@@ -32,8 +32,8 @@
               Change language
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-              <li><a class="dropdown-item" th:href="@{/change-lang?lang=it}" th:text="#{lang.it}">Italiano</a></li>
-              <li><a class="dropdown-item" th:href="@{/change-lang?lang=en}" th:text="#{lang.en}">English</a></li>
+              <li><a class="dropdown-item" th:href="@{/change-lang(lang='it')}" th:text="#{lang.it}">Italiano</a></li>
+              <li><a class="dropdown-item" th:href="@{/change-lang(lang='en')}" th:text="#{lang.en}">English</a></li>
             </ul>
           </li>
         </ul>
