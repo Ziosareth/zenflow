@@ -25,26 +25,27 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .userDetailsService(userDetailsService)
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/webjars/**", "/css/**", "/js/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
-                .defaultSuccessUrl("/", true)
-                    .failureUrl("/login?error")
-            )
-            .logout(logout -> logout
-                .permitAll()
-                .logoutSuccessUrl("/login?logout")
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID")
-            )
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/webjars/**", "/css/**", "/js/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll()
+                        .defaultSuccessUrl("/dashboard", true)
+                        .failureUrl("/login?error")
+                )
+                .logout(logout -> logout
+                        .permitAll()
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                )
                 .sessionManagement(session -> session
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false));
-        
+
         return http.build();
     }
 }

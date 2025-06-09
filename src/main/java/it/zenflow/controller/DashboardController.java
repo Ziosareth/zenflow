@@ -2,11 +2,13 @@ package it.zenflow.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-@Controller("/dashboard")
+@Controller()
+@RequestMapping("/dashboard")
 public class DashboardController {
 
-    @GetMapping("/")
+    @GetMapping("")
     public String dashboard() {
         return "dashboard";
     }

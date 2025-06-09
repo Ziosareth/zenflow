@@ -1,37 +1,53 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title th:text="#{login.title}">Login</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
 </head>
 <body class="bg-light">
     <div class="container">
-        <div class="row justify-content-center mt-5">
+        <!-- Language Switcher -->
+        <div class="row justify-content-end mt-3">
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="languageDropdown" 
+                            data-bs-toggle="dropdown" aria-expanded="false" th:text="#{lang.change}">
+                        Change language
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                        <li><a class="dropdown-item" th:href="@{/change-lang?lang=it}" th:text="#{lang.it}">Italiano</a></li>
+                        <li><a class="dropdown-item" th:href="@{/change-lang?lang=en}" th:text="#{lang.en}">English</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center mt-3">
             <div class="col-md-6 col-lg-4">
                 <div class="card shadow">
                     <div class="card-header bg-dark text-white text-center">
-                        <h4>Accesso</h4>
+                        <h4 th:text="#{login.header}">Access</h4>
                     </div>
                     <div class="card-body">
-                        <div th:if="${param.error}" class="alert alert-danger">
-                            Credenziali non valide. Riprova.
+                        <div th:if="${param.error}" class="alert alert-danger" th:text="#{login.error}">
+                            Invalid credentials. Please try again.
                         </div>
-                        <div th:if="${param.logout}" class="alert alert-success">
-                            Logout effettuato con successo.
+                        <div th:if="${param.logout}" class="alert alert-success" th:text="#{login.logout.success}">
+                            Logout successful.
                         </div>
                         <form th:action="@{/login}" method="post">
                             <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
+                                <label for="username" class="form-label" th:text="#{login.username}">Username</label>
                                 <input type="text" class="form-control" id="username" name="username" required autofocus>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
+                                <label for="password" class="form-label" th:text="#{login.password}">Password</label>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-dark">Accedi</button>
+                                <button type="submit" class="btn btn-dark" th:text="#{login.button}">Login</button>
                             </div>
                         </form>
                     </div>
