@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title, extraCSS)">
+    <meta charset="UTF-8">
+    <title th:replace="${title}">Default Title</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.13.1/font/bootstrap-icons.css}">
+    <!-- Additional CSS can be added here -->
+    <th:block th:replace="${extraCSS} ?: ~{}"></th:block>
+</head>
+
+<body>
+    <!-- Script fragment to be included at the end of body -->
+    <th:block th:fragment="scripts(extraScripts)">
+        <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+        <!-- Additional scripts can be added here -->
+        <th:block th:replace="${extraScripts} ?: ~{}"></th:block>
+    </th:block>
+</body>
+</html>

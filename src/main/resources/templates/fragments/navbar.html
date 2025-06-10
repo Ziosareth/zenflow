@@ -4,7 +4,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Navbar</title>
-  <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.13.1/font/bootstrap-icons.css}">
 </head>
 <body>
 <div th:fragment="navbar">
@@ -19,6 +18,18 @@
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
             <a class="nav-link active" th:href="@{/dashboard}" th:text="#{navbar.dashboard}"></a>
+          </li>
+          <!-- Projects dropdown menu -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" 
+               data-bs-toggle="dropdown" aria-expanded="false" th:text="#{navbar.projects}">
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="projectsDropdown">
+              <li><a class="dropdown-item" th:href="@{/projects}" th:utext="#{navbar.projects.list}"></a></li>
+              <li><a class="dropdown-item" th:href="@{/projects/new}" th:utext="#{navbar.projects.new}"></a></li>
+              <li><a class="dropdown-item" th:href="@{/projects/backlog}" th:utext="#{navbar.projects.backlog}"></a></li>
+              <li><a class="dropdown-item" th:href="@{/projects/sprint}" th:utext="#{navbar.projects.sprint}"></a></li>
+            </ul>
           </li>
           <li class="nav-item">
             <a class="nav-link" th:href="@{/profile}" th:text="#{navbar.profile}"></a>
