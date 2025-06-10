@@ -1,21 +1,19 @@
 package it.zenflow.controller.admin;
 
 import it.zenflow.config.ZenFlowAuthenticationHandler;
-import it.zenflow.model.rbac.Permission;
-import it.zenflow.model.rbac.Role;
-import it.zenflow.model.rbac.User;
-import it.zenflow.model.rbac.UserRepository;
+import it.zenflow.model.rbac.*;
 import it.zenflow.service.EmailService;
 import it.zenflow.service.rbac.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,14 +53,14 @@ public class UserInviteControllerIntegrationTest {
     @Autowired
     private UserService userService;
 
-    @MockBean
+    @Autowired
     private EmailService emailService;
 
     @Autowired
-    private it.zenflow.model.rbac.RoleRepository roleRepository;
+    private RoleRepository roleRepository;
 
     @Autowired
-    private it.zenflow.model.rbac.PermissionRepository permissionRepository;
+    private PermissionRepository permissionRepository;
 
     @Autowired
     private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
@@ -74,6 +72,15 @@ public class UserInviteControllerIntegrationTest {
     private Permission readUserPermission;
     private Permission createUserPermission;
     private Permission updateUserPermission;
+
+    @TestConfiguration
+    static class UserInviteControllerIntegrationTestConfiguration {
+        @Bean
+        @Primary
+        public EmailService emailService(){
+            return mock(EmailService.class);
+        }
+    }
 
     @BeforeEach
     public void setup() {
