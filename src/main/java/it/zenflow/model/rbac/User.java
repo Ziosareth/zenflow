@@ -27,6 +27,7 @@ public class User {
     private String email;
     private String password;
     private boolean enabled = true;
+    private boolean passwordChangeRequired = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -37,4 +38,3 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
 }
-

@@ -15,6 +15,16 @@ services:
     networks:
       - zenflow-network
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: zenflow-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - zenflow-network
+
 volumes:
   postgres_data:
     name: zenflow-postgres-data

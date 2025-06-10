@@ -1,13 +1,19 @@
 package it.zenflow.service.rbac;
 
+import it.zenflow.model.rbac.Role;
 import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
+import it.zenflow.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<User> findAll() {
@@ -60,5 +68,32 @@ public class UserService {
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Transactional
+    public User inviteUser(String username, String email, Set<Role> roles, Locale locale) {
+        // Generate a random password
+        String temporaryPassword = generateRandomPassword();
+
+        // Create and save the user
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
+        user.setEnabled(true);
+        user.setRoles(roles);
+        user.setPasswordChangeRequired(true);
+
+        User savedUser = userRepository.save(user);
+
+        // Send invitation email
+        emailService.sendInvitationEmail(email, username, temporaryPassword, locale);
+
+        return savedUser;
+    }
+
+    private String generateRandomPassword() {
+        // Generate a secure random password (12 characters)
+        return RandomStringUtils.randomAlphanumeric(12);
     }
 }
