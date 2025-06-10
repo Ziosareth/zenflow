@@ -37,10 +37,7 @@ public class PasswordResetControllerI18nIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private UserService userService;
-
+    
     @Autowired
     private MessageSource messageSource;
 
