@@ -1,7 +1,10 @@
 # Indice
 ## 1. Introduzione
 ### Obiettivo del progetto
+ZenFlow è una web app con lo scopo di semplificare la gestione dei progetto di sviluppo, fornendo supporto ai tech lead e software architects per la stesura delle user story, fornendo strumenti come il calcolo delle stime tramite diverse metodologie (PERT, Poker planning), timeline delle attività, e gestione del personale che ci lavora
 ### Motivazioni della scelta tecnologica
+Per lo sviluppo sono stati utilizzati i seguenti framework e librerie:
+
 ### Breve overview della soluzione sviluppata
 ## 2. Background teorico
 ### ORM: cos'è e perché usarlo
