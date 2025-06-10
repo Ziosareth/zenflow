@@ -1,0 +1,68 @@
+/* ZenFlow – Background “Calm Gradient” */
+/* -------- Variabili CSS per facile manutenzione -------- */
+:root {
+    --zf-col-0: #f9fbff;
+    --zf-col-1: #e6edff;
+    --zf-col-2: #d7e0ff;
+    --zf-col-3: #c8d4ff;
+}
+
+/* -------- Tema principale -------- */
+body {
+    min-height: 100vh;
+    /* Gradient + texture */
+    background-image:
+            url("/images/noise-8-opacity.png"),
+            radial-gradient(circle at 20% 30%,
+            var(--zf-col-0) 0%,
+            var(--zf-col-1) 40%,
+            var(--zf-col-2) 70%,
+            var(--zf-col-3) 100%);
+    background-blend-mode: overlay;
+    background-repeat: no-repeat;
+    background-size: cover;
+    /* L’effetto parallax è piacevole su desktop,
+       ma può causare scatti su alcuni mobile. */
+    background-attachment: fixed;
+}
+
+/* -------- Ottimizzazioni responsive -------- */
+
+/* iOS < 16 e Android low-end: disabilita il parallax,
+   mantenendo comunque la resa grafica. */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 767.98px) { /* breakpoint BS5 “md” */
+        body {
+            background-attachment: scroll;
+        }
+    }
+}
+
+/* Schermi ≥ 1400 px (Bootstrap “xxl”).
+   Allarghiamo il centro del gradiente per evitare un punto troppo luminoso. */
+@media (min-width: 1400px) {
+    body {
+        background-image:
+                url("/static/images/noise-8-opacity.png"),
+                radial-gradient(circle at 25% 35%,
+                var(--zf-col-0) 0%,
+                var(--zf-col-1) 35%,
+                var(--zf-col-2) 65%,
+                var(--zf-col-3) 100%);
+    }
+}
+
+/* -------- Dark mode (rispetta la preferenza di sistema) -------- */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --zf-col-0: #1e2230;
+        --zf-col-1: #27314b;
+        --zf-col-2: #313d59;
+        --zf-col-3: #3a4768;
+    }
+
+    body {
+        color: #f1f3f7;                /* testo di default più chiaro */
+        background-blend-mode: normal; /* sovrapposizione non necessaria */
+    }
+}

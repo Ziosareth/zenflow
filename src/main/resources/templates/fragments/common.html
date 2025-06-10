@@ -5,7 +5,9 @@
     <title th:replace="${title}">Default Title</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.13.1/font/bootstrap-icons.css}">
-    <!-- Additional CSS can be added here -->
+    <!-- ZenFlow theme -->
+    <link rel="stylesheet" th:href="@{/css/zenflow.css}">
+    <!-- Slot opzionale per altri CSS specifici di pagina -->
     <th:block th:replace="${extraCSS} ?: ~{}"></th:block>
 </head>
 
