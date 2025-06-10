@@ -3,7 +3,6 @@ package it.zenflow.controller;
 import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
 import it.zenflow.service.EmailService;
-import it.zenflow.service.rbac.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +36,7 @@ public class PasswordResetControllerI18nIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private MessageSource messageSource;
 
