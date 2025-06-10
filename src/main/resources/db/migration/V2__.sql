@@ -13,7 +13,10 @@ INSERT INTO zenflow.permissions (name, description) VALUES
 -- Inserimento ruoli
 INSERT INTO zenflow.roles (name) VALUES
                                      ('ADMIN'),
-                                     ('USER');
+                                     ('USER'),
+                                     ('DEVELOPER'),
+                                     ('PRODUCT_OWNER'),
+                                     ('TECH_LEAD');
 
 -- Associazione ruolo ADMIN con tutti i permessi
 INSERT INTO zenflow.role_permissions (role_id, permission_id)
@@ -37,3 +40,93 @@ INSERT INTO zenflow.user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM zenflow.users u, zenflow.roles r
 WHERE u.username = 'admin' AND r.name = 'ADMIN';
+
+-- Add permissions for Project entity
+INSERT INTO zenflow.permissions (name, description) VALUES
+                                                        ('CREATE_PROJECT', 'Creare nuovi progetti'),
+                                                        ('READ_PROJECT', 'Visualizzare progetti'),
+                                                        ('UPDATE_PROJECT', 'Modificare progetti'),
+                                                        ('DELETE_PROJECT', 'Eliminare progetti');
+
+-- Add permissions for UserStory entity
+INSERT INTO zenflow.permissions (name, description) VALUES
+                                                        ('CREATE_USER_STORY', 'Creare nuove user story'),
+                                                        ('READ_USER_STORY', 'Visualizzare user story'),
+                                                        ('UPDATE_USER_STORY', 'Modificare user story'),
+                                                        ('DELETE_USER_STORY', 'Eliminare user story');
+
+-- Add permissions for Sprint entity
+INSERT INTO zenflow.permissions (name, description) VALUES
+                                                        ('CREATE_SPRINT', 'Creare nuovi sprint'),
+                                                        ('READ_SPRINT', 'Visualizzare sprint'),
+                                                        ('UPDATE_SPRINT', 'Modificare sprint'),
+                                                        ('DELETE_SPRINT', 'Eliminare sprint');
+
+-- Add permissions for Task entity
+INSERT INTO zenflow.permissions (name, description) VALUES
+                                                        ('CREATE_TASK', 'Creare nuovi task'),
+                                                        ('READ_TASK', 'Visualizzare task'),
+                                                        ('UPDATE_TASK', 'Modificare task'),
+                                                        ('DELETE_TASK', 'Eliminare task');
+
+-- Add permissions for PlanningPokerSession entity
+INSERT INTO zenflow.permissions (name, description) VALUES
+                                                        ('CREATE_PLANNING_POKER_SESSION', 'Creare nuove sessioni di planning poker'),
+                                                        ('READ_PLANNING_POKER_SESSION', 'Visualizzare sessioni di planning poker'),
+                                                        ('UPDATE_PLANNING_POKER_SESSION', 'Modificare sessioni di planning poker'),
+                                                        ('DELETE_PLANNING_POKER_SESSION', 'Eliminare sessioni di planning poker');
+
+-- Add permissions for EstimationVote entity
+INSERT INTO zenflow.permissions (name, description) VALUES
+                                                        ('CREATE_ESTIMATION_VOTE', 'Creare nuovi voti di stima'),
+                                                        ('READ_ESTIMATION_VOTE', 'Visualizzare voti di stima'),
+                                                        ('UPDATE_ESTIMATION_VOTE', 'Modificare voti di stima'),
+                                                        ('DELETE_ESTIMATION_VOTE', 'Eliminare voti di stima');
+
+-- Associate all new permissions with ADMIN role
+INSERT INTO zenflow.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM zenflow.roles r
+         CROSS JOIN zenflow.permissions p
+WHERE r.name = 'ADMIN'
+  AND p.name IN ('CREATE_PROJECT', 'READ_PROJECT', 'UPDATE_PROJECT', 'DELETE_PROJECT',
+                'CREATE_USER_STORY', 'READ_USER_STORY', 'UPDATE_USER_STORY', 'DELETE_USER_STORY',
+                'CREATE_SPRINT', 'READ_SPRINT', 'UPDATE_SPRINT', 'DELETE_SPRINT',
+                'CREATE_TASK', 'READ_TASK', 'UPDATE_TASK', 'DELETE_TASK',
+                'CREATE_PLANNING_POKER_SESSION', 'READ_PLANNING_POKER_SESSION', 'UPDATE_PLANNING_POKER_SESSION', 'DELETE_PLANNING_POKER_SESSION',
+                'CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE', 'DELETE_ESTIMATION_VOTE');
+
+-- Associate read permissions with DEVELOPER role
+INSERT INTO zenflow.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM zenflow.roles r
+         CROSS JOIN zenflow.permissions p
+WHERE r.name = 'DEVELOPER'
+  AND p.name IN ('READ_PROJECT', 'READ_USER_STORY', 'READ_SPRINT', 'READ_TASK', 
+                'READ_PLANNING_POKER_SESSION', 'READ_ESTIMATION_VOTE',
+                'CREATE_TASK', 'UPDATE_TASK',
+                'CREATE_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE');
+
+-- Associate permissions with PRODUCT_OWNER role
+INSERT INTO zenflow.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM zenflow.roles r
+         CROSS JOIN zenflow.permissions p
+WHERE r.name = 'PRODUCT_OWNER'
+  AND p.name IN ('READ_PROJECT', 'CREATE_PROJECT', 'UPDATE_PROJECT',
+                'READ_USER_STORY', 'CREATE_USER_STORY', 'UPDATE_USER_STORY', 'DELETE_USER_STORY',
+                'READ_SPRINT', 'CREATE_SPRINT', 'UPDATE_SPRINT',
+                'READ_TASK', 'READ_PLANNING_POKER_SESSION', 'READ_ESTIMATION_VOTE');
+
+-- Associate permissions with TECH_LEAD role
+INSERT INTO zenflow.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM zenflow.roles r
+         CROSS JOIN zenflow.permissions p
+WHERE r.name = 'TECH_LEAD'
+  AND p.name IN ('READ_PROJECT', 'UPDATE_PROJECT',
+                'READ_USER_STORY', 'CREATE_USER_STORY', 'UPDATE_USER_STORY',
+                'READ_SPRINT', 'CREATE_SPRINT', 'UPDATE_SPRINT',
+                'READ_TASK', 'CREATE_TASK', 'UPDATE_TASK', 'DELETE_TASK',
+                'CREATE_PLANNING_POKER_SESSION', 'READ_PLANNING_POKER_SESSION', 'UPDATE_PLANNING_POKER_SESSION',
+                'CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE');

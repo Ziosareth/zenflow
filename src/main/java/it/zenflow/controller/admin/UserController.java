@@ -1,6 +1,7 @@
 package it.zenflow.controller.admin;
 
 import it.zenflow.model.rbac.User;
+import it.zenflow.service.rbac.RoleService;
 import it.zenflow.service.rbac.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -15,15 +16,15 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
 
 @Controller
 @RequestMapping("/admin/users")
-@PreAuthorize("hasAnyRole('ADMIN', 'TECHLEAD')")
+@PreAuthorize("hasAuthority('READ_USER')")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
+    private final RoleService roleService;
     private final MessageSource messageSource;
 
     @GetMapping("")
@@ -61,12 +62,14 @@ public class UserController {
         return userService.findById(id)
                 .map(user -> {
                     model.addAttribute("user", user);
+                    model.addAttribute("allRoles", roleService.findAll());
                     return "admin/user-edit";
                 })
                 .orElse("redirect:/admin/users");
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAuthority('UPDATE_USER')")
     public String updateUser(@PathVariable Long id, @ModelAttribute User user, RedirectAttributes redirectAttributes) {
         return userService.findById(id)
                 .map(existingUser -> {
@@ -85,6 +88,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/toggle-status")
+    @PreAuthorize("hasAuthority('UPDATE_USER')")
     public String toggleUserStatus(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         return userService.findById(id)
                 .map(user -> {

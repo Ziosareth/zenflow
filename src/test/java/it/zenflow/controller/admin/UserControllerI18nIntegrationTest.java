@@ -60,22 +60,22 @@ public class UserControllerI18nIntegrationTest {
         permissionRepository.deleteAll();
 
         // Create permissions
-        Permission viewUserPermission = new Permission();
-        viewUserPermission.setName("VIEW_USER");
-        viewUserPermission.setDescription("Permission to view user details");
-        viewUserPermission = permissionRepository.save(viewUserPermission);
+        Permission readUserPermission = new Permission();
+        readUserPermission.setName("READ_USER");
+        readUserPermission.setDescription("Permission to view user details");
+        readUserPermission = permissionRepository.save(readUserPermission);
 
-        Permission editUserPermission = new Permission();
-        editUserPermission.setName("EDIT_USER");
-        editUserPermission.setDescription("Permission to edit user details");
-        editUserPermission = permissionRepository.save(editUserPermission);
+        Permission updateUserPermission = new Permission();
+        updateUserPermission.setName("UPDATE_USER");
+        updateUserPermission.setDescription("Permission to edit user details");
+        updateUserPermission = permissionRepository.save(updateUserPermission);
 
         // Create admin role
         adminRole = new Role();
         adminRole.setName("ADMIN");
         Set<Permission> adminPermissions = new HashSet<>();
-        adminPermissions.add(viewUserPermission);
-        adminPermissions.add(editUserPermission);
+        adminPermissions.add(readUserPermission);
+        adminPermissions.add(updateUserPermission);
         adminRole.setPermissions(adminPermissions);
         adminRole = roleRepository.save(adminRole);
 
@@ -94,7 +94,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testUserListPageInEnglish() throws Exception {
         // Set locale to English using the lang parameter
         mockMvc.perform(get("/admin/users")
@@ -110,7 +110,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testUserListPageInItalian() throws Exception {
         // Set locale to Italian
         LocaleContextHolder.setLocale(Locale.ITALIAN);
@@ -127,7 +127,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testUserDetailPageInEnglish() throws Exception {
         mockMvc.perform(get("/admin/users/{id}", testUser.getId())
                 .locale(Locale.ENGLISH))
@@ -139,7 +139,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testUserDetailPageInItalian() throws Exception {
         // Set locale to Italian
         LocaleContextHolder.setLocale(Locale.ITALIAN);
@@ -153,7 +153,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testFlashMessagesInEnglish() throws Exception {
         // Toggle user status
         mockMvc.perform(post("/admin/users/{id}/toggle-status", testUser.getId())
@@ -171,7 +171,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testFlashMessagesInItalian() throws Exception {
         // Set locale to Italian
         LocaleContextHolder.setLocale(Locale.ITALIAN);

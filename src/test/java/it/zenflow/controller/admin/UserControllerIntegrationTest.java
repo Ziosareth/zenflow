@@ -58,37 +58,37 @@ public class UserControllerIntegrationTest {
         permissionRepository.deleteAll();
 
         // Create permissions
-        Permission viewUserPermission = new Permission();
-        viewUserPermission.setName("VIEW_USER");
-        viewUserPermission.setDescription("Permission to view user details");
-        viewUserPermission = permissionRepository.save(viewUserPermission);
+        Permission readUserPermission = new Permission();
+        readUserPermission.setName("READ_USER");
+        readUserPermission.setDescription("Permission to view user details");
+        readUserPermission = permissionRepository.save(readUserPermission);
 
-        Permission editUserPermission = new Permission();
-        editUserPermission.setName("EDIT_USER");
-        editUserPermission.setDescription("Permission to edit user details");
-        editUserPermission = permissionRepository.save(editUserPermission);
+        Permission updateUserPermission = new Permission();
+        updateUserPermission.setName("UPDATE_USER");
+        updateUserPermission.setDescription("Permission to edit user details");
+        updateUserPermission = permissionRepository.save(updateUserPermission);
 
         // Create roles
         adminRole = new Role();
         adminRole.setName("ADMIN");
         Set<Permission> adminPermissions = new HashSet<>();
-        adminPermissions.add(viewUserPermission);
-        adminPermissions.add(editUserPermission);
+        adminPermissions.add(readUserPermission);
+        adminPermissions.add(updateUserPermission);
         adminRole.setPermissions(adminPermissions);
         adminRole = roleRepository.save(adminRole);
 
         userRole = new Role();
         userRole.setName("USER");
         Set<Permission> userPermissions = new HashSet<>();
-        userPermissions.add(viewUserPermission);
+        userPermissions.add(readUserPermission);
         userRole.setPermissions(userPermissions);
         userRole = roleRepository.save(userRole);
 
         techleadRole = new Role();
         techleadRole.setName("TECHLEAD");
         Set<Permission> techleadPermissions = new HashSet<>();
-        techleadPermissions.add(viewUserPermission);
-        techleadPermissions.add(editUserPermission);
+        techleadPermissions.add(readUserPermission);
+        techleadPermissions.add(updateUserPermission);
         techleadRole.setPermissions(techleadPermissions);
         techleadRole = roleRepository.save(techleadRole);
 
@@ -127,7 +127,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testListUsers() throws Exception {
         mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isOk())
@@ -144,7 +144,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER"})
     public void testViewUser() throws Exception {
         mockMvc.perform(get("/admin/users/{id}", regularUser.getId()))
                 .andExpect(status().isOk())
@@ -156,7 +156,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER"})
     public void testViewNonExistentUser() throws Exception {
         mockMvc.perform(get("/admin/users/999"))
                 .andExpect(status().is3xxRedirection())
@@ -164,24 +164,27 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER"})
     public void testEditUserForm() throws Exception {
         mockMvc.perform(get("/admin/users/{id}/edit", regularUser.getId()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/user-edit"))
                 .andExpect(model().attributeExists("user"))
+                .andExpect(model().attributeExists("allRoles"))
                 .andExpect(model().attribute("user", hasProperty("username", is("user"))))
                 .andExpect(model().attribute("user", hasProperty("email", is("user@example.com"))))
                 .andExpect(content().string(containsString("user@example.com")));
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testUpdateUser() throws Exception {
         mockMvc.perform(post("/admin/users/{id}", regularUser.getId())
                         .param("username", "updateduser")
                         .param("email", "updated@example.com")
                         .param("enabled", "true")
+                        .param("roles", userRole.getId().toString())
+                        .param("roles", techleadRole.getId().toString())
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/users/" + regularUser.getId()))
@@ -192,10 +195,13 @@ public class UserControllerIntegrationTest {
         assert updatedUser.getUsername().equals("updateduser");
         assert updatedUser.getEmail().equals("updated@example.com");
         assert updatedUser.isEnabled();
+        assert updatedUser.getRoles().size() == 2;
+        assert updatedUser.getRoles().contains(userRole);
+        assert updatedUser.getRoles().contains(techleadRole);
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
     public void testToggleUserStatus() throws Exception {
         // Initially the user is enabled
         assert regularUser.isEnabled();
@@ -223,14 +229,14 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"ROLE_USER"})
+    @WithMockUser(username = "user", authorities = {})
     public void testAccessDeniedForNonAdminUser() throws Exception {
         mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = "techlead", authorities = {"ROLE_TECHLEAD"})
+    @WithMockUser(username = "techlead", authorities = {"READ_USER"})
     public void testAccessAllowedForTechleadUser() throws Exception {
         mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isOk())
@@ -244,7 +250,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "techlead", authorities = {"ROLE_TECHLEAD"})
+    @WithMockUser(username = "techlead", authorities = {"READ_USER", "UPDATE_USER"})
     public void testTechleadCanEditUser() throws Exception {
         mockMvc.perform(post("/admin/users/{id}", regularUser.getId())
                         .param("username", "updatedByTechlead")
@@ -263,7 +269,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "techlead", authorities = {"ROLE_TECHLEAD"})
+    @WithMockUser(username = "techlead", authorities = {"READ_USER", "UPDATE_USER"})
     public void testTechleadCanToggleUserStatus() throws Exception {
         // Initially the user is enabled
         assert regularUser.isEnabled();
