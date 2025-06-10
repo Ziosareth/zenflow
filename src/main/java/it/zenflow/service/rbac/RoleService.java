@@ -3,6 +3,8 @@ package it.zenflow.service.rbac;
 import it.zenflow.model.rbac.Role;
 import it.zenflow.model.rbac.RoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,11 @@ public class RoleService {
     @Transactional(readOnly = true)
     public List<Role> findAll() {
         return roleRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Role> findAll(Pageable pageable) {
+        return roleRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
