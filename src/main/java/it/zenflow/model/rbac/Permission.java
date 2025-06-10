@@ -24,6 +24,7 @@ public class Permission {
 
     private String name;        // es. "CREATE_USER", "READ_USER", ecc.
     private String description;
+    private String category;    // es. "ADMINISTRATION", "PROJECT", ecc.
 
     @ManyToMany(mappedBy = "permissions")
     private Set<Role> roles = new HashSet<>();

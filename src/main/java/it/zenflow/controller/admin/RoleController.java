@@ -1,5 +1,6 @@
 package it.zenflow.controller.admin;
 
+import it.zenflow.model.rbac.Permission;
 import it.zenflow.model.rbac.Role;
 import it.zenflow.service.rbac.PermissionService;
 import it.zenflow.service.rbac.RoleService;
@@ -15,6 +16,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/roles")
@@ -51,6 +56,13 @@ public class RoleController {
         return roleService.findById(id)
                 .map(role -> {
                     model.addAttribute("role", role);
+
+                    // Group role permissions by category
+                    Map<String, List<Permission>> rolePermissionsByCategory = role.getPermissions().stream()
+                            .collect(Collectors.groupingBy(Permission::getCategory));
+                    model.addAttribute("rolePermissionsByCategory", rolePermissionsByCategory);
+
+                    model.addAttribute("permissionService", permissionService);
                     return "admin/role-detail";
                 })
                 .orElse("redirect:/admin/roles");
@@ -60,7 +72,8 @@ public class RoleController {
     @PreAuthorize("hasAuthority('UPDATE_ROLE')")
     public String newRoleForm(Model model) {
         model.addAttribute("role", new Role());
-        model.addAttribute("allPermissions", permissionService.findAll());
+        model.addAttribute("permissionsByCategory", permissionService.findAllGroupedByCategory());
+        model.addAttribute("permissionService", permissionService);
         return "admin/role-edit";
     }
 
@@ -70,7 +83,8 @@ public class RoleController {
         return roleService.findById(id)
                 .map(role -> {
                     model.addAttribute("role", role);
-                    model.addAttribute("allPermissions", permissionService.findAll());
+                    model.addAttribute("permissionsByCategory", permissionService.findAllGroupedByCategory());
+                    model.addAttribute("permissionService", permissionService);
                     return "admin/role-edit";
                 })
                 .orElse("redirect:/admin/roles");

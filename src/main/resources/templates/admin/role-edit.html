@@ -33,18 +33,29 @@
 
                     <div class="mb-3">
                         <label class="form-label" th:text="#{admin.roles.permissions}">Permissions</label>
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="form-check" th:each="permission : ${allPermissions}">
-                                    <input class="form-check-input" type="checkbox" 
-                                           th:field="*{permissions}" 
-                                           th:value="${permission.id}" 
-                                           th:id="${'permission-' + permission.id}">
-                                    <label class="form-check-label" 
-                                           th:for="${'permission-' + permission.id}">
-                                        <span th:text="${permission.name}">Permission Name</span>
-                                        <small class="text-muted" th:text="${permission.description}">Permission Description</small>
-                                    </label>
+                        <div class="accordion" id="permissionsAccordion">
+                            <div class="accordion-item" th:each="category : ${permissionsByCategory.keySet()}">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                            th:data-bs-target="${'#category-' + category}" 
+                                            th:aria-controls="${'category-' + category}">
+                                        <span th:text="${permissionService.getLocalizedCategoryName(category)}">Category Name</span>
+                                    </button>
+                                </h2>
+                                <div th:id="${'category-' + category}" class="accordion-collapse collapse show">
+                                    <div class="accordion-body">
+                                        <div class="form-check" th:each="permission : ${permissionsByCategory.get(category)}">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   th:field="*{permissions}" 
+                                                   th:value="${permission.id}" 
+                                                   th:id="${'permission-' + permission.id}">
+                                            <label class="form-check-label" 
+                                                   th:for="${'permission-' + permission.id}">
+                                                <span th:text="${permission.name}">Permission Name</span>
+                                                <small class="text-muted" th:text="${permissionService.getLocalizedDescription(permission)}">Permission Description</small>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

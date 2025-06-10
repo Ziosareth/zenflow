@@ -37,9 +37,20 @@
                     </div>
                     <div class="col-md-6">
                         <p><strong th:text="#{admin.roles.permissions} + ':'">Permissions:</strong></p>
-                        <div class="mb-3">
-                            <span th:each="permission : ${role.permissions}" class="badge bg-secondary me-1 mb-1" th:text="${permission.name}"></span>
-                            <span th:if="${#lists.isEmpty(role.permissions)}" class="text-muted" th:text="#{admin.roles.no.permissions}">No permissions assigned</span>
+                        <div th:if="${#lists.isEmpty(role.permissions)}" class="text-muted" th:text="#{admin.roles.no.permissions}">No permissions assigned</div>
+                        <div th:if="${!#lists.isEmpty(role.permissions)}">
+                            <!-- Display permissions grouped by category -->
+                            <div class="mb-3" th:each="category : ${rolePermissionsByCategory.keySet()}">
+                                <h6 th:text="${permissionService.getLocalizedCategoryName(category)}">Category Name</h6>
+                                <div>
+                                    <span th:each="permission : ${rolePermissionsByCategory.get(category)}" 
+                                          class="badge bg-secondary me-1 mb-1" 
+                                          th:text="${permission.name}"
+                                          th:title="${permissionService.getLocalizedDescription(permission)}">
+                                        Permission Name
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
