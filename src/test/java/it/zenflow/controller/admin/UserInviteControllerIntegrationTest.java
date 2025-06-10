@@ -73,14 +73,6 @@ public class UserInviteControllerIntegrationTest {
     private Permission createUserPermission;
     private Permission updateUserPermission;
 
-    @TestConfiguration
-    static class UserInviteControllerIntegrationTestConfiguration {
-        @Bean
-        @Primary
-        public EmailService emailService(){
-            return mock(EmailService.class);
-        }
-    }
 
     @BeforeEach
     public void setup() {

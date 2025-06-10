@@ -59,7 +59,9 @@ public class RoleController {
 
                     // Group role permissions by category
                     Map<String, List<Permission>> rolePermissionsByCategory = role.getPermissions().stream()
-                            .collect(Collectors.groupingBy(Permission::getCategory));
+                            .collect(Collectors.groupingBy(
+                                permission -> permission.getCategory() != null ? permission.getCategory() : "UNCATEGORIZED"
+                            ));
                     model.addAttribute("rolePermissionsByCategory", rolePermissionsByCategory);
 
                     model.addAttribute("permissionService", permissionService);
@@ -73,6 +75,7 @@ public class RoleController {
     public String newRoleForm(Model model) {
         model.addAttribute("role", new Role());
         model.addAttribute("permissionsByCategory", permissionService.findAllGroupedByCategory());
+        model.addAttribute("allPermissions", permissionService.findAll());
         model.addAttribute("permissionService", permissionService);
         return "admin/role-edit";
     }
@@ -84,6 +87,7 @@ public class RoleController {
                 .map(role -> {
                     model.addAttribute("role", role);
                     model.addAttribute("permissionsByCategory", permissionService.findAllGroupedByCategory());
+                    model.addAttribute("allPermissions", permissionService.findAll());
                     model.addAttribute("permissionService", permissionService);
                     return "admin/role-edit";
                 })

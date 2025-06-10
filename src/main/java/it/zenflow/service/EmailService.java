@@ -43,10 +43,10 @@ public class EmailService {
         String subject = messageSource.getMessage("email.invitation.subject", null, locale);
         String content = messageSource.getMessage("email.invitation.content", 
                 new Object[]{username, temporaryPassword}, locale);
-        
+
         sendSimpleEmail(to, subject, content);
     }
-    
+
     /**
      * Send an HTML email using Thymeleaf templates
      */
@@ -55,18 +55,38 @@ public class EmailService {
         // Prepare the context with variables for the template
         Context context = new Context(locale);
         variables.forEach(context::setVariable);
-        
+
         // Process the template
         String htmlContent = templateEngine.process(templateName, context);
-        
+
         // Create the email message
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(htmlContent, true); // true indicates HTML content
-        
+
         // Send the email
         mailSender.send(mimeMessage);
+    }
+
+    /**
+     * Send a password reset email with a reset token
+     */
+    public void sendPasswordResetEmail(String to, String token, Locale locale) {
+        log.info("Sending password reset email to: {}", to);
+
+        try {
+            String subject = messageSource.getMessage("email.reset.subject", null, locale);
+
+            Map<String, Object> variables = Map.of(
+                "resetUrl", "http://localhost:8080/password/reset?token=" + token,
+                "expiryHours", 24
+            );
+
+            sendHtmlEmail(to, subject, "password-reset-email", variables, locale);
+        } catch (MessagingException e) {
+            log.error("Failed to send password reset email", e);
+        }
     }
 }

@@ -10,10 +10,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -94,6 +96,40 @@ public class UserService {
 
     private String generateRandomPassword() {
         // Generate a secure random password (12 characters)
-        return RandomStringUtils.randomAlphanumeric(12);
+        return RandomStringUtils.secure().nextAlphanumeric(12);
+    }
+
+    @Transactional
+    public void createPasswordResetToken(String email, Locale locale) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = generateSecureToken();
+            user.setResetToken(token);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
+            userRepository.save(user);
+            emailService.sendPasswordResetEmail(user.getEmail(), token, locale);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public boolean validateResetToken(String token) {
+        return userRepository.findByResetToken(token)
+            .filter(user -> user.getResetTokenExpiry().isAfter(LocalDateTime.now()))
+            .isPresent();
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        userRepository.findByResetToken(token)
+            .filter(user -> user.getResetTokenExpiry().isAfter(LocalDateTime.now()))
+            .ifPresent(user -> {
+                user.setPassword(passwordEncoder.encode(newPassword));
+                user.setResetToken(null);
+                user.setResetTokenExpiry(null);
+                userRepository.save(user);
+            });
+    }
+
+    private String generateSecureToken() {
+        return UUID.randomUUID().toString();
     }
 }

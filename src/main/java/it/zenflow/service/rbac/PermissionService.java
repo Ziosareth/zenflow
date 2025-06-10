@@ -28,7 +28,9 @@ public class PermissionService {
     @Transactional(readOnly = true)
     public Map<String, List<Permission>> findAllGroupedByCategory() {
         return permissionRepository.findAll().stream()
-                .collect(Collectors.groupingBy(Permission::getCategory));
+                .collect(Collectors.groupingBy(
+                    permission -> permission.getCategory() != null ? permission.getCategory() : "UNCATEGORIZED"
+                ));
     }
 
     @Transactional(readOnly = true)

@@ -40,6 +40,9 @@
                                 <label for="password" class="form-label" th:text="#{login.password}"></label>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
+                            <div class="mb-3 text-end">
+                                <a th:href="@{/password/forgot}" th:text="#{login.forgot.password}">Forgot Password?</a>
+                            </div>
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-dark" th:text="#{login.button}"></button>
                             </div>

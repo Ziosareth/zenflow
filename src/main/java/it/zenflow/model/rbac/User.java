@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +29,8 @@ public class User {
     private String password;
     private boolean enabled = true;
     private boolean passwordChangeRequired = false;
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
