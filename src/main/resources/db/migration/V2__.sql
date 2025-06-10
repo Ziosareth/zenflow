@@ -12,11 +12,7 @@ INSERT INTO zenflow.permissions (name, description) VALUES
 
 -- Inserimento ruoli
 INSERT INTO zenflow.roles (name) VALUES
-                                     ('ADMIN'),
-                                     ('USER'),
-                                     ('DEVELOPER'),
-                                     ('PRODUCT_OWNER'),
-                                     ('TECH_LEAD');
+                                     ('ADMIN');
 
 -- Associazione ruolo ADMIN con tutti i permessi
 INSERT INTO zenflow.role_permissions (role_id, permission_id)
@@ -25,11 +21,6 @@ FROM zenflow.roles r
          CROSS JOIN zenflow.permissions p
 WHERE r.name = 'ADMIN';
 
--- Associazione ruolo USER con permessi limitati
-INSERT INTO zenflow.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM zenflow.roles r, zenflow.permissions p
-WHERE r.name = 'USER' AND p.name = 'READ_USER';
 
 -- Inserimento utente admin (password temporanea che verrà aggiornata da Java)
 INSERT INTO zenflow.users (username, email, password, enabled) VALUES
@@ -95,38 +86,3 @@ WHERE r.name = 'ADMIN'
                 'CREATE_TASK', 'READ_TASK', 'UPDATE_TASK', 'DELETE_TASK',
                 'CREATE_PLANNING_POKER_SESSION', 'READ_PLANNING_POKER_SESSION', 'UPDATE_PLANNING_POKER_SESSION', 'DELETE_PLANNING_POKER_SESSION',
                 'CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE', 'DELETE_ESTIMATION_VOTE');
-
--- Associate read permissions with DEVELOPER role
-INSERT INTO zenflow.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM zenflow.roles r
-         CROSS JOIN zenflow.permissions p
-WHERE r.name = 'DEVELOPER'
-  AND p.name IN ('READ_PROJECT', 'READ_USER_STORY', 'READ_SPRINT', 'READ_TASK', 
-                'READ_PLANNING_POKER_SESSION', 'READ_ESTIMATION_VOTE',
-                'CREATE_TASK', 'UPDATE_TASK',
-                'CREATE_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE');
-
--- Associate permissions with PRODUCT_OWNER role
-INSERT INTO zenflow.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM zenflow.roles r
-         CROSS JOIN zenflow.permissions p
-WHERE r.name = 'PRODUCT_OWNER'
-  AND p.name IN ('READ_PROJECT', 'CREATE_PROJECT', 'UPDATE_PROJECT',
-                'READ_USER_STORY', 'CREATE_USER_STORY', 'UPDATE_USER_STORY', 'DELETE_USER_STORY',
-                'READ_SPRINT', 'CREATE_SPRINT', 'UPDATE_SPRINT',
-                'READ_TASK', 'READ_PLANNING_POKER_SESSION', 'READ_ESTIMATION_VOTE');
-
--- Associate permissions with TECH_LEAD role
-INSERT INTO zenflow.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM zenflow.roles r
-         CROSS JOIN zenflow.permissions p
-WHERE r.name = 'TECH_LEAD'
-  AND p.name IN ('READ_PROJECT', 'UPDATE_PROJECT',
-                'READ_USER_STORY', 'CREATE_USER_STORY', 'UPDATE_USER_STORY',
-                'READ_SPRINT', 'CREATE_SPRINT', 'UPDATE_SPRINT',
-                'READ_TASK', 'CREATE_TASK', 'UPDATE_TASK', 'DELETE_TASK',
-                'CREATE_PLANNING_POKER_SESSION', 'READ_PLANNING_POKER_SESSION', 'UPDATE_PLANNING_POKER_SESSION',
-                'CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE');
