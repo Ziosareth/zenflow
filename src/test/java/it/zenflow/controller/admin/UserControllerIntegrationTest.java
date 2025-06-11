@@ -1,9 +1,6 @@
 package it.zenflow.controller.admin;
 
-import it.zenflow.model.rbac.Permission;
-import it.zenflow.model.rbac.Role;
-import it.zenflow.model.rbac.User;
-import it.zenflow.model.rbac.UserRepository;
+import it.zenflow.model.rbac.*;
 import it.zenflow.service.rbac.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,10 +42,10 @@ public class UserControllerIntegrationTest {
     private Role techleadRole;
 
     @Autowired
-    private it.zenflow.model.rbac.RoleRepository roleRepository;
+    private RoleRepository roleRepository;
 
     @Autowired
-    private it.zenflow.model.rbac.PermissionRepository permissionRepository;
+    private PermissionRepository permissionRepository;
 
     @BeforeEach
     public void setup() {
