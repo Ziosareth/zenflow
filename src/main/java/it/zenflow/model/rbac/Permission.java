@@ -24,6 +24,7 @@ public class Permission {
 
     private String name;        // es. "CREATE_USER", "READ_USER", ecc.
     private String description;
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'UNCATEGORIZED'")
     private String category;    // es. "ADMINISTRATION", "PROJECT", ecc.
 
     @ManyToMany(mappedBy = "permissions")

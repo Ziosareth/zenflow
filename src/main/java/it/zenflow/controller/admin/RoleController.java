@@ -60,7 +60,7 @@ public class RoleController {
                     // Group role permissions by category
                     Map<String, List<Permission>> rolePermissionsByCategory = role.getPermissions().stream()
                             .collect(Collectors.groupingBy(
-                                permission -> permission.getCategory() != null ? permission.getCategory() : "UNCATEGORIZED"
+                                    Permission::getCategory
                             ));
                     model.addAttribute("rolePermissionsByCategory", rolePermissionsByCategory);
 

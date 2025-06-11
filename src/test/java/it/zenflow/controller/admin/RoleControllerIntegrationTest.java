@@ -51,6 +51,7 @@ public class RoleControllerIntegrationTest {
                     Permission permission = new Permission();
                     permission.setName("TEST_PERMISSION");
                     permission.setDescription("Test permission for integration tests");
+                    permission.setCategory("TEST");
                     return permissionService.save(permission);
                 });
 

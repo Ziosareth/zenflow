@@ -61,11 +61,13 @@ public class UserControllerIntegrationTest {
         Permission readUserPermission = new Permission();
         readUserPermission.setName("READ_USER");
         readUserPermission.setDescription("Permission to view user details");
+        readUserPermission.setCategory("USER_MANAGEMENT");
         readUserPermission = permissionRepository.save(readUserPermission);
 
         Permission updateUserPermission = new Permission();
         updateUserPermission.setName("UPDATE_USER");
         updateUserPermission.setDescription("Permission to edit user details");
+        updateUserPermission.setCategory("USER_MANAGEMENT");
         updateUserPermission = permissionRepository.save(updateUserPermission);
 
         // Create roles
