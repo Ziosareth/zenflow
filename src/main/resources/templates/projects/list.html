@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="${isMyProjects} ? #{project.my.title} : #{project.list.title}">Projects - ZenFlow</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 th:text="${isMyProjects} ? #{project.my.title} : #{project.list.title}">Projects</h1>
+            <div>
+                <a th:href="@{/projects/my}" class="btn btn-outline-primary me-2" th:unless="${isMyProjects}">
+                    <i class="bi bi-person-check"></i> <span th:text="#{project.my}">My Projects</span>
+                </a>
+                <a th:href="@{/projects}" class="btn btn-outline-primary me-2" th:if="${isMyProjects}">
+                    <i class="bi bi-list-check"></i> <span th:text="#{project.all}">All Projects</span>
+                </a>
+                <a sec:authorize="hasAuthority('CREATE_PROJECT')" th:href="@{/projects/new}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> <span th:text="#{project.new}">New Project</span>
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0" th:text="${isMyProjects} ? #{project.my.list} : #{project.list}">Projects</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(projects)}" class="alert alert-info">
+                    <span th:text="#{project.no.projects}">No projects found</span>
+                </div>
+                <div th:unless="${#lists.isEmpty(projects)}" class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th th:text="#{project.id}">ID</th>
+                                <th th:text="#{project.name}">Name</th>
+                                <th th:text="#{project.type}">Type</th>
+                                <th th:text="#{project.status}">Status</th>
+                                <th th:text="#{project.owner}">Owner</th>
+                                <th th:text="#{project.team}">Team</th>
+                                <th th:text="#{project.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="project : ${projects}">
+                                <td th:text="${project.id}"></td>
+                                <td th:text="${project.name}"></td>
+                                <td>
+                                    <span class="badge bg-info" th:text="${project.type}">Type</span>
+                                </td>
+                                <td>
+                                    <span th:if="${project.status.name() == 'ACTIVE'}" class="badge bg-success" th:text="${project.status}">Active</span>
+                                    <span th:if="${project.status.name() == 'COMPLETED'}" class="badge bg-secondary" th:text="${project.status}">Completed</span>
+                                    <span th:if="${project.status.name() == 'ARCHIVED'}" class="badge bg-dark" th:text="${project.status}">Archived</span>
+                                    <span th:if="${project.status.name() == 'ON_HOLD'}" class="badge bg-warning" th:text="${project.status}">On Hold</span>
+                                </td>
+                                <td th:text="${project.owner.username}"></td>
+                                <td th:text="${project.teamMembers.size()}"></td>
+                                <td>
+                                    <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> <span th:text="#{project.view}">View</span>
+                                    </a>
+                                    <a sec:authorize="hasAuthority('UPDATE_PROJECT')" 
+                                       th:if="${currentUser.id == project.owner.id}"
+                                       th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> <span th:text="#{project.edit}">Edit</span>
+                                    </a>
+                                    <a sec:authorize="hasAuthority('UPDATE_PROJECT') and hasAuthority('ADMIN')" 
+                                       th:unless="${currentUser.id == project.owner.id}"
+                                       th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> <span th:text="#{project.edit}">Edit</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-4" th:if="${totalPages > 0 and isMyProjects != true}">
+                    <div>
+                        <span th:text="#{project.showing} + ' ' + ${totalItems} + ' ' + #{project.entries}">Showing entries</span>
+                    </div>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <!-- Previous button -->
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/projects(page=${currentPage - 1}, size=${pageSize}, sort=${sortField})}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+
+                            <!-- Page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                                th:classappend="${currentPage == i} ? 'active'">
+                                <a class="page-link" th:href="@{/projects(page=${i}, size=${pageSize}, sort=${sortField})}" 
+                                   th:text="${i + 1}"></a>
+                            </li>
+
+                            <!-- Next button -->
+                            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                <a class="page-link" th:href="@{/projects(page=${currentPage + 1}, size=${pageSize}, sort=${sortField})}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Page size selector -->
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="pageSizeDropdown" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <span th:text="#{project.page.size} + ': ' + ${pageSize}">Page Size</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="pageSizeDropdown">
+                            <li><a class="dropdown-item" th:href="@{/projects(page=0, size=5, sort=${sortField})}">5</a></li>
+                            <li><a class="dropdown-item" th:href="@{/projects(page=0, size=10, sort=${sortField})}">10</a></li>
+                            <li><a class="dropdown-item" th:href="@{/projects(page=0, size=20, sort=${sortField})}">20</a></li>
+                            <li><a class="dropdown-item" th:href="@{/projects(page=0, size=50, sort=${sortField})}">50</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>
