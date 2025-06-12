@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="${project.name} + ' - ' + ${userStory.title}">Project - User Story</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="${userStory.title}">User Story Title</h2>
+            <div>
+                <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to User Stories
+                </a>
+                <div class="btn-group" th:if="${isOwner or isTeamMember or #authorization.expression('hasAuthority(''UPDATE_USER_STORY'')')}">
+                    <a th:href="@{/projects/{projectId}/user-stories/{id}/edit(projectId=${project.id},id=${userStory.id})}"
+                       class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <button th:if="${isOwner or #authorization.expression('hasAuthority(''DELETE_USER_STORY'')')}"
+                            class="btn btn-danger"
+                            onclick="confirmDelete()">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}">Success message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="fw-bold">Description</h6>
+                            <p th:text="${userStory.description}" class="mb-0">Description text</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold">Acceptance Criteria</h6>
+                            <p th:text="${userStory.acceptanceCriteria}" class="mb-0">Acceptance criteria text</p>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">Tasks</h6>
+                                <div th:if="${#lists.isEmpty(userStory.tasks)}" class="text-muted">
+                                    No tasks defined for this user story.
+                                </div>
+                                <ul th:unless="${#lists.isEmpty(userStory.tasks)}" class="list-group">
+                                    <li th:each="task : ${userStory.tasks}" class="list-group-item">
+                                        <span th:text="${task.title}">Task title</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="fw-bold">Status:</span>
+                            <span class="badge" 
+                                  th:classappend="${userStory.status.name() == 'BACKLOG' ? 'bg-secondary' : 
+                                                  (userStory.status.name() == 'SELECTED' ? 'bg-info' : 
+                                                  (userStory.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                  (userStory.status.name() == 'IN_REVIEW' ? 'bg-warning' : 
+                                                  (userStory.status.name() == 'TESTING' ? 'bg-info' : 
+                                                  (userStory.status.name() == 'DONE' ? 'bg-success' : 'bg-danger')))))}"
+                                  th:text="${userStory.status}">Status</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">Priority:</span>
+                            <span class="badge"
+                                  th:classappend="${userStory.priority.name() == 'LOW' ? 'bg-success' : 
+                                                  (userStory.priority.name() == 'MEDIUM' ? 'bg-info' : 
+                                                  (userStory.priority.name() == 'HIGH' ? 'bg-warning' : 'bg-danger'))}"
+                                  th:text="${userStory.priority}">Priority</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">Story Points:</span>
+                            <span th:text="${userStory.storyPoints != null ? userStory.storyPoints : 'Not estimated'}">5</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">Business Value:</span>
+                            <span th:text="${userStory.businessValue != null ? userStory.businessValue : 'Not defined'}">8</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">Assigned To:</span>
+                            <span th:text="${userStory.assignedTo != null ? userStory.assignedTo.username : 'Unassigned'}">User</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Estimation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="fw-bold">Optimistic:</span>
+                            <span th:text="${userStory.optimisticEstimate != null ? userStory.optimisticEstimate : 'Not estimated'}">3</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">Most Likely:</span>
+                            <span th:text="${userStory.mostLikelyEstimate != null ? userStory.mostLikelyEstimate : 'Not estimated'}">5</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">Pessimistic:</span>
+                            <span th:text="${userStory.pessimisticEstimate != null ? userStory.pessimisticEstimate : 'Not estimated'}">8</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="fw-bold">PERT Estimate:</span>
+                            <span th:text="${userStory.pertEstimate != null ? #numbers.formatDecimal(userStory.pertEstimate, 1, 1) : 'Not calculated'}">5.2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this user story?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form th:action="@{/projects/{projectId}/user-stories/{id}/delete(projectId=${project.id},id=${userStory.id})}" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function confirmDelete() {
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+    </script>
+    
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

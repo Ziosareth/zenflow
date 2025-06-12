@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="${isNew ? 'New User Story' : 'Edit User Story'} + ' - ' + ${project.name}">User Story - Project</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="${isNew ? 'New User Story' : 'Edit User Story'} + ' - ' + ${project.name}">User Story - Project</h2>
+            <div>
+                <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to User Stories
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0" th:text="${isNew ? 'Create User Story' : 'Edit User Story'}">User Story Form</h5>
+            </div>
+            <div class="card-body">
+                <form th:action="${isNew ? '/projects/' + project.id + '/user-stories/new' : '/projects/' + project.id + '/user-stories/' + userStoryDTO.id + '/edit'}"
+                      th:object="${userStoryDTO}" method="post" class="needs-validation" novalidate>
+                    
+                    <input type="hidden" th:field="*{id}" />
+                    <input type="hidden" th:field="*{projectId}" />
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" th:field="*{title}" required
+                               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">
+                            Please provide a title.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" th:field="*{description}" rows="3"
+                                  th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"></textarea>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
+                            Description error.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="acceptanceCriteria" class="form-label">Acceptance Criteria</label>
+                        <textarea class="form-control" id="acceptanceCriteria" th:field="*{acceptanceCriteria}" rows="3"
+                                  th:classappend="${#fields.hasErrors('acceptanceCriteria')} ? 'is-invalid' : ''"></textarea>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('acceptanceCriteria')}" th:errors="*{acceptanceCriteria}">
+                            Acceptance criteria error.
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                <select class="form-select" id="status" th:field="*{status}" required
+                                        th:classappend="${#fields.hasErrors('status')} ? 'is-invalid' : ''">
+                                    <option th:each="statusOption : ${statuses}" 
+                                            th:value="${statusOption}" 
+                                            th:text="${statusOption}">Status</option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('status')}" th:errors="*{status}">
+                                    Please select a status.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                <select class="form-select" id="priority" th:field="*{priority}" required
+                                        th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid' : ''">
+                                    <option th:each="priorityOption : ${priorities}" 
+                                            th:value="${priorityOption}" 
+                                            th:text="${priorityOption}">Priority</option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}">
+                                    Please select a priority.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="storyPoints" class="form-label">Story Points</label>
+                                <input type="number" class="form-control" id="storyPoints" th:field="*{storyPoints}" min="0"
+                                       th:classappend="${#fields.hasErrors('storyPoints')} ? 'is-invalid' : ''">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('storyPoints')}" th:errors="*{storyPoints}">
+                                    Story points error.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="businessValue" class="form-label">Business Value</label>
+                                <input type="number" class="form-control" id="businessValue" th:field="*{businessValue}" min="0"
+                                       th:classappend="${#fields.hasErrors('businessValue')} ? 'is-invalid' : ''">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('businessValue')}" th:errors="*{businessValue}">
+                                    Business value error.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="assignedToId" class="form-label">Assigned To</label>
+                        <select class="form-select" id="assignedToId" th:field="*{assignedToId}">
+                            <option value="">-- Unassigned --</option>
+                            <option th:each="member : ${teamMembers}" 
+                                    th:value="${member.id}" 
+                                    th:text="${member.username}">User</option>
+                        </select>
+                    </div>
+                    
+                    <h5 class="mt-4 mb-3">PERT Estimation</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="optimisticEstimate" class="form-label">Optimistic Estimate</label>
+                                <input type="number" class="form-control" id="optimisticEstimate" th:field="*{optimisticEstimate}" step="0.5" min="0"
+                                       th:classappend="${#fields.hasErrors('optimisticEstimate')} ? 'is-invalid' : ''">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('optimisticEstimate')}" th:errors="*{optimisticEstimate}">
+                                    Optimistic estimate error.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="mostLikelyEstimate" class="form-label">Most Likely Estimate</label>
+                                <input type="number" class="form-control" id="mostLikelyEstimate" th:field="*{mostLikelyEstimate}" step="0.5" min="0"
+                                       th:classappend="${#fields.hasErrors('mostLikelyEstimate')} ? 'is-invalid' : ''">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('mostLikelyEstimate')}" th:errors="*{mostLikelyEstimate}">
+                                    Most likely estimate error.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pessimisticEstimate" class="form-label">Pessimistic Estimate</label>
+                                <input type="number" class="form-control" id="pessimisticEstimate" th:field="*{pessimisticEstimate}" step="0.5" min="0"
+                                       th:classappend="${#fields.hasErrors('pessimisticEstimate')} ? 'is-invalid' : ''">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('pessimisticEstimate')}" th:errors="*{pessimisticEstimate}">
+                                    Pessimistic estimate error.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

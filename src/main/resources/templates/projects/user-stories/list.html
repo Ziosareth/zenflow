@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="${project.name} + ' - User Stories'">Project - User Stories</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="${project.name} + ' - User Stories'">Project - User Stories</h2>
+            <div>
+                <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Project
+                </a>
+                <a th:if="${isOwner or isTeamMember or #authorization.expression('hasAuthority(''CREATE_USER_STORY'')')}"
+                   th:href="@{/projects/{projectId}/user-stories/new(projectId=${project.id})}"
+                   class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New User Story
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}">Success message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">User Stories</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(userStories)}" class="alert alert-info">
+                    No user stories found for this project.
+                </div>
+
+                <div th:unless="${#lists.isEmpty(userStories)}" class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Story Points</th>
+                                <th>Assigned To</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="story : ${userStories}">
+                                <td th:text="${story.id}">1</td>
+                                <td>
+                                    <a th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${project.id},id=${story.id})}"
+                                       th:text="${story.title}">User Story Title</a>
+                                </td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${story.status.name() == 'BACKLOG' ? 'bg-secondary' : 
+                                                          (story.status.name() == 'SELECTED' ? 'bg-info' : 
+                                                          (story.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                          (story.status.name() == 'IN_REVIEW' ? 'bg-warning' : 
+                                                          (story.status.name() == 'TESTING' ? 'bg-info' : 
+                                                          (story.status.name() == 'DONE' ? 'bg-success' : 'bg-danger')))))}"
+                                          th:text="${story.status}">Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${story.priority.name() == 'LOW' ? 'bg-success' : 
+                                                          (story.priority.name() == 'MEDIUM' ? 'bg-info' : 
+                                                          (story.priority.name() == 'HIGH' ? 'bg-warning' : 'bg-danger'))}"
+                                          th:text="${story.priority}">Priority</span>
+                                </td>
+                                <td th:text="${story.storyPoints != null ? story.storyPoints : '-'}">5</td>
+                                <td th:text="${story.assignedTo != null ? story.assignedTo.username : '-'}">User</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${project.id},id=${story.id})}"
+                                           class="btn btn-outline-primary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a th:if="${isOwner or isTeamMember or #authorization.expression('hasAuthority(''UPDATE_USER_STORY'')')}"
+                                           th:href="@{/projects/{projectId}/user-stories/{id}/edit(projectId=${project.id},id=${story.id})}"
+                                           class="btn btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button th:if="${isOwner or #authorization.expression('hasAuthority(''DELETE_USER_STORY'')')}"
+                                                class="btn btn-outline-danger" title="Delete"
+                                                th:attr="data-project-id=${project.id}, data-story-id=${story.id}, data-story-title=${story.title}"
+                                                onclick="confirmDeleteStory(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete the user story "<span id="storyTitle"></span>"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function confirmDeleteStory(button) {
+            var projectId = button.getAttribute('data-project-id');
+            var storyId = button.getAttribute('data-story-id');
+            var storyTitle = button.getAttribute('data-story-title');
+
+            document.getElementById('storyTitle').textContent = storyTitle;
+            document.getElementById('deleteForm').action = '/projects/' + projectId + '/user-stories/' + storyId + '/delete';
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+    </script>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>
