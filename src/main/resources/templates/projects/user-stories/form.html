@@ -13,7 +13,7 @@
             <h2 th:text="${isNew ? 'New User Story' : 'Edit User Story'} + ' - ' + ${project.name}">User Story - Project</h2>
             <div>
                 <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Back to User Stories
+                    <i class="bi bi-arrow-left"></i> <span th:text="#{userstory.back}">Back to User Stories</span>
                 </a>
             </div>
         </div>
@@ -25,41 +25,41 @@
             <div class="card-body">
                 <form th:action="${isNew ? '/projects/' + project.id + '/user-stories/new' : '/projects/' + project.id + '/user-stories/' + userStoryDTO.id + '/edit'}"
                       th:object="${userStoryDTO}" method="post" class="needs-validation" novalidate>
-                    
+
                     <input type="hidden" th:field="*{id}" />
                     <input type="hidden" th:field="*{projectId}" />
-                    
+
                     <div class="mb-3">
-                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <label for="title" class="form-label" th:text="#{userstory.title} + ' *'">Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="title" th:field="*{title}" required
                                th:classappend="${#fields.hasErrors('title')} ? 'is-invalid' : ''">
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">
                             Please provide a title.
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
+                        <label for="description" class="form-label" th:text="#{userstory.description}">Description</label>
                         <textarea class="form-control" id="description" th:field="*{description}" rows="3"
                                   th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"></textarea>
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
                             Description error.
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="acceptanceCriteria" class="form-label">Acceptance Criteria</label>
+                        <label for="acceptanceCriteria" class="form-label" th:text="#{userstory.acceptanceCriteria}">Acceptance Criteria</label>
                         <textarea class="form-control" id="acceptanceCriteria" th:field="*{acceptanceCriteria}" rows="3"
                                   th:classappend="${#fields.hasErrors('acceptanceCriteria')} ? 'is-invalid' : ''"></textarea>
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('acceptanceCriteria')}" th:errors="*{acceptanceCriteria}">
                             Acceptance criteria error.
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                <label for="status" class="form-label" th:text="#{userstory.status} + ' *'">Status <span class="text-danger">*</span></label>
                                 <select class="form-select" id="status" th:field="*{status}" required
                                         th:classappend="${#fields.hasErrors('status')} ? 'is-invalid' : ''">
                                     <option th:each="statusOption : ${statuses}" 
@@ -71,10 +71,10 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                <label for="priority" class="form-label" th:text="#{userstory.priority} + ' *'">Priority <span class="text-danger">*</span></label>
                                 <select class="form-select" id="priority" th:field="*{priority}" required
                                         th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid' : ''">
                                     <option th:each="priorityOption : ${priorities}" 
@@ -87,11 +87,31 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{userstory.estimationType} + ' *'">Estimation Type <span class="text-danger">*</span></label>
+                        <div class="d-flex">
+                            <div class="form-check me-4">
+                                <input class="form-check-input" type="radio" name="estimationType" id="estimationTypeStoryPoints" 
+                                       th:field="*{estimationType}" th:value="STORY_POINTS" checked>
+                                <label class="form-check-label" for="estimationTypeStoryPoints" th:text="#{userstory.storyPoints}">
+                                    Story Points
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="estimationType" id="estimationTypePert" 
+                                       th:field="*{estimationType}" th:value="PERT">
+                                <label class="form-check-label" for="estimationTypePert" th:text="#{userstory.pertEstimation}">
+                                    PERT Estimation
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="storyPointsSection">
                             <div class="mb-3">
-                                <label for="storyPoints" class="form-label">Story Points</label>
+                                <label for="storyPoints" class="form-label" th:text="#{userstory.storyPoints}">Story Points</label>
                                 <input type="number" class="form-control" id="storyPoints" th:field="*{storyPoints}" min="0"
                                        th:classappend="${#fields.hasErrors('storyPoints')} ? 'is-invalid' : ''">
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('storyPoints')}" th:errors="*{storyPoints}">
@@ -99,10 +119,10 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="businessValue" class="form-label">Business Value</label>
+                                <label for="businessValue" class="form-label" th:text="#{userstory.businessValue}">Business Value</label>
                                 <input type="number" class="form-control" id="businessValue" th:field="*{businessValue}" min="0"
                                        th:classappend="${#fields.hasErrors('businessValue')} ? 'is-invalid' : ''">
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('businessValue')}" th:errors="*{businessValue}">
@@ -111,23 +131,23 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="assignedToId" class="form-label">Assigned To</label>
+                        <label for="assignedToId" class="form-label" th:text="#{userstory.assignedTo}">Assigned To</label>
                         <select class="form-select" id="assignedToId" th:field="*{assignedToId}">
-                            <option value="">-- Unassigned --</option>
+                            <option value="" th:text="#{userstory.unassigned}">-- Unassigned --</option>
                             <option th:each="member : ${teamMembers}" 
                                     th:value="${member.id}" 
                                     th:text="${member.username}">User</option>
                         </select>
                     </div>
-                    
-                    <h5 class="mt-4 mb-3">PERT Estimation</h5>
-                    
+
+                    <h5 class="mt-4 mb-3" th:text="#{userstory.pertEstimation}">PERT Estimation</h5>
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="optimisticEstimate" class="form-label">Optimistic Estimate</label>
+                                <label for="optimisticEstimate" class="form-label" th:text="#{userstory.optimisticEstimate}">Optimistic Estimate</label>
                                 <input type="number" class="form-control" id="optimisticEstimate" th:field="*{optimisticEstimate}" step="0.5" min="0"
                                        th:classappend="${#fields.hasErrors('optimisticEstimate')} ? 'is-invalid' : ''">
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('optimisticEstimate')}" th:errors="*{optimisticEstimate}">
@@ -135,10 +155,10 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="mostLikelyEstimate" class="form-label">Most Likely Estimate</label>
+                                <label for="mostLikelyEstimate" class="form-label" th:text="#{userstory.mostLikelyEstimate}">Most Likely Estimate</label>
                                 <input type="number" class="form-control" id="mostLikelyEstimate" th:field="*{mostLikelyEstimate}" step="0.5" min="0"
                                        th:classappend="${#fields.hasErrors('mostLikelyEstimate')} ? 'is-invalid' : ''">
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('mostLikelyEstimate')}" th:errors="*{mostLikelyEstimate}">
@@ -146,10 +166,10 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="pessimisticEstimate" class="form-label">Pessimistic Estimate</label>
+                                <label for="pessimisticEstimate" class="form-label" th:text="#{userstory.pessimisticEstimate}">Pessimistic Estimate</label>
                                 <input type="number" class="form-control" id="pessimisticEstimate" th:field="*{pessimisticEstimate}" step="0.5" min="0"
                                        th:classappend="${#fields.hasErrors('pessimisticEstimate')} ? 'is-invalid' : ''">
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('pessimisticEstimate')}" th:errors="*{pessimisticEstimate}">
@@ -158,17 +178,52 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary me-md-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary me-md-2" th:text="#{userstory.cancel}">Cancel</a>
+                        <button type="submit" class="btn btn-primary" th:text="#{userstory.save}">Save</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <!-- Script -->
     <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the estimation type radio buttons
+            const storyPointsRadio = document.getElementById('estimationTypeStoryPoints');
+            const pertRadio = document.getElementById('estimationTypePert');
+
+            // Get the sections to show/hide
+            const storyPointsSection = document.getElementById('storyPointsSection');
+            const pertSection = document.querySelector('h5.mt-4.mb-3 + .row');
+            const pertHeading = document.querySelector('h5.mt-4.mb-3');
+
+            // Function to toggle visibility based on selected estimation type
+            function toggleEstimationFields() {
+                if (storyPointsRadio.checked) {
+                    // Show story points, hide PERT
+                    storyPointsSection.style.display = 'block';
+                    pertSection.style.display = 'none';
+                    pertHeading.style.display = 'none';
+                } else if (pertRadio.checked) {
+                    // Hide story points, show PERT
+                    storyPointsSection.style.display = 'none';
+                    pertSection.style.display = 'flex';
+                    pertHeading.style.display = 'block';
+                }
+            }
+
+            // Add event listeners to the radio buttons
+            storyPointsRadio.addEventListener('change', toggleEstimationFields);
+            pertRadio.addEventListener('change', toggleEstimationFields);
+
+            // Initial toggle based on the current selection
+            toggleEstimationFields();
+        });
+    </script>
 </body>
 </html>

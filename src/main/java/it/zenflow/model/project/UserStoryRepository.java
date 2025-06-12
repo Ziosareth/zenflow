@@ -8,19 +8,23 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
-    
+
     List<UserStory> findByProject(Project project);
-    
+
     List<UserStory> findByProjectAndStatus(Project project, StoryStatus status);
-    
+
     List<UserStory> findByAssignedTo(User user);
-    
+
     @Query("SELECT us FROM UserStory us WHERE us.project.id = :projectId")
     List<UserStory> findByProjectId(@Param("projectId") Long projectId);
-    
+
     @Query("SELECT us FROM UserStory us WHERE us.project.id = :projectId AND us.status = :status")
     List<UserStory> findByProjectIdAndStatus(@Param("projectId") Long projectId, @Param("status") StoryStatus status);
+
+    @Query("SELECT us FROM UserStory us LEFT JOIN FETCH us.tasks WHERE us.id = :id")
+    Optional<UserStory> findByIdWithTasks(@Param("id") Long id);
 }

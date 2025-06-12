@@ -39,17 +39,17 @@ public class UserStoryController {
     @PreAuthorize("hasAuthority('READ_USER_STORY')")
     public String listUserStories(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
                 .map(project -> {
                     List<UserStory> userStories = userStoryService.findByProject(project);
-                    
+
                     model.addAttribute("project", project);
                     model.addAttribute("userStories", userStories);
                     model.addAttribute("currentUser", currentUser);
                     model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
                     model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));
-                    
+
                     return "projects/user-stories/list";
                 })
                 .orElse("redirect:/projects");
@@ -59,20 +59,20 @@ public class UserStoryController {
     @PreAuthorize("hasAuthority('READ_USER_STORY')")
     public String viewUserStory(@PathVariable Long projectId, @PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
-                .map(project -> userStoryService.findById(id)
+                .map(project -> userStoryService.findByIdWithTasks(id)
                         .map(userStory -> {
                             if (!userStory.getProject().getId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             model.addAttribute("project", project);
                             model.addAttribute("userStory", userStory);
                             model.addAttribute("currentUser", currentUser);
                             model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
                             model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));
-                            
+
                             return "projects/user-stories/detail";
                         })
                         .orElse("redirect:/projects/" + projectId + "/user-stories"))
@@ -83,7 +83,7 @@ public class UserStoryController {
     @PreAuthorize("hasAuthority('CREATE_USER_STORY')")
     public String newUserStoryForm(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
                 .map(project -> {
                     // Check if user is owner or team member
@@ -92,17 +92,18 @@ public class UserStoryController {
                         !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                         return "redirect:/projects/" + projectId;
                     }
-                    
+
                     UserStoryDTO userStoryDTO = new UserStoryDTO();
                     userStoryDTO.setProjectId(projectId);
-                    
+
                     model.addAttribute("project", project);
                     model.addAttribute("userStoryDTO", userStoryDTO);
                     model.addAttribute("statuses", StoryStatus.values());
                     model.addAttribute("priorities", Priority.values());
+                    model.addAttribute("estimationTypes", it.zenflow.model.project.enums.EstimationType.values());
                     model.addAttribute("teamMembers", project.getTeamMembers());
                     model.addAttribute("isNew", true);
-                    
+
                     return "projects/user-stories/form";
                 })
                 .orElse("redirect:/projects");
@@ -117,9 +118,9 @@ public class UserStoryController {
             @AuthenticationPrincipal UserDetails userDetails,
             Model model,
             RedirectAttributes redirectAttributes) {
-        
+
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
                 .map(project -> {
                     // Check if user is owner or team member
@@ -128,16 +129,17 @@ public class UserStoryController {
                         !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                         return "redirect:/projects/" + projectId;
                     }
-                    
+
                     if (bindingResult.hasErrors()) {
                         model.addAttribute("project", project);
                         model.addAttribute("statuses", StoryStatus.values());
                         model.addAttribute("priorities", Priority.values());
+                        model.addAttribute("estimationTypes", it.zenflow.model.project.enums.EstimationType.values());
                         model.addAttribute("teamMembers", project.getTeamMembers());
                         model.addAttribute("isNew", true);
                         return "projects/user-stories/form";
                     }
-                    
+
                     UserStory userStory = new UserStory();
                     userStory.setTitle(userStoryDTO.getTitle());
                     userStory.setDescription(userStoryDTO.getDescription());
@@ -146,24 +148,25 @@ public class UserStoryController {
                     userStory.setPriority(userStoryDTO.getPriority());
                     userStory.setStoryPoints(userStoryDTO.getStoryPoints());
                     userStory.setBusinessValue(userStoryDTO.getBusinessValue());
+                    userStory.setEstimationType(userStoryDTO.getEstimationType());
                     userStory.setProject(project);
-                    
+
                     // Set assigned user if provided
                     if (userStoryDTO.getAssignedToId() != null) {
                         userService.findById(userStoryDTO.getAssignedToId())
                                 .ifPresent(userStory::setAssignedTo);
                     }
-                    
+
                     // Set PERT estimates if provided
                     userStory.setOptimisticEstimate(userStoryDTO.getOptimisticEstimate());
                     userStory.setPessimisticEstimate(userStoryDTO.getPessimisticEstimate());
                     userStory.setMostLikelyEstimate(userStoryDTO.getMostLikelyEstimate());
-                    
+
                     userStoryService.save(userStory);
-                    
+
                     String message = messageSource.getMessage("userstory.created", null, LocaleContextHolder.getLocale());
                     redirectAttributes.addFlashAttribute("message", message);
-                    
+
                     return "redirect:/projects/" + projectId + "/user-stories";
                 })
                 .orElse("redirect:/projects");
@@ -176,23 +179,23 @@ public class UserStoryController {
             @PathVariable Long id,
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
                 .map(project -> userStoryService.findById(id)
                         .map(userStory -> {
                             if (!userStory.getProject().getId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             // Check if user is owner or team member
                             if (!project.getOwner().getId().equals(currentUser.getId()) && 
                                 !project.getTeamMembers().contains(currentUser) &&
                                 !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             UserStoryDTO userStoryDTO = new UserStoryDTO();
                             userStoryDTO.setId(userStory.getId());
                             userStoryDTO.setTitle(userStory.getTitle());
@@ -202,24 +205,26 @@ public class UserStoryController {
                             userStoryDTO.setPriority(userStory.getPriority());
                             userStoryDTO.setStoryPoints(userStory.getStoryPoints());
                             userStoryDTO.setBusinessValue(userStory.getBusinessValue());
+                            userStoryDTO.setEstimationType(userStory.getEstimationType());
                             userStoryDTO.setProjectId(projectId);
-                            
+
                             if (userStory.getAssignedTo() != null) {
                                 userStoryDTO.setAssignedToId(userStory.getAssignedTo().getId());
                             }
-                            
+
                             userStoryDTO.setOptimisticEstimate(userStory.getOptimisticEstimate());
                             userStoryDTO.setPessimisticEstimate(userStory.getPessimisticEstimate());
                             userStoryDTO.setMostLikelyEstimate(userStory.getMostLikelyEstimate());
                             userStoryDTO.setPertEstimate(userStory.getPertEstimate());
-                            
+
                             model.addAttribute("project", project);
                             model.addAttribute("userStoryDTO", userStoryDTO);
                             model.addAttribute("statuses", StoryStatus.values());
                             model.addAttribute("priorities", Priority.values());
+                            model.addAttribute("estimationTypes", it.zenflow.model.project.enums.EstimationType.values());
                             model.addAttribute("teamMembers", project.getTeamMembers());
                             model.addAttribute("isNew", false);
-                            
+
                             return "projects/user-stories/form";
                         })
                         .orElse("redirect:/projects/" + projectId + "/user-stories"))
@@ -236,32 +241,33 @@ public class UserStoryController {
             @AuthenticationPrincipal UserDetails userDetails,
             Model model,
             RedirectAttributes redirectAttributes) {
-        
+
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
                 .map(project -> userStoryService.findById(id)
                         .map(userStory -> {
                             if (!userStory.getProject().getId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             // Check if user is owner or team member
                             if (!project.getOwner().getId().equals(currentUser.getId()) && 
                                 !project.getTeamMembers().contains(currentUser) &&
                                 !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             if (bindingResult.hasErrors()) {
                                 model.addAttribute("project", project);
                                 model.addAttribute("statuses", StoryStatus.values());
                                 model.addAttribute("priorities", Priority.values());
+                                model.addAttribute("estimationTypes", it.zenflow.model.project.enums.EstimationType.values());
                                 model.addAttribute("teamMembers", project.getTeamMembers());
                                 model.addAttribute("isNew", false);
                                 return "projects/user-stories/form";
                             }
-                            
+
                             userStory.setTitle(userStoryDTO.getTitle());
                             userStory.setDescription(userStoryDTO.getDescription());
                             userStory.setAcceptanceCriteria(userStoryDTO.getAcceptanceCriteria());
@@ -269,7 +275,8 @@ public class UserStoryController {
                             userStory.setPriority(userStoryDTO.getPriority());
                             userStory.setStoryPoints(userStoryDTO.getStoryPoints());
                             userStory.setBusinessValue(userStoryDTO.getBusinessValue());
-                            
+                            userStory.setEstimationType(userStoryDTO.getEstimationType());
+
                             // Update assigned user if provided
                             if (userStoryDTO.getAssignedToId() != null) {
                                 userService.findById(userStoryDTO.getAssignedToId())
@@ -277,17 +284,17 @@ public class UserStoryController {
                             } else {
                                 userStory.setAssignedTo(null);
                             }
-                            
+
                             // Update PERT estimates if provided
                             userStory.setOptimisticEstimate(userStoryDTO.getOptimisticEstimate());
                             userStory.setPessimisticEstimate(userStoryDTO.getPessimisticEstimate());
                             userStory.setMostLikelyEstimate(userStoryDTO.getMostLikelyEstimate());
-                            
+
                             userStoryService.save(userStory);
-                            
+
                             String message = messageSource.getMessage("userstory.updated", null, LocaleContextHolder.getLocale());
                             redirectAttributes.addFlashAttribute("message", message);
-                            
+
                             return "redirect:/projects/" + projectId + "/user-stories/" + id;
                         })
                         .orElse("redirect:/projects/" + projectId + "/user-stories"))
@@ -301,27 +308,27 @@ public class UserStoryController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
-        
+
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        
+
         return projectService.findById(projectId)
                 .map(project -> userStoryService.findById(id)
                         .map(userStory -> {
                             if (!userStory.getProject().getId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             // Check if user is owner or has admin rights
                             if (!project.getOwner().getId().equals(currentUser.getId()) && 
                                 !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
-                            
+
                             userStoryService.deleteById(id);
-                            
+
                             String message = messageSource.getMessage("userstory.deleted", null, LocaleContextHolder.getLocale());
                             redirectAttributes.addFlashAttribute("message", message);
-                            
+
                             return "redirect:/projects/" + projectId + "/user-stories";
                         })
                         .orElse("redirect:/projects/" + projectId + "/user-stories"))

@@ -15,63 +15,132 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class UserStoryService {
-    
+
     private final UserStoryRepository userStoryRepository;
-    
+    private final ProjectService projectService;
+
     @Transactional(readOnly = true)
     public List<UserStory> findAll() {
         return userStoryRepository.findAll();
     }
-    
+
     @Transactional(readOnly = true)
     public Optional<UserStory> findById(Long id) {
         return userStoryRepository.findById(id);
     }
-    
+
+    @Transactional(readOnly = true)
+    public Optional<UserStory> findByIdWithTasks(Long id) {
+        return userStoryRepository.findByIdWithTasks(id);
+    }
+
     @Transactional(readOnly = true)
     public List<UserStory> findByProject(Project project) {
         return userStoryRepository.findByProject(project);
     }
-    
+
     @Transactional(readOnly = true)
     public List<UserStory> findByProjectId(Long projectId) {
         return userStoryRepository.findByProjectId(projectId);
     }
-    
+
     @Transactional(readOnly = true)
     public List<UserStory> findByProjectAndStatus(Project project, StoryStatus status) {
         return userStoryRepository.findByProjectAndStatus(project, status);
     }
-    
+
     @Transactional(readOnly = true)
     public List<UserStory> findByProjectIdAndStatus(Long projectId, StoryStatus status) {
         return userStoryRepository.findByProjectIdAndStatus(projectId, status);
     }
-    
+
     @Transactional(readOnly = true)
     public List<UserStory> findByAssignedTo(User user) {
         return userStoryRepository.findByAssignedTo(user);
     }
-    
+
     @Transactional
     public UserStory save(UserStory userStory) {
-        // Calculate PERT estimate if all three estimates are provided
-        if (userStory.getOptimisticEstimate() != null && 
-            userStory.getPessimisticEstimate() != null && 
-            userStory.getMostLikelyEstimate() != null) {
-            
-            double pertEstimate = (userStory.getOptimisticEstimate() + 
-                                  (4 * userStory.getMostLikelyEstimate()) + 
-                                  userStory.getPessimisticEstimate()) / 6;
-            
-            userStory.setPertEstimate(pertEstimate);
+        // Handle estimation based on the selected estimation type
+        if (userStory.getEstimationType() == null) {
+            // Default to STORY_POINTS if not specified
+            userStory.setEstimationType(it.zenflow.model.project.enums.EstimationType.STORY_POINTS);
         }
-        
-        return userStoryRepository.save(userStory);
+
+        switch (userStory.getEstimationType()) {
+            case PERT:
+                // Calculate PERT estimate if all three estimates are provided
+                if (userStory.getOptimisticEstimate() != null && 
+                    userStory.getPessimisticEstimate() != null && 
+                    userStory.getMostLikelyEstimate() != null) {
+
+                    double pertEstimate = (userStory.getOptimisticEstimate() + 
+                                          (4 * userStory.getMostLikelyEstimate()) + 
+                                          userStory.getPessimisticEstimate()) / 6;
+
+                    userStory.setPertEstimate(pertEstimate);
+
+                    // Calculate story points from PERT estimate (rounded to nearest integer)
+                    userStory.setStoryPoints((int) Math.round(pertEstimate));
+                } else {
+                    // Clear story points if PERT estimates are incomplete
+                    userStory.setStoryPoints(null);
+                    userStory.setPertEstimate(null);
+                }
+                break;
+
+            case STORY_POINTS:
+                // Clear all PERT-related fields
+                userStory.setOptimisticEstimate(null);
+                userStory.setPessimisticEstimate(null);
+                userStory.setMostLikelyEstimate(null);
+                userStory.setPertEstimate(null);
+                break;
+        }
+
+        // Save the user story
+        UserStory savedUserStory = userStoryRepository.save(userStory);
+
+        // Update the project's total story points
+        Project project = userStory.getProject();
+        if (project != null) {
+            List<UserStory> allStories = userStoryRepository.findByProject(project);
+            int totalPoints = allStories.stream()
+                .filter(story -> story.getStoryPoints() != null)
+                .mapToInt(UserStory::getStoryPoints)
+                .sum();
+
+            project.setTotalStoryPoints(totalPoints);
+            projectService.save(project);
+        }
+
+        return savedUserStory;
     }
-    
+
     @Transactional
     public void deleteById(Long id) {
-        userStoryRepository.deleteById(id);
+        // Get the user story and its project before deleting
+        Optional<UserStory> userStoryOpt = userStoryRepository.findById(id);
+        if (userStoryOpt.isPresent()) {
+            Project project = userStoryOpt.get().getProject();
+
+            // Delete the user story
+            userStoryRepository.deleteById(id);
+
+            // Update the project's total story points
+            if (project != null) {
+                List<UserStory> remainingStories = userStoryRepository.findByProject(project);
+                int totalPoints = remainingStories.stream()
+                    .filter(story -> story.getStoryPoints() != null)
+                    .mapToInt(UserStory::getStoryPoints)
+                    .sum();
+
+                project.setTotalStoryPoints(totalPoints);
+                projectService.save(project);
+            }
+        } else {
+            // If the user story doesn't exist, just try to delete it
+            userStoryRepository.deleteById(id);
+        }
     }
 }
