@@ -66,19 +66,24 @@
                                 <td th:text="${project.owner.username}"></td>
                                 <td th:text="${project.teamMembers.size()}"></td>
                                 <td>
-                                    <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-eye"></i> <span th:text="#{project.view}">View</span>
-                                    </a>
-                                    <a sec:authorize="hasAuthority('UPDATE_PROJECT')" 
-                                       th:if="${currentUser.id == project.owner.id}"
-                                       th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i> <span th:text="#{project.edit}">Edit</span>
-                                    </a>
-                                    <a sec:authorize="hasAuthority('UPDATE_PROJECT') and hasAuthority('ADMIN')" 
-                                       th:unless="${currentUser.id == project.owner.id}"
-                                       th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i> <span th:text="#{project.edit}">Edit</span>
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/projects/{id}(id=${project.id})}"
+                                           class="btn btn-outline-primary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a sec:authorize="hasAuthority('UPDATE_PROJECT')" 
+                                           th:if="${currentUser.id == project.owner.id}"
+                                           th:href="@{/projects/{id}/edit(id=${project.id})}"
+                                           class="btn btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a sec:authorize="hasAuthority('UPDATE_PROJECT') and hasAuthority('ADMIN')" 
+                                           th:unless="${currentUser.id == project.owner.id}"
+                                           th:href="@{/projects/{id}/edit(id=${project.id})}"
+                                           class="btn btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

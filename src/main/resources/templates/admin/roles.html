@@ -45,12 +45,16 @@
                                     <span th:each="permission, iterStat : ${role.permissions}" class="badge bg-secondary me-1" th:text="${permission.name}"></span>
                                 </td>
                                 <td>
-                                    <a th:href="@{/admin/roles/{id}(id=${role.id})}" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-eye"></i> <span th:text="#{admin.roles.view}">View</span>
-                                    </a>
-                                    <a th:href="@{/admin/roles/{id}/edit(id=${role.id})}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i> <span th:text="#{admin.roles.edit}">Edit</span>
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/admin/roles/{id}(id=${role.id})}"
+                                           class="btn btn-outline-primary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a th:href="@{/admin/roles/{id}/edit(id=${role.id})}"
+                                           class="btn btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

@@ -52,12 +52,16 @@
                                     <span th:each="role, iterStat : ${user.roles}" class="badge bg-secondary me-1" th:text="${role.name}"></span>
                                 </td>
                                 <td>
-                                    <a th:href="@{/admin/users/{id}(id=${user.id})}" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-eye"></i> <span th:text="#{admin.users.view}">View</span>
-                                    </a>
-                                    <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i> <span th:text="#{admin.users.edit}">Edit</span>
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/admin/users/{id}(id=${user.id})}"
+                                           class="btn btn-outline-primary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a th:href="@{/admin/users/{id}/edit(id=${user.id})}"
+                                           class="btn btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
