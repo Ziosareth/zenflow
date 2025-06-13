@@ -82,4 +82,7 @@ public class UserStory {
 
     @Column(name = "pert_estimate")
     private Double pertEstimate;
+
+    @Column(name = "variance")
+    private Double variance;
 }

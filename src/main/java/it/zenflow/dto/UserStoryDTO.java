@@ -53,4 +53,5 @@ public class UserStoryDTO {
     private Double pessimisticEstimate;
     private Double mostLikelyEstimate;
     private Double pertEstimate;
+    private Double variance;
 }

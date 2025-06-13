@@ -375,4 +375,82 @@ public class UserStoryControllerIntegrationTest {
         mockMvc.perform(get("/projects/{projectId}/user-stories", testProject.getId()))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY"})
+    public void testCreateUserStoryWithPERTEstimation() throws Exception {
+        mockMvc.perform(post("/projects/{projectId}/user-stories/new", testProject.getId())
+                        .param("title", "PERT Test User Story")
+                        .param("description", "This is a PERT test user story")
+                        .param("acceptanceCriteria", "The PERT user story should be testable")
+                        .param("status", "BACKLOG")
+                        .param("priority", "MEDIUM")
+                        .param("estimationType", "PERT")
+                        .param("optimisticEstimate", "3.0")
+                        .param("mostLikelyEstimate", "5.0")
+                        .param("pessimisticEstimate", "9.0")
+                        .param("businessValue", "8")
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/projects/" + testProject.getId() + "/user-stories"))
+                .andExpect(flash().attributeExists("message"));
+
+        // Verify the user story was created with correct PERT values and variance
+        UserStory newUserStory = userStoryRepository.findAll().stream()
+                .filter(us -> us.getTitle().equals("PERT Test User Story"))
+                .findFirst()
+                .orElse(null);
+        assert newUserStory != null;
+        assert newUserStory.getTitle().equals("PERT Test User Story");
+        assert newUserStory.getEstimationType() == it.zenflow.model.project.enums.EstimationType.PERT;
+        assert newUserStory.getOptimisticEstimate() == 3.0;
+        assert newUserStory.getMostLikelyEstimate() == 5.0;
+        assert newUserStory.getPessimisticEstimate() == 9.0;
+
+        // Verify PERT estimate: (3 + 4*5 + 9) / 6 = 5.33
+        double expectedPertEstimate = (3.0 + 4*5.0 + 9.0) / 6.0;
+        assert Math.abs(newUserStory.getPertEstimate() - expectedPertEstimate) < 0.01;
+
+        // Verify variance: ((9 - 3) / 6)² = 1.0
+        double expectedVariance = Math.pow((9.0 - 3.0) / 6.0, 2);
+        assert Math.abs(newUserStory.getVariance() - expectedVariance) < 0.01;
+
+        // Verify story points (rounded PERT estimate): round(5.33) = 5
+        assert newUserStory.getStoryPoints() == 5;
+    }
+
+    @Test
+    public void testUserStoryVarianceCalculation() {
+        // Create a user story with PERT estimation
+        UserStory pertUserStory = new UserStory();
+        pertUserStory.setTitle("Variance Test User Story");
+        pertUserStory.setDescription("This is a variance test user story");
+        pertUserStory.setAcceptanceCriteria("The variance user story should be testable");
+        pertUserStory.setStatus(StoryStatus.BACKLOG);
+        pertUserStory.setPriority(Priority.MEDIUM);
+        pertUserStory.setProject(testProject);
+        pertUserStory.setEstimationType(it.zenflow.model.project.enums.EstimationType.PERT);
+        pertUserStory.setOptimisticEstimate(2.0);
+        pertUserStory.setMostLikelyEstimate(4.0);
+        pertUserStory.setPessimisticEstimate(10.0);
+        pertUserStory = userStoryService.save(pertUserStory);
+
+        // Expected values
+        double expectedPertEstimate = (2.0 + 4*4.0 + 10.0) / 6.0; // 4.67
+        double expectedVariance = Math.pow((10.0 - 2.0) / 6.0, 2); // 1.78
+
+        // Verify the user story has the correct PERT values and variance
+        UserStory savedUserStory = userStoryService.findById(pertUserStory.getId()).orElseThrow();
+        assert savedUserStory != null;
+        assert savedUserStory.getTitle().equals("Variance Test User Story");
+        assert savedUserStory.getEstimationType() == it.zenflow.model.project.enums.EstimationType.PERT;
+        assert savedUserStory.getOptimisticEstimate() == 2.0;
+        assert savedUserStory.getMostLikelyEstimate() == 4.0;
+        assert savedUserStory.getPessimisticEstimate() == 10.0;
+        assert Math.abs(savedUserStory.getPertEstimate() - expectedPertEstimate) < 0.01;
+        assert Math.abs(savedUserStory.getVariance() - expectedVariance) < 0.01;
+
+        // Verify story points (rounded PERT estimate): round(4.67) = 5
+        assert savedUserStory.getStoryPoints() == 5;
+    }
 }

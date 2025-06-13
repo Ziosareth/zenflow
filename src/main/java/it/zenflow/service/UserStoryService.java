@@ -80,12 +80,17 @@ public class UserStoryService {
 
                     userStory.setPertEstimate(pertEstimate);
 
+                    // Calculate variance: ((Pessimistic - Optimistic) / 6)²
+                    double variance = Math.pow((userStory.getPessimisticEstimate() - userStory.getOptimisticEstimate()) / 6, 2);
+                    userStory.setVariance(variance);
+
                     // Calculate story points from PERT estimate (rounded to nearest integer)
                     userStory.setStoryPoints((int) Math.round(pertEstimate));
                 } else {
                     // Clear story points if PERT estimates are incomplete
                     userStory.setStoryPoints(null);
                     userStory.setPertEstimate(null);
+                    userStory.setVariance(null);
                 }
                 break;
 
@@ -95,6 +100,7 @@ public class UserStoryService {
                 userStory.setPessimisticEstimate(null);
                 userStory.setMostLikelyEstimate(null);
                 userStory.setPertEstimate(null);
+                userStory.setVariance(null);
                 break;
         }
 
