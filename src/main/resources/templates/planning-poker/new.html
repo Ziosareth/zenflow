@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="#{planningpoker.new.form}">Create New Planning Poker Session</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="#{planningpoker.new.form}">Create New Planning Poker Session</h2>
+            <div>
+                <a th:href="@{/planning-poker}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> <span th:text="#{planningpoker.back}">Back to Sessions</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0" th:text="#{planningpoker.new.form}">Create New Planning Poker Session</h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/planning-poker/new}" th:object="${command}" method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label" th:text="#{planningpoker.name}">Session Name</label>
+                        <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+                            Please provide a valid session name.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="projectId" class="form-label" th:text="#{planningpoker.project}">Project</label>
+                        <select class="form-select" id="projectId" th:field="*{projectId}" required>
+                            <option value="">Select a project</option>
+                            <option th:each="project : ${projects}" 
+                                    th:value="${project.id}" 
+                                    th:text="${project.name}"
+                                    th:selected="${project.id == command.projectId}">
+                                Project Name
+                            </option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('projectId')}" th:errors="*{projectId}">
+                            Please select a project.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="estimationType" class="form-label" th:text="#{planningpoker.estimationType}">Estimation Type</label>
+                        <select class="form-select" id="estimationType" th:field="*{estimationType}" required>
+                            <option th:each="type : ${estimationTypes}" 
+                                    th:value="${type}" 
+                                    th:text="${type}">
+                                Estimation Type
+                            </option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('estimationType')}" th:errors="*{estimationType}">
+                            Please select an estimation type.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{planningpoker.userStories}">User Story</label>
+                        <div class="alert alert-info" id="userStoriesLoading">
+                            <i class="bi bi-info-circle"></i> Please select a project to load user stories.
+                        </div>
+                        <div id="userStoriesContainer" style="display: none;">
+                            <select class="form-select" id="userStoryId" th:field="*{userStoryId}">
+                                <option value="">Select a user story</option>
+                                <!-- User stories will be loaded dynamically -->
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('userStoryId')}" th:errors="*{userStoryId}">
+                                Please select a user story.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{planningpoker.participants}">Participants</label>
+                        <div class="alert alert-info" id="participantsLoading">
+                            <i class="bi bi-info-circle"></i> Please select a project to load participants.
+                        </div>
+                        <div id="participantsContainer" style="display: none;">
+                            <div class="checkbox-group" id="participantsCheckboxes">
+                                <!-- Participants will be loaded dynamically as checkboxes -->
+                            </div>
+                            <input type="hidden" name="participantIds" id="participantIdsHidden" th:field="*{participantIds}">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('participantIds')}" th:errors="*{participantIds}">
+                                Please select at least one participant.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a th:href="@{/planning-poker}" class="btn btn-secondary" th:text="#{userstory.cancel}">Cancel</a>
+                        <button type="submit" class="btn btn-primary" th:text="#{planningpoker.create}">Create Session</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const projectSelect = document.getElementById('projectId');
+            const userStoriesContainer = document.getElementById('userStoriesContainer');
+            const userStoriesLoading = document.getElementById('userStoriesLoading');
+            const participantsContainer = document.getElementById('participantsContainer');
+            const participantsLoading = document.getElementById('participantsLoading');
+
+            // Check if project is already selected
+            if (projectSelect.value) {
+                loadUserStories(projectSelect.value);
+                loadParticipants(projectSelect.value);
+            }
+
+            // Add event listener for project selection
+            projectSelect.addEventListener('change', function() {
+                const projectId = this.value;
+                if (projectId) {
+                    loadUserStories(projectId);
+                    loadParticipants(projectId);
+                } else {
+                    userStoriesContainer.style.display = 'none';
+                    userStoriesLoading.style.display = 'block';
+                    participantsContainer.style.display = 'none';
+                    participantsLoading.style.display = 'block';
+                }
+            });
+
+            function loadUserStories(projectId) {
+                userStoriesLoading.style.display = 'block';
+                userStoriesContainer.style.display = 'none';
+
+                const userStorySelect = document.getElementById('userStoryId');
+
+                fetch(`/planning-poker/project/${projectId}/stories`)
+                    .then(response => response.json())
+                    .then(stories => {
+                        // Clear all options except the first one (placeholder)
+                        userStorySelect.innerHTML = '<option value="">Select a user story</option>';
+
+                        if (stories.length === 0) {
+                            userStoriesContainer.innerHTML = '<div class="alert alert-warning">No user stories available</div>';
+                        } else {
+                            stories.forEach(story => {
+                                const option = document.createElement('option');
+                                option.value = story.id;
+                                option.textContent = `${story.id} - ${story.title}`;
+                                userStorySelect.appendChild(option);
+                            });
+                        }
+
+                        userStoriesLoading.style.display = 'none';
+                        userStoriesContainer.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Error loading user stories:', error);
+                        userStoriesLoading.textContent = 'Error loading user stories. Please try again.';
+                    });
+            }
+
+            function loadParticipants(projectId) {
+                participantsLoading.style.display = 'block';
+                participantsContainer.style.display = 'none';
+
+                const checkboxesContainer = document.getElementById('participantsCheckboxes');
+                const hiddenInput = document.getElementById('participantIdsHidden');
+
+                fetch(`/planning-poker/project/${projectId}/members`)
+                    .then(response => response.json())
+                    .then(members => {
+                        checkboxesContainer.innerHTML = '';
+
+                        if (members.length === 0) {
+                            checkboxesContainer.innerHTML = '<div class="alert alert-warning">No team members available</div>';
+                        } else {
+                            members.forEach(member => {
+                                const checkboxDiv = document.createElement('div');
+                                checkboxDiv.className = 'form-check';
+
+                                const checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.className = 'form-check-input participant-checkbox';
+                                checkbox.value = member.id;
+                                checkbox.id = `participant-${member.id}`;
+                                checkbox.addEventListener('change', updateParticipantIds);
+
+                                const label = document.createElement('label');
+                                label.className = 'form-check-label';
+                                label.htmlFor = `participant-${member.id}`;
+                                label.textContent = member.username;
+
+                                checkboxDiv.appendChild(checkbox);
+                                checkboxDiv.appendChild(label);
+                                checkboxesContainer.appendChild(checkboxDiv);
+                            });
+                        }
+
+                        participantsLoading.style.display = 'none';
+                        participantsContainer.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Error loading participants:', error);
+                        participantsLoading.textContent = 'Error loading participants. Please try again.';
+                    });
+            }
+
+            function updateParticipantIds() {
+                const checkboxes = document.querySelectorAll('.participant-checkbox:checked');
+                const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+                document.getElementById('participantIdsHidden').value = selectedIds.join(',');
+            }
+
+            function updateUserStoryIds() {
+                const checkboxes = document.querySelectorAll('.user-story-checkbox:checked');
+                const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+                document.getElementById('userStoryIdsHidden').value = selectedIds.join(',');
+            }
+
+            // Single story mode is no longer needed with checkboxes
+
+            // Form submission handling
+            document.querySelector('form').addEventListener('submit', function(e) {
+                // Update the hidden inputs with selected IDs before submission
+                updateParticipantIds();
+                updateUserStoryIds();
+            });
+        });
+    </script>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

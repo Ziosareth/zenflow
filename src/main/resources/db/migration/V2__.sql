@@ -23,8 +23,8 @@ WHERE r.name = 'ADMIN';
 
 
 -- Inserimento utente admin (password temporanea che verrà aggiornata da Java)
-INSERT INTO zenflow.users (username, email, password, enabled) VALUES
-    ('admin', '', '$2a$10$ZqSPx8eu.yE04hJ1mayubOw3re41cJ.Lg9nAJHXlhaUK8fsHTx71K', true);
+INSERT INTO zenflow.users (username, email, password, enabled, password_change_required) VALUES
+    ('admin', 'ale.bivi94@icloud.com', '$2a$10$ZqSPx8eu.yE04hJ1mayubOw3re41cJ.Lg9nAJHXlhaUK8fsHTx71K', true, false);
 
 -- Associazione utente admin con ruolo ADMIN
 INSERT INTO zenflow.user_roles (user_id, role_id)

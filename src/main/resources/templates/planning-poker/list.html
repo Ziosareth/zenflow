@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="#{planningpoker.list}">Planning Poker Sessions</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="#{planningpoker.list}">Planning Poker Sessions</h2>
+            <div>
+                <a sec:authorize="hasAuthority('CREATE_PLANNING_POKER_SESSION')"
+                   th:href="@{/planning-poker/new}"
+                   class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> <span th:text="#{planningpoker.new}">New Planning Poker Session</span>
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}">Success message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}">Error message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0" th:text="#{planningpoker.list}">Planning Poker Sessions</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(sessions)}" class="alert alert-info" th:text="#{planningpoker.no.sessions}">
+                    No planning poker sessions found.
+                </div>
+
+                <div th:unless="${#lists.isEmpty(sessions)}" class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th th:text="#{planningpoker.session.id}">ID</th>
+                                <th th:text="#{planningpoker.session.name}">Name</th>
+                                <th th:text="#{planningpoker.session.status}">Status</th>
+                                <th th:text="#{planningpoker.session.project}">Project</th>
+                                <th th:text="#{planningpoker.session.facilitator}">Facilitator</th>
+                                <th th:text="#{project.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="pokerSession : ${sessions}">
+                                <td th:text="${pokerSession.id}">1</td>
+                                <td>
+                                    <a th:href="@{/planning-poker/{id}(id=${pokerSession.id})}"
+                                       th:text="${pokerSession.name}">Session Name</a>
+                                </td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${pokerSession.status.name() == 'CREATED' ? 'bg-secondary' : 
+                                                          (pokerSession.status.name() == 'ACTIVE' ? 'bg-primary' : 
+                                                          (pokerSession.status.name() == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                                          th:text="${pokerSession.status}">Status</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/projects/{id}(id=${pokerSession.project.id})}"
+                                       th:text="${pokerSession.project.name}">Project Name</a>
+                                </td>
+                                <td th:text="${pokerSession.facilitator.username}">Facilitator</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/planning-poker/{id}(id=${pokerSession.id})}"
+                                           class="btn btn-outline-primary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button th:if="${pokerSession.facilitator.id == currentUser.id or #authorization.expression('hasAuthority(''DELETE_PLANNING_POKER_SESSION'')')}"
+                                                class="btn btn-outline-danger" title="Delete"
+                                                th:attr="data-session-id=${pokerSession.id}, data-session-name=${pokerSession.name}"
+                                                onclick="confirmDeleteSession(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel" th:text="#{planningpoker.delete}">Delete Session</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the planning poker session "<span id="sessionName"></span>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
+                    <form id="deleteForm" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-danger" th:text="#{planningpoker.delete}">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function confirmDeleteSession(button) {
+            var sessionId = button.getAttribute('data-session-id');
+            var sessionName = button.getAttribute('data-session-name');
+
+            document.getElementById('sessionName').textContent = sessionName;
+            document.getElementById('deleteForm').action = '/planning-poker/' + sessionId + '/delete';
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+    </script>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

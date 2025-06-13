@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="${pokerSession.name} + ' - ' + #{planningpoker.title}">Planning Poker Session</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="${pokerSession.name}">Planning Poker Session</h2>
+            <div>
+                <a th:href="@{/planning-poker/project/{id}(id=${project.id})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> <span th:text="#{planningpoker.back.to.project}">Back to Project Sessions</span>
+                </a>
+                <div th:if="${isFacilitator}" class="btn-group ms-2">
+                    <button th:if="${pokerSession.status != null and pokerSession.status.name() == 'CREATED'}" 
+                            class="btn btn-primary"
+                            onclick="confirmStartSession()">
+                        <i class="bi bi-play-fill"></i> <span th:text="#{planningpoker.start}">Start Session</span>
+                    </button>
+                    <button th:if="${pokerSession.status != null and pokerSession.status.name() == 'ACTIVE'}" 
+                            class="btn btn-success"
+                            onclick="confirmCompleteSession()">
+                        <i class="bi bi-check-lg"></i> <span th:text="#{planningpoker.complete}">Complete Session</span>
+                    </button>
+                    <button th:if="${pokerSession.status != null and pokerSession.status.name() != 'COMPLETED' and pokerSession.status.name() != 'CANCELLED'}" 
+                            class="btn btn-warning"
+                            onclick="confirmCancelSession()">
+                        <i class="bi bi-x-lg"></i> <span th:text="#{planningpoker.cancel}">Cancel Session</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}">Success message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}">Error message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Session Status Banner -->
+        <div class="alert" 
+             th:classappend="${pokerSession.status != null and pokerSession.status.name() == 'CREATED'} ? 'alert-secondary' : 
+                            (${pokerSession.status != null and pokerSession.status.name() == 'ACTIVE'} ? 'alert-primary' : 
+                            (${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'} ? 'alert-success' : 'alert-danger'))">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi" 
+                       th:classappend="${pokerSession.status != null and pokerSession.status.name() == 'CREATED'} ? 'bi-hourglass' : 
+                                      (${pokerSession.status != null and pokerSession.status.name() == 'ACTIVE'} ? 'bi-play-fill' : 
+                                      (${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'} ? 'bi-check-circle' : 'bi-x-circle'))"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0" th:text="#{planningpoker.session.status} + ': ' + ${pokerSession.status}">Status: ACTIVE</h5>
+                    <p class="mb-0" th:if="${pokerSession.status != null and pokerSession.status.name() == 'CREATED'}" th:text="#{planningpoker.session.created.message}">
+                        This session is ready to start. The facilitator needs to start the session to begin voting.
+                    </p>
+                    <p class="mb-0" th:if="${pokerSession.status != null and pokerSession.status.name() == 'ACTIVE'}" th:text="#{planningpoker.session.active.message}">
+                        This session is active. Participants can now vote on user stories.
+                    </p>
+                    <p class="mb-0" th:if="${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'}" th:text="#{planningpoker.session.completed.message}">
+                        This session has been completed. The final estimates have been applied to the user stories.
+                    </p>
+                    <p class="mb-0" th:if="${pokerSession.status != null and pokerSession.status.name() == 'CANCELLED'}" th:text="#{planningpoker.session.cancelled.message}">
+                        This session has been cancelled. No estimates have been applied to the user stories.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Session Details -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0" th:text="#{planningpoker.session.details}">Session Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="fw-bold" th:text="#{planningpoker.session.id} + ':'">ID:</span>
+                            <span th:text="${pokerSession.id}">1</span>
+                        </div>
+                        <div class="mb-3">
+                            <span class="fw-bold" th:text="#{planningpoker.session.name} + ':'">Name:</span>
+                            <span th:text="${pokerSession.name}">Sprint 1 Planning</span>
+                        </div>
+                        <div class="mb-3">
+                            <span class="fw-bold" th:text="#{planningpoker.session.project} + ':'">Project:</span>
+                            <a th:href="@{/projects/{id}(id=${project.id})}" th:text="${project.name}">Project Name</a>
+                        </div>
+                        <div class="mb-3">
+                            <span class="fw-bold" th:text="#{planningpoker.session.facilitator} + ':'">Facilitator:</span>
+                            <span th:text="${pokerSession.facilitator != null ? pokerSession.facilitator.username : ''}">Facilitator</span>
+                        </div>
+                        <div class="mb-3">
+                            <span class="fw-bold" th:text="#{planningpoker.estimationType} + ':'">Estimation Type:</span>
+                            <span th:text="${pokerSession.estimationType}">STORY_POINTS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participants -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0" th:text="#{planningpoker.session.participants}">Participants</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li th:if="${#sets.isEmpty(pokerSession.participants)}" class="list-group-item text-muted" th:text="#{planningpoker.no.participants}">
+                                No participants assigned.
+                            </li>
+                            <li th:each="participant : ${pokerSession.participants}" class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <span th:text="${participant.username}">Username</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Stories and Voting -->
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0" th:text="#{planningpoker.session.userStories}">User Stories</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${userStory == null}" class="alert alert-info" th:text="#{planningpoker.no.userStories}">
+                            No user story selected for this session.
+                        </div>
+
+                        <div th:if="${userStory != null}" class="card mb-4">
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0" th:text="${userStory.title}">User Story Title</h5>
+                                    <span th:if="${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'}" class="badge bg-success" th:text="${userStory.storyPoints}">5</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <h6 th:text="#{userstory.description}">Description</h6>
+                                    <p th:text="${userStory.description}">Description text</p>
+                                </div>
+
+                                <!-- Voting Section -->
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h6 class="card-title mb-0" th:text="#{planningpoker.vote.results}">Voting Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div th:if="${#lists.isEmpty(userStoryVotes)}" class="alert alert-info" th:text="#{planningpoker.no.votes}">
+                                            No votes submitted yet.
+                                        </div>
+
+                                        <div th:unless="${#lists.isEmpty(userStoryVotes)}">
+                                            <!-- Vote Statistics -->
+                                            <div class="row mb-3" th:if="${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'}">
+                                                <div class="col-md-3 text-center">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title" th:text="#{planningpoker.vote.average}">Average</h6>
+                                                            <p class="h4">4.5</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 text-center">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title" th:text="#{planningpoker.vote.median}">Median</h6>
+                                                            <p class="h4" th:text="${userStory.storyPoints}">5</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 text-center">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title" th:text="#{planningpoker.vote.min}">Minimum</h6>
+                                                            <p class="h4">3</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 text-center">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title" th:text="#{planningpoker.vote.max}">Maximum</h6>
+                                                            <p class="h4">8</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Votes Table -->
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th th:text="#{planningpoker.session.participants}">Participant</th>
+                                                        <th th:text="#{planningpoker.vote.storyPoints}">Story Points</th>
+                                                        <th th:text="#{planningpoker.vote.reasoning}">Reasoning</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr th:each="vote : ${userStoryVotes}">
+                                                        <td th:text="${vote.voter.username}">User</td>
+                                                        <td>
+                                                            <span th:if="${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'}" th:text="${vote.storyPoints}">5</span>
+                                                            <span th:if="${pokerSession.status != null and pokerSession.status.name() != 'COMPLETED' and vote.voter.id == currentUser.id}" th:text="${vote.storyPoints}">5</span>
+                                                            <span th:if="${pokerSession.status != null and pokerSession.status.name() != 'COMPLETED' and vote.voter.id != currentUser.id}" class="badge bg-secondary">Hidden</span>
+                                                        </td>
+                                                        <td th:text="${vote.reasoning ?: '-'}">Reasoning text</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Vote Button -->
+                                        <div th:if="${pokerSession.status.name() == 'ACTIVE' && (isParticipant || isFacilitator)}" class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <a th:href="@{/planning-poker/{sessionId}/vote/{userStoryId}(sessionId=${pokerSession.id},userStoryId=${userStory.id})}" 
+                                               class="btn btn-primary">
+                                                <i class="bi bi-hand-index-thumb"></i> <span th:text="#{planningpoker.vote}">Vote</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Session Confirmation Modal -->
+    <div class="modal fade" id="startSessionModal" tabindex="-1" aria-labelledby="startSessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="startSessionModalLabel" th:text="#{planningpoker.start}">Start Session</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to start this planning poker session? Once started, participants can begin voting.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
+                    <form th:action="@{/planning-poker/{id}/start(id=${pokerSession.id})}" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-primary" th:text="#{planningpoker.start}">Start Session</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Session Confirmation Modal -->
+    <div class="modal fade" id="completeSessionModal" tabindex="-1" aria-labelledby="completeSessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completeSessionModalLabel" th:text="#{planningpoker.complete}">Complete Session</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to complete this planning poker session? This will finalize all estimates and apply them to the user stories.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
+                    <form th:action="@{/planning-poker/{id}/complete(id=${pokerSession.id})}" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-success" th:text="#{planningpoker.complete}">Complete Session</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Session Confirmation Modal -->
+    <div class="modal fade" id="cancelSessionModal" tabindex="-1" aria-labelledby="cancelSessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelSessionModalLabel" th:text="#{planningpoker.cancel}">Cancel Session</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this planning poker session? No estimates will be applied to the user stories.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
+                    <form th:action="@{/planning-poker/{id}/cancel(id=${pokerSession.id})}" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-warning" th:text="#{planningpoker.cancel}">Cancel Session</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function confirmStartSession() {
+            var modal = new bootstrap.Modal(document.getElementById('startSessionModal'));
+            modal.show();
+        }
+
+        function confirmCompleteSession() {
+            var modal = new bootstrap.Modal(document.getElementById('completeSessionModal'));
+            modal.show();
+        }
+
+        function confirmCancelSession() {
+            var modal = new bootstrap.Modal(document.getElementById('cancelSessionModal'));
+            modal.show();
+        }
+    </script>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

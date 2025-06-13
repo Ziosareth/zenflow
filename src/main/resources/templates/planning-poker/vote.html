@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="#{planningpoker.vote.form}">Submit Your Vote</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="#{planningpoker.vote.form}">Submit Your Vote</h2>
+            <div>
+                <a th:href="@{/planning-poker/{id}(id=${pokerSession.id})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> <span th:text="#{planningpoker.back}">Back to Session</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0" th:text="${userStory.title}">User Story Title</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="fw-bold" th:text="#{userstory.description}">Description</h6>
+                            <p th:text="${userStory.description}" class="mb-0">Description text</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold" th:text="#{userstory.acceptanceCriteria}">Acceptance Criteria</h6>
+                            <p th:text="${userStory.acceptanceCriteria}" class="mb-0">Acceptance criteria text</p>
+                        </div>
+
+                        <form th:action="@{/planning-poker/{sessionId}/vote/{userStoryId}(sessionId=${pokerSession.id},userStoryId=${userStory.id})}" 
+                              th:object="${vote}" method="post">
+                            <input type="hidden" th:field="*{sessionId}" />
+                            <input type="hidden" th:field="*{userStoryId}" />
+                            <input type="hidden" th:field="*{voterId}" />
+                            <input type="hidden" th:field="*{id}" />
+
+                            <div class="mb-3">
+                                <label class="form-label" th:text="#{planningpoker.vote.storyPoints}">Story Points</label>
+                                <div class="btn-group d-flex flex-wrap" role="group" aria-label="Story Points">
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints0" th:field="*{storyPoints}" value="0" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints0">0</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints1" th:field="*{storyPoints}" value="1" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints1">1</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints2" th:field="*{storyPoints}" value="2" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints2">2</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints3" th:field="*{storyPoints}" value="3" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints3">3</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints5" th:field="*{storyPoints}" value="5" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints5">5</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints8" th:field="*{storyPoints}" value="8" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints8">8</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints13" th:field="*{storyPoints}" value="13" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints13">13</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints21" th:field="*{storyPoints}" value="21" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints21">21</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints34" th:field="*{storyPoints}" value="34" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints34">34</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints55" th:field="*{storyPoints}" value="55" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints55">55</label>
+
+                                    <input type="radio" class="btn-check" name="storyPoints" id="storyPoints89" th:field="*{storyPoints}" value="89" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="storyPoints89">89</label>
+                                </div>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('storyPoints')}" th:errors="*{storyPoints}">
+                                    Please select a story point value.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="reasoning" class="form-label" th:text="#{planningpoker.vote.reasoning}">Reasoning (optional)</label>
+                                <textarea class="form-control" id="reasoning" th:field="*{reasoning}" rows="3"></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('reasoning')}" th:errors="*{reasoning}">
+                                    Please provide valid reasoning.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a th:href="@{/planning-poker/{id}(id=${pokerSession.id})}" class="btn btn-secondary" th:text="#{userstory.cancel}">Cancel</a>
+                                <button type="submit" class="btn btn-primary" th:if="${vote.id != null}" th:text="#{planningpoker.vote.update}">Update Vote</button>
+                                <button type="submit" class="btn btn-primary" th:unless="${vote.id != null}" th:text="#{planningpoker.vote.submit}">Submit Vote</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>
