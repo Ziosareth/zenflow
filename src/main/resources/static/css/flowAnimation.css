@@ -1,0 +1,28 @@
+/* ZenFlow – Animated Background Flows */
+
+/* Base styling for the canvas background */
+#flowCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Place behind content */
+    pointer-events: none; /* Allow interaction with elements below */
+}
+
+/*!* Override the static background in zenflow.css *!*/
+/*body {*/
+/*    !* Remove the static background image and gradient *!*/
+/*    background-image: none !important;*/
+/*    background-color: var(--zf-col-0);*/
+/*    position: relative;*/
+/*    overflow-x: hidden;*/
+/*}*/
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: var(--zf-col-0); /* Uses the dark mode variable from zenflow.css */
+    }
+}
