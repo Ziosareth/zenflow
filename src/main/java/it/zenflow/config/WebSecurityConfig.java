@@ -23,7 +23,7 @@ public class WebSecurityConfig {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/webjars/**", "/css/**", "/js/**", "/change-lang").permitAll()
+                        .requestMatchers("/webjars/**", "/css/**", "/js/**", "/images/**", "/change-lang").permitAll()
                         .requestMatchers("/password/forgot", "/password/reset").permitAll() // reset per utenti NON autenticati
                         .requestMatchers("/password/change").authenticated() // cambio per utenti autenticati
                         .anyRequest().authenticated()

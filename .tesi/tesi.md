@@ -10,59 +10,478 @@ Include strumenti come:
 - Gestione del personale coinvolto
 
 ### 1.2 Motivazioni della scelta tecnologica
+La scelta delle tecnologie per ZenFlow è stata guidata dalla necessità di creare un'applicazione robusta, manutenibile e scalabile:
+
+- **Spring Boot**: Framework che semplifica lo sviluppo di applicazioni Java enterprise-ready, offrendo configurazione automatica e un ecosistema completo di strumenti
+- **JPA/Hibernate**: Per la persistenza dei dati e l'ORM, permettendo di lavorare con oggetti Java anziché query SQL dirette
+- **PostgreSQL**: Database relazionale robusto con supporto per transazioni complesse e integrità referenziale
+- **Flyway**: Per la gestione delle migrazioni del database, garantendo consistenza tra ambienti diversi
+- **Thymeleaf**: Template engine per le viste che permette di creare HTML dinamico mantenendo template validi anche come file statici
+- **Spring Security**: Per implementare un sistema di autenticazione e autorizzazione robusto basato su ruoli (RBAC)
+- **Bootstrap**: Framework CSS per un'interfaccia utente responsive e moderna
+- **Lombok**: Per ridurre il codice boilerplate e migliorare la leggibilità
+- **MapStruct**: Per la mappatura efficiente tra entità e DTO senza overhead a runtime
 
 ### 1.3 Breve overview della soluzione sviluppata
+ZenFlow è una soluzione completa per la gestione di progetti Agile che include:
+
+- **Gestione di progetti e team**: Creazione e configurazione di progetti, assegnazione di membri al team con ruoli specifici
+- **Backlog di user story**: Creazione, prioritizzazione e gestione delle user story
+- **Pianificazione e monitoraggio di sprint**: Definizione di sprint con date di inizio/fine e monitoraggio dell'avanzamento
+- **Stima delle user story**: Supporto per Planning Poker collaborativo e metodologia PERT per stime più accurate
+- **Sistema RBAC**: Controllo degli accessi basato su ruoli per garantire che ogni utente possa accedere solo alle funzionalità appropriate
 
 ## 2. Background teorico
 
 ### 2.1 ORM: cos'è e perché usarlo
+L'Object-Relational Mapping (ORM) risolve il problema dell'impedance mismatch tra il modello a oggetti e il modello relazionale, permettendo di:
+
+- **Lavorare con oggetti Java**: Manipolare dati attraverso oggetti e metodi Java anziché query SQL
+- **Gestire automaticamente le relazioni**: Mappare relazioni complesse tra entità (one-to-many, many-to-many, ecc.)
+- **Semplificare le operazioni CRUD**: Ridurre il codice necessario per operazioni di base sul database
+- **Migliorare la manutenibilità**: Centralizzare la logica di accesso ai dati e ridurre la duplicazione del codice
+- **Ottimizzare le performance**: Attraverso caching, lazy loading e altre strategie
 
 ### 2.2 Introduzione a JPA, Spring Framework, Spring Data
+Il progetto utilizza un ecosistema di tecnologie Java complementari:
+
+- **JPA (Java Persistence API)**: Standard Java per l'ORM che definisce come mappare oggetti Java a tabelle di database relazionali
+- **Hibernate**: Implementazione di JPA utilizzata nel progetto, che fornisce funzionalità avanzate come caching, lazy loading e ottimizzazione delle query
+- **Spring Framework**: Ecosistema completo per lo sviluppo di applicazioni enterprise, basato su dependency injection e inversion of control
+- **Spring Data**: Semplifica l'accesso ai dati fornendo repository predefiniti e query method derivate dai nomi dei metodi
+- **Spring Boot**: Semplifica la configurazione e il deployment di applicazioni Spring, con auto-configurazione e starter dependencies
 
 ### 2.3 Database relazionali e mapping oggetto-relazionale
+Nel progetto, il mapping tra oggetti Java e database relazionale è realizzato attraverso:
+
+- **Entità con annotazioni JPA**: Classi Java annotate con `@Entity` e `@Table` per mappare oggetti a tabelle
+- **Relazioni tra entità**: Uso di annotazioni come `@OneToMany`, `@ManyToOne`, `@ManyToMany` per definire relazioni
+- **Strategie di fetch**: Configurazione di caricamento LAZY (on-demand) vs EAGER (immediato) per ottimizzare le performance
+- **Cascading delle operazioni**: Propagazione automatica di operazioni (persist, merge, remove) alle entità correlate
+- **Gestione delle transazioni**: Definizione di confini transazionali chiari per garantire l'integrità dei dati
 
 ### 2.4 Pattern architetturali adottati
+ZenFlow implementa un'architettura a layer ben definiti:
+
+- **Presentation Layer**: Controller Spring MVC e viste Thymeleaf per l'interfaccia utente
+- **Service Layer**: Componenti che implementano la logica di business, con transazioni ben definite
+- **Repository Layer**: Interfacce Spring Data JPA per l'accesso ai dati
+- **Domain Layer**: Entità JPA e modelli di dominio che rappresentano i concetti chiave dell'applicazione
+- **Security Layer**: Configurazione Spring Security per autenticazione e autorizzazione basata su ruoli
+
+Seguendo le best practices di Spring Boot, il progetto adotta:
+- Constructor injection per le dipendenze
+- Package-private visibility per componenti interni
+- Configurazione tipizzata con `@ConfigurationProperties`
+- Transazioni ben definite con `@Transactional`
+- Disabilitazione di Open Session in View
+- Separazione tra layer web e persistenza con DTO
 
 ## 3. Analisi requisiti
 
 ### 3.1 Requisiti funzionali
+ZenFlow implementa i seguenti requisiti funzionali:
+
+- **Gestione utenti e ruoli**:
+  - Registrazione e autenticazione utenti
+  - Gestione dei ruoli e permessi (RBAC)
+  - Profili utente personalizzabili
+
+- **Creazione e gestione progetti**:
+  - Creazione di nuovi progetti con metadati
+  - Assegnazione di team members con ruoli specifici
+  - Dashboard di progetto con metriche e stato
+
+- **Gestione del backlog di user story**:
+  - Creazione e modifica di user story
+  - Prioritizzazione del backlog
+  - Categorizzazione con tag e label
+
+- **Pianificazione e monitoraggio sprint**:
+  - Definizione di sprint con date di inizio/fine
+  - Assegnazione di user story agli sprint
+  - Monitoraggio dell'avanzamento con burndown chart
+
+- **Stima delle user story**:
+  - Planning Poker collaborativo in tempo reale
+  - Calcolo di stime PERT (Pessimistica, Ottimistica, Più probabile)
+  - Storico delle stime per analisi
+
+- **Assegnazione e tracciamento task**:
+  - Scomposizione di user story in task
+  - Assegnazione di task ai membri del team
+  - Aggiornamento dello stato di avanzamento
+
+- **Calcolo metriche di progetto**:
+  - Velocità del team
+  - Burndown e burnup chart
+  - Previsioni di completamento
 
 ### 3.2 Requisiti non funzionali
+L'applicazione soddisfa i seguenti requisiti non funzionali:
+
+- **Sicurezza**:
+  - Autenticazione robusta
+  - Autorizzazione basata su ruoli
+  - Protezione contro vulnerabilità comuni (CSRF, XSS)
+
+- **Usabilità e interfaccia**:
+  - Design responsive per desktop e mobile
+  - Interfaccia intuitiva con feedback immediato
+  - Accessibilità secondo standard WCAG
+
+- **Persistenza e integrità dei dati**:
+  - Transazioni ACID per garantire consistenza
+  - Validazione dei dati in input
+  - Backup e recovery
+
+- **Audit trail**:
+  - Tracciamento delle modifiche con Hibernate Envers
+  - Log delle operazioni critiche
+  - Storico delle versioni per entità importanti
+
+- **Scalabilità e performance**:
+  - Ottimizzazione delle query database
+  - Caching appropriato
+  - Paginazione per grandi set di dati
 
 ### 3.3 Diagrammi UML
+Per la progettazione del sistema sono stati realizzati i seguenti diagrammi:
+
+- **Diagramma delle classi**: Rappresentazione delle entità principali e delle loro relazioni
+- **Diagramma ER del database**: Schema del database relazionale
+- **Diagrammi di sequenza**: Per i principali casi d'uso (es. creazione progetto, planning poker)
+- **Diagrammi di attività**: Per workflow complessi come il processo di stima delle user story
 
 ## 4. Progettazione del sistema
 
 ### 4.1 Architettura dell'applicazione
+ZenFlow implementa un'architettura MVC (Model-View-Controller) basata su Spring Boot:
+
+- **Model**: Entità JPA che rappresentano il dominio dell'applicazione
+- **View**: Template Thymeleaf che generano l'interfaccia HTML
+- **Controller**: Classi Spring MVC che gestiscono le richieste HTTP
+
+L'architettura segue il principio di separazione delle responsabilità, con componenti specializzati per ogni aspetto dell'applicazione.
 
 ### 4.2 Database design
+Lo schema del database, gestito attraverso migrazioni Flyway, include:
+
+- **Tabelle principali**:
+  - `users`, `roles`, `permissions`: Per il sistema RBAC
+  - `projects`, `sprints`, `user_stories`, `tasks`: Per il core dell'applicazione
+  - `planning_poker_sessions`, `planning_poker_votes`: Per le funzionalità di stima
+
+- **Tabelle di relazione**:
+  - `user_roles`, `role_permissions`: Per le relazioni many-to-many del sistema RBAC
+  - `project_team_members`: Per associare utenti ai progetti con ruoli specifici
+
+- **Tabelle di audit**:
+  - Tabelle con suffisso `_aud` generate da Hibernate Envers per tracciare le modifiche
 
 ### 4.3 Spiegazione entity e relazioni
+Le principali entità del sistema e le loro relazioni sono:
+
+- **User, Role, Permission**:
+  - Sistema RBAC con utenti che hanno ruoli, e ruoli che hanno permessi
+  - Relazioni many-to-many gestite con tabelle di join
+
+- **Project**:
+  - Entità centrale con relazioni verso User (owner, team members)
+  - Contiene metadati del progetto e riferimenti a sprint e user story
+
+- **Sprint**:
+  - Periodi di lavoro con date di inizio/fine
+  - Relazione many-to-one con Project e one-to-many con UserStory
+
+- **UserStory**:
+  - Requisiti utente con stime e priorità
+  - Relazioni con Project, Sprint e Task
+
+- **Task**:
+  - Attività concrete per implementare le user story
+  - Relazione many-to-one con UserStory e User (assignee)
+
+- **PlanningPokerSession**:
+  - Sessioni di stima collaborativa
+  - Relazioni con UserStory e User (partecipanti)
 
 ### 4.4 Layer logici
+L'applicazione è organizzata in layer logici ben definiti:
+
+- **Controller**: Gestione delle richieste HTTP, validazione input, rendering delle viste
+  - Package `it.zenflow.controller`
+  - Implementa pattern PRG (Post-Redirect-Get) per form submission
+
+- **Service**: Logica di business con transazioni ben definite
+  - Package `it.zenflow.service`
+  - Metodi annotati con `@Transactional` o `@Transactional(readOnly = true)`
+
+- **Repository**: Accesso ai dati tramite Spring Data JPA
+  - Package `it.zenflow.repository`
+  - Interfacce che estendono `JpaRepository` con query methods
+
+- **DTO**: Oggetti per il trasferimento dati tra layer
+  - Package `it.zenflow.dto`
+  - Record Java con validazione Jakarta Bean Validation
+
+- **Mapper**: Conversione tra entità e DTO
+  - Implementati con MapStruct per generazione efficiente a compile-time
 
 ## 5. Implementazione
 
 ### 5.1 Tecnologie utilizzate
+Il progetto utilizza le seguenti tecnologie e librerie:
+
+- **Spring Boot 3.5.0**: Framework per applicazioni Java
+- **Java 24**: Linguaggio di programmazione con features moderne (records, pattern matching)
+- **PostgreSQL/H2**: Database relazionali (produzione/test)
+- **Flyway**: Gestione delle migrazioni del database
+- **Hibernate/JPA**: ORM per la persistenza
+- **Hibernate Envers**: Audit trail delle modifiche
+- **Spring Security**: Framework per autenticazione e autorizzazione
+- **Thymeleaf**: Template engine per le viste
+- **Bootstrap**: Framework CSS per UI responsive
+- **Lombok**: Riduzione del boilerplate
+- **MapStruct**: Mappatura tra oggetti
+- **Spring Boot Docker Compose**: Integrazione con Docker per sviluppo e test
 
 ### 5.2 Esempi di codice
+Il progetto include esempi significativi di:
+
+- **Definizione di entità con JPA**: Classi con annotazioni JPA per mapping ORM
+
+```java
+@Entity
+@Table(name = "user_stories")
+@Audited
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserStory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StoryStatus status = StoryStatus.BACKLOG;
+
+    // Relazioni
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
+
+    @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> tasks = new ArrayList<>();
+}
+```
+
+- **Implementazione di repository**: Interfacce Spring Data con query methods
+
+```java
+@Repository
+public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
+
+    List<UserStory> findByProject(Project project);
+
+    List<UserStory> findByProjectAndStatus(Project project, StoryStatus status);
+
+    @Query("SELECT us FROM UserStory us WHERE us.project.id = :projectId")
+    List<UserStory> findByProjectId(@Param("projectId") Long projectId);
+
+    @Query("SELECT us FROM UserStory us LEFT JOIN FETCH us.tasks WHERE us.id = :id")
+    Optional<UserStory> findByIdWithTasks(@Param("id") Long id);
+}
+```
+
+- **Servizi con logica di business**: Componenti `@Service` con transazioni ben definite
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserStoryService {
+
+    private final UserStoryRepository userStoryRepository;
+    private final ProjectService projectService;
+
+    @Transactional(readOnly = true)
+    public Optional<UserStory> findById(Long id) {
+        return userStoryRepository.findById(id);
+    }
+
+    @Transactional
+    public UserStory save(UserStory userStory) {
+        // Calcolo della stima PERT se necessario
+        if (userStory.getEstimationType() == EstimationType.PERT) {
+            if (userStory.getOptimisticEstimate() != null && 
+                userStory.getPessimisticEstimate() != null && 
+                userStory.getMostLikelyEstimate() != null) {
+
+                double pertEstimate = (userStory.getOptimisticEstimate() + 
+                                      (4 * userStory.getMostLikelyEstimate()) + 
+                                      userStory.getPessimisticEstimate()) / 6;
+
+                userStory.setPertEstimate(pertEstimate);
+                userStory.setStoryPoints((int) Math.round(pertEstimate));
+            }
+        }
+
+        return userStoryRepository.save(userStory);
+    }
+}
+```
+
+- **Controller MVC**: Gestione delle richieste HTTP e rendering delle viste
+
+```java
+@Controller
+@RequestMapping("/projects/{projectId}/user-stories")
+@PreAuthorize("isAuthenticated()")
+@RequiredArgsConstructor
+public class UserStoryController {
+
+    private final UserStoryService userStoryService;
+    private final ProjectService projectService;
+    private final MessageSource messageSource;
+
+    @GetMapping("")
+    @PreAuthorize("hasAuthority('READ_USER_STORY')")
+    public String listUserStories(@PathVariable Long projectId, Model model) {
+        return projectService.findById(projectId)
+                .map(project -> {
+                    List<UserStory> userStories = userStoryService.findByProject(project);
+                    model.addAttribute("project", project);
+                    model.addAttribute("userStories", userStories);
+                    return "projects/user-stories/list";
+                })
+                .orElse("redirect:/projects");
+    }
+
+    @PostMapping("/new")
+    @PreAuthorize("hasAuthority('CREATE_USER_STORY')")
+    public String createUserStory(
+            @PathVariable Long projectId,
+            @Valid @ModelAttribute UserStoryDTO userStoryDTO,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            return "projects/user-stories/form";
+        }
+
+        // Conversione da DTO a entità e salvataggio
+        // ...
+
+        String message = messageSource.getMessage("userstory.created", null, LocaleContextHolder.getLocale());
+        redirectAttributes.addFlashAttribute("message", message);
+
+        return "redirect:/projects/" + projectId + "/user-stories";
+    }
+}
+```
+
+- **DTO per separazione dei layer**: Oggetti per il trasferimento dati con validazione
+
+```java
+public class UserStoryDTO {
+
+    private Long id;
+
+    @NotBlank(message = "{validation.userstory.title.required}")
+    @Size(min = 3, max = 200, message = "{validation.userstory.title.size}")
+    private String title;
+
+    @Size(max = 2000, message = "{validation.userstory.description.size}")
+    private String description;
+
+    @NotNull(message = "{validation.userstory.status.required}")
+    private StoryStatus status = StoryStatus.BACKLOG;
+
+    private Long projectId;
+    private Long assignedToId;
+
+    // PERT Estimation fields
+    private Double optimisticEstimate;
+    private Double pessimisticEstimate;
+    private Double mostLikelyEstimate;
+}
+```
+
+- **Configurazione di sicurezza**: Setup di Spring Security con RBAC
 
 ### 5.3 Come viene gestita la persistenza
+La persistenza dei dati è gestita attraverso:
+
+- **Spring Data JPA**: Repository predefiniti con metodi CRUD e query methods
+- **Configurazione di Hibernate**: Ottimizzazioni per performance e consistenza
+- **Gestione delle transazioni**: Boundaries transazionali ben definiti nei service
+- **Migrazioni del database**: Script Flyway per evoluzione controllata dello schema
+- **Audit trail**: Hibernate Envers per tracciare modifiche alle entità
 
 ### 5.4 Test unitari e di integrazione
+L'approccio ai test include:
+
+- **Test unitari**: JUnit 5 con Mockito per testare componenti isolati
+- **Test di integrazione**: TestContainers per test con database reali in container Docker
+- **Test di sicurezza**: Verifica delle regole di autorizzazione e autenticazione
+- **Test end-to-end**: Simulazione di scenari utente completi
 
 ## 6. Discussione e considerazioni
 
 ### 6.1 Problemi incontrati
+Durante lo sviluppo sono state affrontate diverse sfide:
+
+- **Gestione delle relazioni JPA**: Configurazione corretta di fetch type e cascading
+- **Configurazione della sicurezza**: Implementazione di un sistema RBAC flessibile
+- **Implementazione dell'audit trail**: Setup di Hibernate Envers per tracciare le modifiche
+- **Ottimizzazione delle query**: Risoluzione di problemi N+1 e performance
 
 ### 6.2 Soluzioni adottate
+I problemi sono stati risolti seguendo le best practices di Spring Boot:
+
+- **Constructor injection**: Per dipendenze chiare e testabilità
+- **Transazioni ben definite**: Con `@Transactional` e `readOnly = true` dove appropriato
+- **Disabilitazione di Open Session in View**: Per evitare problemi N+1
+- **Separazione tra layer web e persistenza**: Uso di DTO per disaccoppiare API e database
+- **Validazione centralizzata**: Con Jakarta Bean Validation sui DTO
 
 ### 6.3 Possibili miglioramenti futuri
+Il progetto potrebbe essere migliorato con:
+
+- **Implementazione di API REST complete**: Per supportare client JavaScript moderni
+- **Aggiunta di un frontend SPA**: Con React, Angular o Vue per UX migliorata
+- **Integrazione con sistemi CI/CD**: Per deployment automatizzato
+- **Implementazione di microservizi**: Per scalabilità e resilienza
+- **Aggiunta di funzionalità di reportistica avanzata**: Dashboard e analytics
 
 ## 7. Conclusioni
 
 ### 7.1 Obiettivi raggiunti
+ZenFlow ha raggiunto i seguenti obiettivi:
+
+- **Creazione di una piattaforma completa per la gestione Agile**: Con supporto per l'intero ciclo di vita del progetto
+- **Implementazione di funzionalità di stima collaborativa**: Planning Poker e PERT
+- **Sistema di sicurezza robusto**: Basato su ruoli e permessi granulari
 
 ### 7.2 Spunti di riflessione
+Il progetto ha evidenziato:
+
+- **L'importanza delle metodologie Agile**: Per gestire progetti software complessi
+- **Il valore degli strumenti di supporto al project management**: Per migliorare efficienza e trasparenza
+- **L'evoluzione delle tecnologie Java e Spring**: Verso paradigmi più moderni e produttivi
 
 ### 7.3 Valore del progetto
+ZenFlow rappresenta:
+
+- **Strumento pratico per team Agile**: Che facilita la collaborazione e la pianificazione
+- **Esempio di applicazione enterprise moderna**: Con architettura robusta e scalabile
+- **Dimostrazione di competenze tecniche avanzate**: Nell'ecosistema Java/Spring

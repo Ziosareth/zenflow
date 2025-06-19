@@ -7,6 +7,8 @@
     <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.13.1/font/bootstrap-icons.css}">
     <!-- ZenFlow theme -->
     <link rel="stylesheet" th:href="@{/css/zenflow.css}">
+    <!-- ZenFlow animated background -->
+    <link rel="stylesheet" th:href="@{/css/flowAnimation.css}">
     <!-- Slot opzionale per altri CSS specifici di pagina -->
     <th:block th:replace="${extraCSS} ?: ~{}"></th:block>
 </head>
@@ -15,6 +17,8 @@
     <!-- Script fragment to be included at the end of body -->
     <th:block th:fragment="scripts(extraScripts)">
         <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+        <!-- ZenFlow animated background -->
+        <script th:src="@{/js/flowAnimation.js}"></script>
         <!-- Additional scripts can be added here -->
         <th:block th:replace="${extraScripts} ?: ~{}"></th:block>
     </th:block>

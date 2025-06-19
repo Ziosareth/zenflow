@@ -43,7 +43,7 @@ body {
 @media (min-width: 1400px) {
     body {
         background-image:
-                url("/static/images/noise-8-opacity.png"),
+                url("/images/noise-8-opacity.png"),
                 radial-gradient(circle at 25% 35%,
                 var(--zf-col-0) 0%,
                 var(--zf-col-1) 35%,
