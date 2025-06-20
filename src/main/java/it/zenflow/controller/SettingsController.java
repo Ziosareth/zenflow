@@ -40,7 +40,7 @@ public class SettingsController {
     @PostMapping("/theme")
     public String updateTheme(@RequestParam("theme") String theme, 
                              RedirectAttributes redirectAttributes) {
-        // In a real implementation, this would save the theme preference to the user's profile
+        // TODO In a real implementation, this would save the theme preference to the user's profile
         // For now, we'll just use localStorage in JavaScript
         
         redirectAttributes.addFlashAttribute("successMessage", "settings.theme.updated");
