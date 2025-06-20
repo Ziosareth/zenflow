@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="#{settings.title}">Settings</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Settings Content -->
+    <div class="container mt-4">
+        <h1 th:text="#{settings.title}">Settings</h1>
+        
+        <!-- Success message -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="#{${successMessage}}">Settings updated successfully</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Settings navigation -->
+                <div class="list-group mb-4">
+                    <a href="#appearance" class="list-group-item list-group-item-action active" 
+                       data-bs-toggle="list" th:text="#{settings.appearance}">Appearance</a>
+                    <a href="#notifications" class="list-group-item list-group-item-action" 
+                       data-bs-toggle="list" th:text="#{settings.notifications}">Notifications</a>
+                    <a href="#account" class="list-group-item list-group-item-action" 
+                       data-bs-toggle="list" th:text="#{settings.account}">Account</a>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <!-- Settings content -->
+                <div class="tab-content">
+                    <!-- Appearance settings -->
+                    <div class="tab-pane fade show active" id="appearance">
+                        <div class="card">
+                            <div class="card-header" th:text="#{settings.appearance}">
+                                Appearance
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="#{settings.theme.title}">Theme</h5>
+                                <p class="card-text" th:text="#{settings.theme.description}">
+                                    Choose between light and dark mode for your ZenFlow experience.
+                                </p>
+                                
+                                <div class="d-flex gap-3 mb-4">
+                                    <!-- Theme options -->
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="themeOption" 
+                                               id="themeSystem" value="system" checked>
+                                        <label class="form-check-label" for="themeSystem" 
+                                               th:text="#{settings.theme.system}">
+                                            System preference
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="themeOption" 
+                                               id="themeLight" value="light">
+                                        <label class="form-check-label" for="themeLight" 
+                                               th:text="#{settings.theme.light}">
+                                            Light mode
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="themeOption" 
+                                               id="themeDark" value="dark">
+                                        <label class="form-check-label" for="themeDark" 
+                                               th:text="#{settings.theme.dark}">
+                                            Dark mode
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications settings (placeholder) -->
+                    <div class="tab-pane fade" id="notifications">
+                        <div class="card">
+                            <div class="card-header" th:text="#{settings.notifications}">
+                                Notifications
+                            </div>
+                            <div class="card-body">
+                                <p th:text="#{settings.coming.soon}">Coming soon...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account settings (placeholder) -->
+                    <div class="tab-pane fade" id="account">
+                        <div class="card">
+                            <div class="card-header" th:text="#{settings.account}">
+                                Account
+                            </div>
+                            <div class="card-body">
+                                <p th:text="#{settings.coming.soon}">Coming soon...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <th:block th:replace="~{fragments/common :: scripts(~{::script})}"></th:block>
+    
+    <script>
+        // Theme switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the theme preference from localStorage
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            
+            // Set the correct radio button as checked
+            document.getElementById('theme' + currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1)).checked = true;
+            
+            // Add event listeners to the radio buttons
+            document.querySelectorAll('input[name="themeOption"]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    const theme = this.value;
+                    localStorage.setItem('theme', theme);
+                    applyTheme(theme);
+                });
+            });
+            
+            // Apply the theme on page load
+            applyTheme(currentTheme);
+        });
+        
+        // Function to apply the selected theme
+        function applyTheme(theme) {
+            const body = document.body;
+            
+            // Remove existing theme classes
+            body.classList.remove('theme-light', 'theme-dark');
+            
+            if (theme === 'light') {
+                body.classList.add('theme-light');
+            } else if (theme === 'dark') {
+                body.classList.add('theme-dark');
+            } else {
+                // System preference - don't add any class, let the media query handle it
+            }
+        }
+    </script>
+</body>
+</html>

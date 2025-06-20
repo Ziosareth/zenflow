@@ -52,23 +52,44 @@ body {
     }
 }
 
+/* Theme switching support */
+body.theme-light {
+    --zf-col-0: #f9fbff;
+    --zf-col-1: #e6edff;
+    --zf-col-2: #d7e0ff;
+    --zf-col-3: #c8d4ff;
+    color: #212529;
+    background-blend-mode: overlay;
+}
+
+body.theme-dark {
+    --zf-col-0: #1e2230;
+    --zf-col-1: #27314b;
+    --zf-col-2: #313d59;
+    --zf-col-3: #3a4768;
+    color: #f1f3f7;
+    background-blend-mode: normal;
+}
+
+body.theme-dark .modal-content {
+    color: #f1f3f7;
+    background-color: #27314b;
+}
+
 /* -------- Dark mode (rispetta la preferenza di sistema) -------- */
 @media (prefers-color-scheme: dark) {
-    :root {
+    /* Only apply when no explicit theme class is set */
+    body:not(.theme-light):not(.theme-dark) {
         --zf-col-0: #1e2230;
         --zf-col-1: #27314b;
         --zf-col-2: #313d59;
         --zf-col-3: #3a4768;
+        color: #f1f3f7;
+        background-blend-mode: normal;
     }
 
-    body {
-        color: #f1f3f7;                /* testo di default più chiaro */
-        background-blend-mode: normal; /* sovrapposizione non necessaria */
-    }
-
-    /* Add this to ensure modal text is readable */
-    .modal-content {
-        color: #f1f3f7;        /* Light text color for dark backgrounds */
-        background-color: #27314b;  /* Darker background for modals */
+    body:not(.theme-light):not(.theme-dark) .modal-content {
+        color: #f1f3f7;
+        background-color: #27314b;
     }
 }
