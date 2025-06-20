@@ -445,6 +445,7 @@ Durante lo sviluppo sono state affrontate diverse sfide:
 - **Implementazione dell'audit trail**: Setup di Hibernate Envers per tracciare le modifiche
 - **Ottimizzazione delle query**: Risoluzione di problemi N+1 e performance
 - **Eliminazione a cascata delle entità correlate**: Risoluzione di vincoli di integrità referenziale
+- **Aggiornamento dei punti storia del progetto**: Risoluzione di un problema con il calcolo dei punti totali
 
 #### 6.1.1 Problema di eliminazione delle User Story con sessioni di Planning Poker
 
@@ -519,6 +520,103 @@ L'utilizzo di annotazioni JPA per la gestione delle relazioni e delle operazioni
 5. **Manutenibilità**: Il codice è più pulito e più facile da mantenere
 
 Questa soluzione è in linea con le best practices di Spring Boot e JPA, sfruttando le capacità di mapping oggetto-relazionale di JPA e incapsulando la logica di eliminazione nel layer di persistenza.
+
+#### 6.1.2 Problema di aggiornamento dei punti storia totali del progetto
+
+Un altro problema significativo è emerso durante l'utilizzo delle sessioni di Planning Poker. Dopo aver completato una sessione di Planning Poker e assegnato i punti storia a una user story, il totale dei punti storia del progetto non veniva aggiornato correttamente. Questo causava una discrepanza tra la somma effettiva dei punti storia di tutte le user story e il valore visualizzato nella dashboard del progetto.
+
+##### Analisi del Problema
+
+Per comprendere il problema, abbiamo eseguito i seguenti test:
+
+1. Creazione di una user story con 3 punti storia
+2. Verifica che il progetto mostrasse correttamente un totale di 3 punti storia
+3. Creazione di una nuova user story e avvio di una sessione di Planning Poker
+4. Completamento della sessione con 13 punti storia
+5. Verifica che il progetto continuasse a mostrare solo 3 punti storia invece di 16
+
+Analizzando il codice, abbiamo identificato la causa principale:
+
+```java
+// In PlanningPokerSessionService.java
+private void processVotesAndUpdateUserStories(PlanningPokerSession session) {
+    // ... codice per calcolare i punti storia ...
+
+    if (userStory.getEstimationType() == EstimationType.STORY_POINTS) {
+        int finalEstimate = calculateFinalStoryPoints(votes);
+        userStory.setStoryPoints(finalEstimate);
+    } else if (userStory.getEstimationType() == EstimationType.PERT) {
+        calculatePERTEstimates(votes, userStory);
+    }
+
+    userStoryRepository.save(userStory);  // Chiamata diretta al repository
+}
+```
+
+Il problema era che il metodo `processVotesAndUpdateUserStories()` nel `PlanningPokerSessionService` chiamava direttamente `userStoryRepository.save(userStory)` invece di utilizzare `userStoryService.save(userStory)`.
+
+Nel `UserStoryService`, il metodo `save()` conteneva la logica per aggiornare il totale dei punti storia del progetto:
+
+```java
+@Transactional
+public UserStory save(UserStory userStory) {
+    // ... altro codice ...
+
+    // Salva la user story
+    UserStory savedUserStory = userStoryRepository.save(userStory);
+
+    // Aggiorna il totale dei punti storia del progetto
+    Project project = userStory.getProject();
+    if (project != null) {
+        List<UserStory> allStories = userStoryRepository.findByProject(project);
+        int totalPoints = allStories.stream()
+            .filter(story -> story.getStoryPoints() != null)
+            .mapToInt(UserStory::getStoryPoints)
+            .sum();
+
+        project.setTotalStoryPoints(totalPoints);
+        projectService.save(project);
+    }
+
+    return savedUserStory;
+}
+```
+
+Chiamando direttamente il repository, questa logica di aggiornamento veniva bypassata, causando la discrepanza nei punti storia totali.
+
+##### Soluzione Implementata
+
+La soluzione è stata semplice ma efficace:
+
+1. Aggiungere `UserStoryService` come dipendenza in `PlanningPokerSessionService`
+2. Modificare il metodo `processVotesAndUpdateUserStories()` per utilizzare `userStoryService.save(userStory)` invece di `userStoryRepository.save(userStory)`
+
+```java
+// Modifica in PlanningPokerSessionService.java
+private void processVotesAndUpdateUserStories(PlanningPokerSession session) {
+    // ... codice esistente ...
+
+    if (userStory.getEstimationType() == EstimationType.STORY_POINTS) {
+        int finalEstimate = calculateFinalStoryPoints(votes);
+        userStory.setStoryPoints(finalEstimate);
+    } else if (userStory.getEstimationType() == EstimationType.PERT) {
+        calculatePERTEstimates(votes, userStory);
+    }
+
+    userStoryService.save(userStory);  // Chiamata al service invece che al repository
+}
+```
+
+##### Lezioni Apprese
+
+Questo problema ha evidenziato l'importanza di:
+
+1. **Rispettare i confini dei layer architetturali**: I controller dovrebbero chiamare i service, e i service dovrebbero chiamare altri service o repository, mai bypassare un layer
+2. **Centralizzare la logica di business**: La logica per aggiornare il totale dei punti storia era correttamente implementata nel service, ma non veniva utilizzata
+3. **Utilizzare l'injection delle dipendenze**: Assicurarsi che tutte le dipendenze necessarie siano iniettate correttamente
+4. **Testare scenari end-to-end**: Il problema è stato scoperto solo testando l'intero flusso di lavoro dall'inizio alla fine
+
+Questa esperienza ha rafforzato l'importanza di seguire il principio di responsabilità unica e di mantenere una chiara separazione delle responsabilità tra i diversi layer dell'applicazione.
 
 ### 6.2 Soluzioni adottate
 I problemi sono stati risolti seguendo le best practices di Spring Boot:

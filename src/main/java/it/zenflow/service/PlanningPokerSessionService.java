@@ -21,6 +21,7 @@ public class PlanningPokerSessionService {
     private final PlanningPokerSessionRepository planningPokerSessionRepository;
     private final EstimationVoteRepository estimationVoteRepository;
     private final UserStoryRepository userStoryRepository;
+    private final UserStoryService userStoryService;
     private final UserService userService;
     private final ProjectService projectService;
 
@@ -163,7 +164,7 @@ public class PlanningPokerSessionService {
             calculatePERTEstimates(votes, userStory);
         }
 
-        userStoryRepository.save(userStory);
+        userStoryService.save(userStory);
     }
 
     private int calculateFinalStoryPoints(List<EstimationVote> votes) {
