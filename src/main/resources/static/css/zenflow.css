@@ -65,4 +65,10 @@ body {
         color: #f1f3f7;                /* testo di default più chiaro */
         background-blend-mode: normal; /* sovrapposizione non necessaria */
     }
+
+    /* Add this to ensure modal text is readable */
+    .modal-content {
+        color: #f1f3f7;        /* Light text color for dark backgrounds */
+        background-color: #27314b;  /* Darker background for modals */
+    }
 }
