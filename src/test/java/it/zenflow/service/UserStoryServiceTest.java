@@ -1,10 +1,9 @@
 package it.zenflow.service;
 
-import it.zenflow.model.project.Project;
-import it.zenflow.model.project.UserStory;
-import it.zenflow.model.project.UserStoryRepository;
+import it.zenflow.model.project.*;
 import it.zenflow.model.project.enums.EstimationType;
 import it.zenflow.model.project.enums.Priority;
+import it.zenflow.model.project.enums.SessionStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +30,9 @@ public class UserStoryServiceTest {
 
     @Mock
     private ProjectService projectService;
+
+    @Mock
+    private PlanningPokerSessionRepository planningPokerSessionRepository;
 
     @InjectMocks
     private UserStoryService userStoryService;
@@ -280,5 +283,54 @@ public class UserStoryServiceTest {
         // Verify that the project's total story points were updated
         // Expected: 8 - 5 = 3 (only userStory2 remains with 3 points)
         assertThat(project.getTotalStoryPoints()).isEqualTo(3);
+    }
+
+    @Test
+    public void testDeleteByIdWithCascadeDeletion() {
+        // Arrange
+        userStory1.setStoryPoints(5);
+        project.setTotalStoryPoints(5); // Initial total
+
+        // Create a planning poker session associated with the user story
+        PlanningPokerSession session = new PlanningPokerSession();
+        session.setId(1L);
+        session.setName("Test Session");
+        session.setStatus(SessionStatus.CREATED);
+        session.setProject(project);
+        session.setFacilitator(user);
+        session.setUserStory(userStory1);
+
+        // Add the session to the user story's planning sessions
+        List<PlanningPokerSession> planningSessions = new ArrayList<>();
+        planningSessions.add(session);
+        userStory1.setPlanningSessions(planningSessions);
+
+        // Mock findById to return the user story
+        when(userStoryRepository.findById(1L)).thenReturn(Optional.of(userStory1));
+
+        // Mock deleteById
+        doNothing().when(userStoryRepository).deleteById(1L);
+
+        // Mock findByProject to return an empty list after deletion
+        when(userStoryRepository.findByProject(project)).thenReturn(Arrays.asList());
+
+        // Mock projectService.save
+        when(projectService.save(project)).thenReturn(project);
+
+        // Act
+        userStoryService.deleteById(1L);
+
+        // Assert
+        verify(userStoryRepository, times(1)).findById(1L);
+        verify(userStoryRepository, times(1)).deleteById(1L);
+        verify(userStoryRepository, times(1)).findByProject(project);
+        verify(projectService, times(1)).save(project);
+
+        // Verify that the project's total story points were updated
+        // Expected: 5 - 5 = 0 (no user stories remain)
+        assertThat(project.getTotalStoryPoints()).isEqualTo(0);
+
+        // The cascade delete should happen automatically through JPA, so we don't need to verify
+        // any explicit deletion of planning poker sessions in the service layer
     }
 }

@@ -29,4 +29,6 @@ public interface PlanningPokerSessionRepository extends JpaRepository<PlanningPo
 
     @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants LEFT JOIN FETCH s.votes WHERE s.id = :id")
     Optional<PlanningPokerSession> findByIdWithParticipantsAndVotes(@Param("id") Long id);
+
+    List<PlanningPokerSession> findByUserStory(UserStory userStory);
 }

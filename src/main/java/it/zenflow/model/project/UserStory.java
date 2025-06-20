@@ -85,4 +85,7 @@ public class UserStory {
 
     @Column(name = "variance")
     private Double variance;
+
+    @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlanningPokerSession> planningSessions = new ArrayList<>();
 }
