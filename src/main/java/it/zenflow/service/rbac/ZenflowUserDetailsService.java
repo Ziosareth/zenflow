@@ -1,7 +1,7 @@
 package it.zenflow.service.rbac;
 
-import it.zenflow.config.multitenant.CustomUserDetails;
 import it.zenflow.config.multitenant.TenantContext;
+import it.zenflow.model.rbac.Role;
 import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,31 +25,8 @@ public class ZenflowUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Ottieni il tenant corrente dal context
-        String currentTenant = TenantContext.getCurrentTenant();
-
-        if (currentTenant == null) {
-            throw new UsernameNotFoundException("Tenant context non impostato per l'utente: " + username);
-        }
-
-        // Cerca l'utente considerando sia username che tenant
-        User user = userRepository.findByUsernameAndTenant(username, currentTenant)
-                .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato: " + username + " per tenant: " + currentTenant));
-
-        return new CustomUserDetails(
-                user.getUsername(),
-                user.getPassword(),
-                user.getId(),
-                user.getTenant(),
-                getAuthorities(user)
-        );
-    }
-
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
-        return user.getRoles().stream()
+        Set<SimpleGrantedAuthority> authoritiesSet = user.getRoles().stream()
                 .flatMap(role -> {
                     // Aggiungi il ruolo come authority
                     var roleAuthority = new SimpleGrantedAuthority("ROLE_" + role.getName());
@@ -62,6 +41,33 @@ public class ZenflowUserDetailsService implements UserDetailsService {
                     );
                 })
                 .collect(Collectors.toSet());
+
+        // AGGIUNGI IL TENANT COME AUTHORITY SPECIALE
+        authoritiesSet.add(new SimpleGrantedAuthority("TENANT_" + user.getTenant()));
+
+        return authoritiesSet;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Ottieni il tenant corrente dal context
+        String currentTenant = TenantContext.getCurrentTenant();
+
+        if (currentTenant == null) {
+            throw new UsernameNotFoundException("Tenant context non impostato per l'utente: " + username);
+        }
+
+        // Cerca l'utente considerando sia username che tenant
+        User user = userRepository.findByUsernameAndTenant(username, currentTenant)
+                .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato: " + username + " per tenant: " + currentTenant));
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .authorities(getAuthorities(user))
+                .disabled(!user.isEnabled())
+                .build();
+
     }
 
 }

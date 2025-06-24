@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -23,13 +24,18 @@ public class TenantAuthorizationFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
         String tenantId = TenantContext.getCurrentTenant();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var user = authentication == null ? null : (CustomUserDetails) authentication.getPrincipal();
-        var userTenantId = user == null ? null : user.getTenantId();
-
-        if (user == null || Objects.equals(tenantId, userTenantId)) {
+        UserDetails user = authentication == null ? null : (UserDetails) authentication.getPrincipal();
+        String userTenantId = user == null ? null : extractTenantFromAuthorities(user);
+        if (user == null) {
+            // Utente non autenticato, lascia passare per permettere il login
+            chain.doFilter(request, response);
+        } else if (Objects.equals(tenantId, userTenantId)) {
+            // Utente autenticato e accede al proprio tenant
             chain.doFilter(request, response);
         } else {
-            log.warn("Attempted cross-tenant access.");
+            // Utente autenticato che tenta di accedere a un tenant diverso
+            log.warn("Attempted cross-tenant access from user {} with tenant {} to tenant {}",
+                    user.getUsername(), userTenantId, tenantId);
             response.setStatus(FORBIDDEN.value());
         }
     }
@@ -41,4 +47,13 @@ public class TenantAuthorizationFilter extends OncePerRequestFilter {
                 || request.getRequestURI().startsWith("/js/")
                 || request.getRequestURI().endsWith(".ico");
     }
+
+    private String extractTenantFromAuthorities(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .filter(authority -> authority.getAuthority().startsWith("TENANT_"))
+                .findFirst()
+                .map(authority -> authority.getAuthority().substring(7))
+                .orElse(null);
+    }
+
 }
