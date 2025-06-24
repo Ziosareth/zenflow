@@ -425,6 +425,7 @@ public class PlanningPokerController {
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setEnabled(user.isEnabled());
+        dto.setTenant(user.getTenant());
         return dto;
     }
 

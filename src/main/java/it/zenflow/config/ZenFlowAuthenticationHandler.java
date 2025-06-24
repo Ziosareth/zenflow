@@ -1,9 +1,11 @@
 package it.zenflow.config;
 
+import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.service.rbac.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -24,7 +26,7 @@ public class ZenFlowAuthenticationHandler implements AuthenticationSuccessHandle
                                        Authentication authentication) throws IOException, ServletException {
         String username = authentication.getName();
         log.debug("User {} successfully authenticated", username);
-        
+
         userService.findByUsername(username).ifPresent(user -> {
             if (user.isPasswordChangeRequired()) {
                 log.debug("User {} needs to change password, redirecting", username);

@@ -1,5 +1,7 @@
 package it.zenflow.service.rbac;
 
+import it.zenflow.config.multitenant.CustomUserDetails;
+import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,16 +26,24 @@ public class ZenflowUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato: " + username));
+        // Ottieni il tenant corrente dal context
+        String currentTenant = TenantContext.getCurrentTenant();
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .disabled(!user.isEnabled())
-                .authorities(getAuthorities(user))
-                .build();
+        if (currentTenant == null) {
+            throw new UsernameNotFoundException("Tenant context non impostato per l'utente: " + username);
+        }
 
+        // Cerca l'utente considerando sia username che tenant
+        User user = userRepository.findByUsernameAndTenant(username, currentTenant)
+                .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato: " + username + " per tenant: " + currentTenant));
+
+        return new CustomUserDetails(
+                user.getUsername(),
+                user.getPassword(),
+                user.getId(),
+                user.getTenant(),
+                getAuthorities(user)
+        );
     }
 
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {

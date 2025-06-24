@@ -32,6 +32,7 @@ public class User {
     private boolean passwordChangeRequired = false;
     private String resetToken;
     private LocalDateTime resetTokenExpiry;
+    private String tenant;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

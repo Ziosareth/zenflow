@@ -1,5 +1,5 @@
 -- Inserimento permessi base
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_USER', 'Creare nuovi utenti'),
                                                         ('READ_USER', 'Visualizzare utenti'),
                                                         ('UPDATE_USER', 'Modificare utenti'),
@@ -11,74 +11,74 @@ INSERT INTO zenflow.permissions (name, description) VALUES
                                                         ('ADMIN_ACCESS', 'Accesso amministrativo completo');
 
 -- Inserimento ruoli
-INSERT INTO zenflow.roles (name) VALUES
+INSERT INTO roles (name) VALUES
                                      ('ADMIN');
 
 -- Associazione ruolo ADMIN con tutti i permessi
-INSERT INTO zenflow.role_permissions (role_id, permission_id)
+INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
-FROM zenflow.roles r
-         CROSS JOIN zenflow.permissions p
+FROM roles r
+         CROSS JOIN permissions p
 WHERE r.name = 'ADMIN';
 
 
--- Inserimento utente admin (password temporanea che verrà aggiornata da Java)
-INSERT INTO zenflow.users (username, email, password, enabled, password_change_required) VALUES
-    ('admin', 'ale.bivi94@icloud.com', '$2a$10$ZqSPx8eu.yE04hJ1mayubOw3re41cJ.Lg9nAJHXlhaUK8fsHTx71K', true, false);
-
--- Associazione utente admin con ruolo ADMIN
-INSERT INTO zenflow.user_roles (user_id, role_id)
-SELECT u.id, r.id
-FROM zenflow.users u, zenflow.roles r
-WHERE u.username = 'admin' AND r.name = 'ADMIN';
+-- -- Inserimento utente admin (password temporanea che verrà aggiornata da Java)
+-- INSERT INTO users (username, email, password, enabled, password_change_required) VALUES
+--     ('admin', 'ale.bivi94@icloud.com', '$2a$10$ZqSPx8eu.yE04hJ1mayubOw3re41cJ.Lg9nAJHXlhaUK8fsHTx71K', true, false);
+--
+-- -- Associazione utente admin con ruolo ADMIN
+-- INSERT INTO user_roles (user_id, role_id)
+-- SELECT u.id, r.id
+-- FROM users u, roles r
+-- WHERE u.username = 'admin' AND r.name = 'ADMIN';
 
 -- Add permissions for Project entity
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_PROJECT', 'Creare nuovi progetti'),
                                                         ('READ_PROJECT', 'Visualizzare progetti'),
                                                         ('UPDATE_PROJECT', 'Modificare progetti'),
                                                         ('DELETE_PROJECT', 'Eliminare progetti');
 
 -- Add permissions for UserStory entity
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_USER_STORY', 'Creare nuove user story'),
                                                         ('READ_USER_STORY', 'Visualizzare user story'),
                                                         ('UPDATE_USER_STORY', 'Modificare user story'),
                                                         ('DELETE_USER_STORY', 'Eliminare user story');
 
 -- Add permissions for Sprint entity
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_SPRINT', 'Creare nuovi sprint'),
                                                         ('READ_SPRINT', 'Visualizzare sprint'),
                                                         ('UPDATE_SPRINT', 'Modificare sprint'),
                                                         ('DELETE_SPRINT', 'Eliminare sprint');
 
 -- Add permissions for Task entity
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_TASK', 'Creare nuovi task'),
                                                         ('READ_TASK', 'Visualizzare task'),
                                                         ('UPDATE_TASK', 'Modificare task'),
                                                         ('DELETE_TASK', 'Eliminare task');
 
 -- Add permissions for PlanningPokerSession entity
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_PLANNING_POKER_SESSION', 'Creare nuove sessioni di planning poker'),
                                                         ('READ_PLANNING_POKER_SESSION', 'Visualizzare sessioni di planning poker'),
                                                         ('UPDATE_PLANNING_POKER_SESSION', 'Modificare sessioni di planning poker'),
                                                         ('DELETE_PLANNING_POKER_SESSION', 'Eliminare sessioni di planning poker');
 
 -- Add permissions for EstimationVote entity
-INSERT INTO zenflow.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
                                                         ('CREATE_ESTIMATION_VOTE', 'Creare nuovi voti di stima'),
                                                         ('READ_ESTIMATION_VOTE', 'Visualizzare voti di stima'),
                                                         ('UPDATE_ESTIMATION_VOTE', 'Modificare voti di stima'),
                                                         ('DELETE_ESTIMATION_VOTE', 'Eliminare voti di stima');
 
 -- Associate all new permissions with ADMIN role
-INSERT INTO zenflow.role_permissions (role_id, permission_id)
+INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
-FROM zenflow.roles r
-         CROSS JOIN zenflow.permissions p
+FROM roles r
+         CROSS JOIN permissions p
 WHERE r.name = 'ADMIN'
   AND p.name IN ('CREATE_PROJECT', 'READ_PROJECT', 'UPDATE_PROJECT', 'DELETE_PROJECT',
                 'CREATE_USER_STORY', 'READ_USER_STORY', 'UPDATE_USER_STORY', 'DELETE_USER_STORY',
