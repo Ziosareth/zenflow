@@ -1,5 +1,6 @@
 package it.zenflow.controller;
 
+import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.dto.ProjectDTO;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.ProjectRepository;
@@ -8,6 +9,7 @@ import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.rbac.*;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.rbac.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,7 @@ public class ProjectControllerIntegrationTest {
 
     @BeforeEach
     public void setup() {
+        TenantContext.setCurrentTenant("test");
         // Clear existing data
         projectRepository.deleteAll();
         userRepository.deleteAll();
