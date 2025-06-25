@@ -9,7 +9,6 @@ import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.rbac.*;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.rbac.UserService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,7 +162,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "TENANT_test"})
     public void testListProjects() throws Exception {
         mockMvc.perform(get("/projects"))
                 .andExpect(status().isOk())
@@ -178,7 +177,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "TENANT_test"})
     public void testViewProject() throws Exception {
         mockMvc.perform(get("/projects/{id}", testProject.getId()))
                 .andExpect(status().isOk())
@@ -191,7 +190,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teammember", authorities = {"READ_PROJECT"})
+    @WithMockUser(username = "teammember", authorities = {"READ_PROJECT", "TENANT_test"})
     public void testViewProjectAsTeamMember() throws Exception {
         mockMvc.perform(get("/projects/{id}", testProject.getId()))
                 .andExpect(status().isOk())
@@ -204,7 +203,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"CREATE_PROJECT", "TENANT_test"})
     public void testNewProjectForm() throws Exception {
         mockMvc.perform(get("/projects/new"))
                 .andExpect(status().isOk())
@@ -217,7 +216,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"CREATE_PROJECT", "TENANT_test"})
     public void testCreateProject() throws Exception {
         mockMvc.perform(post("/projects/new")
                         .param("name", "New Test Project")
@@ -247,7 +246,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"UPDATE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"UPDATE_PROJECT", "TENANT_test"})
     public void testEditProjectForm() throws Exception {
         mockMvc.perform(get("/projects/{id}/edit", testProject.getId()))
                 .andExpect(status().isOk())
@@ -262,7 +261,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"UPDATE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"UPDATE_PROJECT", "TENANT_test"})
     public void testUpdateProject() throws Exception {
         mockMvc.perform(post("/projects/{id}/edit", testProject.getId())
                         .param("name", "Updated Test Project")
@@ -283,7 +282,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"DELETE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"DELETE_PROJECT", "TENANT_test"})
     public void testDeleteProject() throws Exception {
         mockMvc.perform(post("/projects/{id}/delete", testProject.getId())
                         .with(csrf()))
@@ -296,7 +295,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"DELETE_PROJECT", "ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"DELETE_PROJECT", "ADMIN", "TENANT_test"})
     public void testAdminCanDeleteAnyProject() throws Exception {
         mockMvc.perform(post("/projects/{id}/delete", testProject.getId())
                         .with(csrf()))
@@ -309,7 +308,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teammember", authorities = {"DELETE_PROJECT"})
+    @WithMockUser(username = "teammember", authorities = {"DELETE_PROJECT", "TENANT_test"})
     public void testTeamMemberCannotDeleteProject() throws Exception {
         mockMvc.perform(post("/projects/{id}/delete", testProject.getId())
                         .with(csrf()))
@@ -321,7 +320,7 @@ public class ProjectControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "TENANT_test"})
     public void testMyProjects() throws Exception {
         mockMvc.perform(get("/projects/my"))
                 .andExpect(status().isOk())

@@ -19,47 +19,47 @@ public class UserStoryService {
     private final UserStoryRepository userStoryRepository;
     private final ProjectService projectService;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findAll() {
         return userStoryRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<UserStory> findById(Long id) {
         return userStoryRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<UserStory> findByIdWithTasks(Long id) {
         return userStoryRepository.findByIdWithTasks(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByProject(Project project) {
         return userStoryRepository.findByProject(project);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByProjectId(Long projectId) {
         return userStoryRepository.findByProjectId(projectId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByProjectAndStatus(Project project, StoryStatus status) {
         return userStoryRepository.findByProjectAndStatus(project, status);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByProjectIdAndStatus(Long projectId, StoryStatus status) {
         return userStoryRepository.findByProjectIdAndStatus(projectId, status);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByAssignedTo(User user) {
         return userStoryRepository.findByAssignedTo(user);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public UserStory save(UserStory userStory) {
         // Handle estimation based on the selected estimation type
         if (userStory.getEstimationType() == null) {
@@ -123,7 +123,7 @@ public class UserStoryService {
         return savedUserStory;
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteById(Long id) {
         // Get the user story and its project before deleting
         Optional<UserStory> userStoryOpt = userStoryRepository.findById(id);

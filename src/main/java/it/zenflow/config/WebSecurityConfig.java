@@ -20,12 +20,14 @@ public class WebSecurityConfig {
 
     private final ZenflowUserDetailsService userDetailsService;
     private final ZenFlowAuthenticationHandler authenticationSuccessHandler;
+    private final TenantFilter tenantFilter;
+    private final TenantAuthorizationFilter tenantAuthorizationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .addFilterBefore(new TenantFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new TenantAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(tenantAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/webjars/**", "/css/**", "/js/**", "/images/**", "/change-lang").permitAll()

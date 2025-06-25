@@ -28,38 +28,38 @@ public class EstimationVoteService {
         return estimationVoteRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findBySession(PlanningPokerSession session) {
         return estimationVoteRepository.findBySession(session);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findBySessionId(Long sessionId) {
         return estimationVoteRepository.findBySessionId(sessionId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findByUserStory(UserStory userStory) {
         return estimationVoteRepository.findByUserStory(userStory);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findByUserStoryId(Long userStoryId) {
         return estimationVoteRepository.findByUserStoryId(userStoryId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findByVoter(User voter) {
         return estimationVoteRepository.findByVoter(voter);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<EstimationVote> findBySessionAndUserStoryAndVoter(
             PlanningPokerSession session, UserStory userStory, User voter) {
         return estimationVoteRepository.findBySessionAndUserStoryAndVoter(session, userStory, voter);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public EstimationVote saveVote(Long sessionId, Long userStoryId, User voter, Integer storyPoints, String reasoning) {
         PlanningPokerSession session = planningPokerSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found"));
@@ -94,7 +94,7 @@ public class EstimationVoteService {
         return estimationVoteRepository.save(vote);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteVote(Long voteId) {
         estimationVoteRepository.deleteById(voteId);
     }

@@ -1,9 +1,10 @@
 package it.zenflow.config.multitenant;
 
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -13,11 +14,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@Component
 public class TenantFilter extends OncePerRequestFilter {
 
     private static final String TENANT_HEADER = "X-TenantID";
     private static final String TENANT_QUERY_PARAM = "tenant";
     private static final Pattern PATH_TENANT_PATTERN = Pattern.compile("^/api/v\\d+/([^/]+)/.*");
+
+    @Value("${defaultTenant}")
+    private String defaultTenant;
 
     public TenantFilter() {
     }
@@ -26,12 +31,15 @@ public class TenantFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         HttpServletRequest req = (HttpServletRequest) request;
         String tenantName = extractTenantName(req);
+        if (tenantName == null) {
+            tenantName = defaultTenant;
+        }
         TenantContext.setCurrentTenant(tenantName);
 
         try {
             filterChain.doFilter(request, response);
         } finally {
-            TenantContext.setCurrentTenant("");
+            TenantContext.clear();
         }
     }
 

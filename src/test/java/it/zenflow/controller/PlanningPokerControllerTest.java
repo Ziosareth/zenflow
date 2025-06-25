@@ -90,7 +90,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"READ_PLANNING_POKER_SESSION"})
+    @WithMockUser(username = "testuser", authorities = {"READ_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testListSessions() throws Exception {
         mockMvc.perform(get("/planning-poker"))
                 .andExpect(status().isOk())
@@ -99,7 +99,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"CREATE_PLANNING_POKER_SESSION"})
+    @WithMockUser(username = "testuser", authorities = {"CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testNewSessionForm() throws Exception {
         mockMvc.perform(get("/planning-poker/new")
                         .param("projectId", testProject.getId().toString()))
@@ -109,7 +109,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"CREATE_PLANNING_POKER_SESSION"})
+    @WithMockUser(username = "testuser", authorities = {"CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testCreateSession() throws Exception {
         mockMvc.perform(post("/planning-poker/new")
                         .param("name", "Test Planning Poker Session")
@@ -123,7 +123,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"READ_PLANNING_POKER_SESSION", "CREATE_PLANNING_POKER_SESSION"})
+    @WithMockUser(username = "testuser", authorities = {"READ_PLANNING_POKER_SESSION", "CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testViewSession() throws Exception {
         // Create a session first
         CreatePlanningPokerSessionCommand command = new CreatePlanningPokerSessionCommand();
@@ -143,7 +143,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"UPDATE_PLANNING_POKER_SESSION", "CREATE_PLANNING_POKER_SESSION"})
+    @WithMockUser(username = "testuser", authorities = {"UPDATE_PLANNING_POKER_SESSION", "CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testStartSession() throws Exception {
         // Create a session first
         CreatePlanningPokerSessionCommand command = new CreatePlanningPokerSessionCommand();
@@ -162,7 +162,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"READ_PLANNING_POKER_SESSION", "CREATE_ESTIMATION_VOTE"})
+    @WithMockUser(username = "testuser", authorities = {"READ_PLANNING_POKER_SESSION", "CREATE_ESTIMATION_VOTE", "TENANT_test"})
     public void testVoteForm() throws Exception {
         // Create a session first
         CreatePlanningPokerSessionCommand command = new CreatePlanningPokerSessionCommand();
@@ -185,7 +185,7 @@ public class PlanningPokerControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser", authorities = {"UPDATE_PLANNING_POKER_SESSION", "CREATE_PLANNING_POKER_SESSION"})
+    @WithMockUser(username = "testuser", authorities = {"UPDATE_PLANNING_POKER_SESSION", "CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testCompleteSession() throws Exception {
         // Create a session first
         CreatePlanningPokerSessionCommand command = new CreatePlanningPokerSessionCommand();

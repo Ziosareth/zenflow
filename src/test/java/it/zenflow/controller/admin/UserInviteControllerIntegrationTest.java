@@ -133,7 +133,7 @@ public class UserInviteControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "CREATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "CREATE_USER", "TENANT_test"})
     public void testInviteUserForm() throws Exception {
         mockMvc.perform(get("/admin/users/invite"))
                 .andExpect(status().isOk())
@@ -143,14 +143,14 @@ public class UserInviteControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER"})
+    @WithMockUser(username = "user", authorities = {"READ_USER", "TENANT_test"})
     public void testInviteUserFormAccessDenied() throws Exception {
         mockMvc.perform(get("/admin/users/invite"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "CREATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "CREATE_USER", "TENANT_test"})
     public void testInviteUser() throws Exception {
         String newUsername = "newuser";
         String newEmail = "newuser@example.com";
@@ -183,7 +183,7 @@ public class UserInviteControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER"})
+    @WithMockUser(username = "user", authorities = {"READ_USER", "TENANT_test"})
     public void testInviteUserAccessDenied() throws Exception {
         mockMvc.perform(post("/admin/users/invite")
                         .param("username", "newuser")
@@ -197,7 +197,7 @@ public class UserInviteControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "CREATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "CREATE_USER", "TENANT_test"})
     public void testInviteUserWithMultipleRoles() throws Exception {
         String newUsername = "multiuser";
         String newEmail = "multiuser@example.com";
@@ -258,7 +258,7 @@ public class UserInviteControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "passwordchange", authorities = {"READ_USER"})
+    @WithMockUser(username = "passwordchange", authorities = {"READ_USER", "TENANT_test"})
     public void testPasswordChangeProcess() throws Exception {
         // Create a user that needs to change password
         String username = "passwordchange";

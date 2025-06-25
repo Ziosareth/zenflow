@@ -121,7 +121,7 @@ public class ProjectControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "TENANT_test"})
     public void testProjectListPageInEnglish() throws Exception {
 
         String projectsTitle = messageSource.getMessage("project.list.title", null, Locale.ENGLISH);
@@ -139,7 +139,7 @@ public class ProjectControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "TENANT_test"})
     public void testProjectListPageInItalian() throws Exception {
         LocaleContextHolder.setLocale(Locale.ITALIAN);
         
@@ -157,7 +157,7 @@ public class ProjectControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "UPDATE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "UPDATE_PROJECT", "TENANT_test"})
     public void testProjectDetailPageInEnglish() throws Exception {
 
         String projectDetails = messageSource.getMessage("project.details", null, Locale.ENGLISH);
@@ -175,7 +175,7 @@ public class ProjectControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "UPDATE_PROJECT"})
+    @WithMockUser(username = "user", authorities = {"READ_PROJECT", "UPDATE_PROJECT", "TENANT_test"})
     public void testProjectDetailPageInItalian() throws Exception {
         LocaleContextHolder.setLocale(Locale.ITALIAN);
         

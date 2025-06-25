@@ -49,7 +49,7 @@ public class ProjectController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        Page<Project> projectPage = projectService.findAll(pageable);
+        Page<Project> projectPage = projectService.findAllWithOwners(pageable);
 
         model.addAttribute("projects", projectPage.getContent());
         model.addAttribute("currentPage", projectPage.getNumber());

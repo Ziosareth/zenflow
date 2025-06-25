@@ -204,7 +204,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"READ_USER_STORY", "TENANT_test"})
     public void testListUserStories() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories", testProject.getId()))
                 .andExpect(status().isOk())
@@ -218,7 +218,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"READ_USER_STORY", "TENANT_test"})
     public void testViewUserStory() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories/{id}", testProject.getId(), testUserStory.getId()))
                 .andExpect(status().isOk())
@@ -234,7 +234,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY", "TENANT_test"})
     public void testNewUserStoryForm() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories/new", testProject.getId()))
                 .andExpect(status().isOk())
@@ -248,7 +248,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY", "TENANT_test"})
     public void testCreateUserStory() throws Exception {
         mockMvc.perform(post("/projects/{projectId}/user-stories/new", testProject.getId())
                         .param("title", "New Test User Story")
@@ -282,7 +282,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY", "TENANT_test"})
     public void testEditUserStoryForm() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories/{id}/edit", testProject.getId(), testUserStory.getId()))
                 .andExpect(status().isOk())
@@ -298,7 +298,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY", "TENANT_test"})
     public void testUpdateUserStory() throws Exception {
         mockMvc.perform(post("/projects/{projectId}/user-stories/{id}/edit", testProject.getId(), testUserStory.getId())
                         .param("title", "Updated Test User Story")
@@ -325,7 +325,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"DELETE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"DELETE_USER_STORY", "TENANT_test"})
     public void testDeleteUserStory() throws Exception {
         mockMvc.perform(post("/projects/{projectId}/user-stories/{id}/delete", testProject.getId(), testUserStory.getId())
                         .with(csrf()))
@@ -338,7 +338,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"DELETE_USER_STORY", "ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"DELETE_USER_STORY", "ADMIN", "TENANT_test"})
     public void testAdminCanDeleteAnyUserStory() throws Exception {
         mockMvc.perform(post("/projects/{projectId}/user-stories/{id}/delete", testProject.getId(), testUserStory.getId())
                         .with(csrf()))
@@ -351,7 +351,7 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teammember", authorities = {"DELETE_USER_STORY"})
+    @WithMockUser(username = "teammember", authorities = {"DELETE_USER_STORY", "TENANT_test"})
     public void testTeamMemberCannotDeleteUserStory() throws Exception {
         mockMvc.perform(post("/projects/{projectId}/user-stories/{id}/delete", testProject.getId(), testUserStory.getId())
                         .with(csrf()))
@@ -370,14 +370,14 @@ public class UserStoryControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user")
+    @WithMockUser(username = "user", authorities = {"TENANT_test"})
     public void testAccessWithoutRequiredAuthority() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories", testProject.getId()))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY", "TENANT_test"})
     public void testCreateUserStoryWithPERTEstimation() throws Exception {
         mockMvc.perform(post("/projects/{projectId}/user-stories/new", testProject.getId())
                         .param("title", "PERT Test User Story")

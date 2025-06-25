@@ -66,7 +66,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testListRoles() throws Exception {
         mockMvc.perform(get("/admin/roles"))
                 .andExpect(status().isOk())
@@ -80,7 +80,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testViewRole() throws Exception {
         mockMvc.perform(get("/admin/roles/{id}", testRole.getId()))
                 .andExpect(status().isOk())
@@ -91,7 +91,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testNewRoleForm() throws Exception {
         mockMvc.perform(get("/admin/roles/new"))
                 .andExpect(status().isOk())
@@ -101,7 +101,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testEditRoleForm() throws Exception {
         mockMvc.perform(get("/admin/roles/{id}/edit", testRole.getId()))
                 .andExpect(status().isOk())
@@ -113,7 +113,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testCreateRole() throws Exception {
         mockMvc.perform(post("/admin/roles/new")
                         .param("name", "NEW_TEST_ROLE")
@@ -127,7 +127,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testUpdateRole() throws Exception {
         mockMvc.perform(post("/admin/roles/{id}", testRole.getId())
                         .param("name", "UPDATED_TEST_ROLE")
@@ -141,7 +141,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE"})
+    @WithMockUser(username = "admin", authorities = {"READ_ROLE", "UPDATE_ROLE", "TENANT_test"})
     public void testDeleteRole() throws Exception {
         mockMvc.perform(post("/admin/roles/{id}/delete", testRole.getId())
                         .with(csrf()))
@@ -153,7 +153,7 @@ public class RoleControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {})
+    @WithMockUser(username = "user", authorities = {"TENANT_test"})
     public void testAccessDeniedForNonAdminUser() throws Exception {
         mockMvc.perform(get("/admin/roles"))
                 .andExpect(status().isForbidden());

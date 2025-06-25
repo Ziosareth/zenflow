@@ -1,24 +1,31 @@
 package it.zenflow.config.multitenant;
 
+import it.zenflow.model.master.Tenant;
+import it.zenflow.model.master.TenantRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Properties;
+import javax.sql.DataSource;
+import java.util.List;
 
 @Configuration
 @Profile("!test")
+@RequiredArgsConstructor
+@Slf4j
 public class FlywayMultitenantConfiguration {
 
-    @Value("${flyway.locations:classpath:db/migration}")
+    private final TenantRepository tenantRepository;
+
+    @Value("${flyway.locations:classpath:db/migration/tenant}")
     private String flywayLocations;
 
     @Value("${flyway.baseline-on-migrate:true}")
@@ -29,33 +36,28 @@ public class FlywayMultitenantConfiguration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void migrateTenants() {
-        File[] files = Paths.get("allTenants").toFile().listFiles();
+        List<Tenant> enabledTenants = tenantRepository.findByEnabledTrue();
 
-        if (files == null) {
-            throw new RuntimeException("Directory allTenants not found or empty");
+        if (enabledTenants.isEmpty()) {
+            log.warn("No enabled tenants found for Flyway migration");
+            return;
         }
 
-        for (File propertyFile : files) {
-            if (propertyFile.getName().endsWith(".properties")) {
-                migrateTenant(propertyFile);
-            }
+        log.info("Starting Flyway migration for {} enabled tenants", enabledTenants.size());
+
+        for (Tenant tenant : enabledTenants) {
+            migrateTenant(tenant);
         }
+
+        log.info("Flyway migration completed for all tenants");
     }
 
-    private void migrateTenant(File propertyFile) {
-        Properties tenantProperties = new Properties();
-
+    private void migrateTenant(Tenant tenant) {
         try {
-            tenantProperties.load(new FileInputStream(propertyFile));
-            String tenantId = tenantProperties.getProperty("name");
-            String url = tenantProperties.getProperty("datasource.url");
-            String username = tenantProperties.getProperty("datasource.username");
-            String password = tenantProperties.getProperty("datasource.password");
-
-            System.out.println("Executing Flyway migration for tenant: " + tenantId);
+            log.info("Executing Flyway migration for tenant: {}", tenant.getName());
 
             Flyway flyway = Flyway.configure()
-                    .dataSource(url, username, password)
+                    .dataSource(tenant.getUrl(), tenant.getUsername(), tenant.getPassword())
                     .locations(flywayLocations)
                     .baselineOnMigrate(baselineOnMigrate)
                     .schemas(defaultSchema)
@@ -64,12 +66,11 @@ public class FlywayMultitenantConfiguration {
 
             flyway.migrate();
 
-            System.out.println("Migration completed successfully for tenant: " + tenantId);
+            log.info("Migration completed successfully for tenant: {}", tenant.getName());
 
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading tenant properties file: " + propertyFile.getName(), e);
         } catch (Exception e) {
-            throw new RuntimeException("Error executing Flyway migration for tenant from file: " + propertyFile.getName(), e);
+            log.error("Error executing Flyway migration for tenant: {}", tenant.getName(), e);
+            throw new RuntimeException("Error executing Flyway migration for tenant: " + tenant.getName(), e);
         }
     }
 }

@@ -25,52 +25,52 @@ public class PlanningPokerSessionService {
     private final UserService userService;
     private final ProjectService projectService;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findAll() {
         return planningPokerSessionRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<PlanningPokerSession> findById(Long id) {
         return planningPokerSessionRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<PlanningPokerSession> findByIdWithParticipants(Long id) {
         return planningPokerSessionRepository.findByIdWithParticipants(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<PlanningPokerSession> findByIdWithVotes(Long id) {
         return planningPokerSessionRepository.findByIdWithVotes(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<PlanningPokerSession> findByIdWithParticipantsAndVotes(Long id) {
         return planningPokerSessionRepository.findByIdWithParticipantsAndVotes(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findByProject(Project project) {
         return planningPokerSessionRepository.findByProject(project);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findByProjectId(Long projectId) {
         return planningPokerSessionRepository.findByProjectId(projectId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findByFacilitator(User facilitator) {
         return planningPokerSessionRepository.findByFacilitator(facilitator);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findByStatus(SessionStatus status) {
         return planningPokerSessionRepository.findByStatus(status);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PlanningPokerSession createSession(CreatePlanningPokerSessionCommand command, User facilitator) {
         Project project = projectService.findById(command.getProjectId())
             .orElseThrow(() -> new EntityNotFoundException("Project not found"));
@@ -100,7 +100,7 @@ public class PlanningPokerSessionService {
         return planningPokerSessionRepository.save(session);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PlanningPokerSession startSession(Long sessionId) {
         PlanningPokerSession session = planningPokerSessionRepository.findById(sessionId)
             .orElseThrow(() -> new EntityNotFoundException("Session not found"));
@@ -113,7 +113,7 @@ public class PlanningPokerSessionService {
         return planningPokerSessionRepository.save(session);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PlanningPokerSession completeSession(Long sessionId) {
         PlanningPokerSession session = planningPokerSessionRepository.findByIdWithVotes(sessionId)
             .orElseThrow(() -> new EntityNotFoundException("Session not found"));
@@ -129,7 +129,7 @@ public class PlanningPokerSessionService {
         return planningPokerSessionRepository.save(session);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PlanningPokerSession cancelSession(Long sessionId) {
         PlanningPokerSession session = planningPokerSessionRepository.findById(sessionId)
             .orElseThrow(() -> new EntityNotFoundException("Session not found"));
@@ -138,7 +138,7 @@ public class PlanningPokerSessionService {
         return planningPokerSessionRepository.save(session);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteSession(Long sessionId) {
         planningPokerSessionRepository.deleteById(sessionId);
     }

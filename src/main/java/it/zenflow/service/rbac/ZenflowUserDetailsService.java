@@ -49,7 +49,7 @@ public class ZenflowUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // Ottieni il tenant corrente dal context
         String currentTenant = TenantContext.getCurrentTenant();

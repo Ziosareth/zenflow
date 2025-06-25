@@ -93,7 +93,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testUserListPageInEnglish() throws Exception {
         // Set locale to English using the lang parameter
         mockMvc.perform(get("/admin/users")
@@ -109,7 +109,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testUserListPageInItalian() throws Exception {
         // Set locale to Italian
         LocaleContextHolder.setLocale(Locale.ITALIAN);
@@ -126,7 +126,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testUserDetailPageInEnglish() throws Exception {
         mockMvc.perform(get("/admin/users/{id}", testUser.getId())
                 .locale(Locale.ENGLISH))
@@ -138,7 +138,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testUserDetailPageInItalian() throws Exception {
         // Set locale to Italian
         LocaleContextHolder.setLocale(Locale.ITALIAN);
@@ -152,7 +152,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testFlashMessagesInEnglish() throws Exception {
         // Toggle user status
         mockMvc.perform(post("/admin/users/{id}/toggle-status", testUser.getId())
@@ -170,7 +170,7 @@ public class UserControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testFlashMessagesInItalian() throws Exception {
         // Set locale to Italian
         LocaleContextHolder.setLocale(Locale.ITALIAN);

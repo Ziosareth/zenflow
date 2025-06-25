@@ -1,57 +1,53 @@
 package it.zenflow.config.multitenant;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
 import javax.sql.DataSource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.Optional;
 
+@Profile("!test")
 @Configuration
+@RequiredArgsConstructor
 public class MultitenantConfiguration {
 
-    @Value("${defaultTenant}")
-    private String defaultTenant;
+    private final TenantDataSourcePool pool;      // iniettato
+    @Value("${defaultTenant:default}")
+    private String defaultTenant;                 // fallback
 
+    /**
+     * DataSource usato da Hibernate/Spring Data per *tutti* gli accessi
+     * applicativi; instrada verso il pool corretto in base al TenantContext.
+     */
     @Bean
-    @ConfigurationProperties(prefix = "tenants")
-    public DataSource dataSource() {
-        File[] files = Paths.get("allTenants").toFile().listFiles();
-        Map<Object, Object> resolvedDataSources = new HashMap<>();
+    public DataSource routingDataSource() {
 
-        for (File propertyFile : files) {
-            Properties tenantProperties = new Properties();
-            DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+        return new AbstractRoutingDataSource() {
 
-            try {
-                tenantProperties.load(new FileInputStream(propertyFile));
-                String tenantId = tenantProperties.getProperty("name");
-
-                dataSourceBuilder.driverClassName(tenantProperties.getProperty("datasource.driver-class-name"));
-                dataSourceBuilder.username(tenantProperties.getProperty("datasource.username"));
-                dataSourceBuilder.password(tenantProperties.getProperty("datasource.password"));
-                dataSourceBuilder.url(tenantProperties.getProperty("datasource.url"));
-                resolvedDataSources.put(tenantId, dataSourceBuilder.build());
-            } catch (IOException exp) {
-                throw new RuntimeException("Problem in tenant datasource:" + exp);
+            /** Chiave di routing → nome tenant */
+            @Override
+            protected Object determineCurrentLookupKey() {
+                return Optional.ofNullable(TenantContext.getCurrentTenant())
+                        .orElse(defaultTenant);
             }
-        }
 
-        AbstractRoutingDataSource dataSource = new MultitenantDataSource();
-        dataSource.setDefaultTargetDataSource(resolvedDataSources.get(defaultTenant));
-        dataSource.setTargetDataSources(resolvedDataSources);
+            /**
+             * Restituisce (o crea in cache) il DataSource del tenant.
+             * Non serve pre-popolare la mappa con setTargetDataSources().
+             */
+            @Override
+            protected DataSource determineTargetDataSource() {
+                String tenantName = (String) determineCurrentLookupKey();
+                return pool.getOrCreate(tenantName);       // lookup dinamico
+            }
 
-        dataSource.afterPropertiesSet();
-        return dataSource;
+            /** disabilitiamo il lenientFallback “nativo” */
+            @Override
+            public void afterPropertiesSet() { /* no-op */ }
+        };
     }
-
 }

@@ -16,32 +16,32 @@ import java.util.Optional;
 public class RoleService {
     private final RoleRepository roleRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<Role> findAll() {
         return roleRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Page<Role> findAll(Pageable pageable) {
         return roleRepository.findAll(pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<Role> findById(Long id) {
         return roleRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<Role> findByName(String name) {
         return roleRepository.findByName(name);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public Role save(Role role) {
         return roleRepository.save(role);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteById(Long id) {
         roleRepository.deleteById(id);
     }

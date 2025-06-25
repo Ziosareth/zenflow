@@ -126,7 +126,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testListUsers() throws Exception {
         mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isOk())
@@ -143,7 +143,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "TENANT_test"})
     public void testViewUser() throws Exception {
         mockMvc.perform(get("/admin/users/{id}", regularUser.getId()))
                 .andExpect(status().isOk())
@@ -155,7 +155,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "TENANT_test"})
     public void testViewNonExistentUser() throws Exception {
         mockMvc.perform(get("/admin/users/999"))
                 .andExpect(status().is3xxRedirection())
@@ -163,7 +163,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "TENANT_test"})
     public void testEditUserForm() throws Exception {
         mockMvc.perform(get("/admin/users/{id}/edit", regularUser.getId()))
                 .andExpect(status().isOk())
@@ -176,7 +176,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testUpdateUser() throws Exception {
         mockMvc.perform(post("/admin/users/{id}", regularUser.getId())
                         .param("username", "updateduser")
@@ -200,7 +200,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "admin", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testToggleUserStatus() throws Exception {
         // Initially the user is enabled
         assert regularUser.isEnabled();
@@ -228,14 +228,14 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {})
+    @WithMockUser(username = "user", authorities = {"TENANT_test"})
     public void testAccessDeniedForNonAdminUser() throws Exception {
         mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = "techlead", authorities = {"READ_USER"})
+    @WithMockUser(username = "techlead", authorities = {"READ_USER", "TENANT_test"})
     public void testAccessAllowedForTechleadUser() throws Exception {
         mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isOk())
@@ -249,7 +249,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "techlead", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "techlead", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testTechleadCanEditUser() throws Exception {
         mockMvc.perform(post("/admin/users/{id}", regularUser.getId())
                         .param("username", "updatedByTechlead")
@@ -268,7 +268,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "techlead", authorities = {"READ_USER", "UPDATE_USER"})
+    @WithMockUser(username = "techlead", authorities = {"READ_USER", "UPDATE_USER", "TENANT_test"})
     public void testTechleadCanToggleUserStatus() throws Exception {
         // Initially the user is enabled
         assert regularUser.isEnabled();

@@ -164,7 +164,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"READ_USER_STORY", "TENANT_test"})
     public void testUserStoryListPageInEnglish() throws Exception {
         // Get localized messages for English
         String userStoriesTitle = messageSource.getMessage("userstory.list", null, Locale.ENGLISH);
@@ -177,7 +177,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"READ_USER_STORY", "TENANT_test"})
     public void testUserStoryListPageInItalian() throws Exception {
         LocaleContextHolder.setLocale(Locale.ITALIAN);
 
@@ -192,7 +192,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"READ_USER_STORY", "TENANT_test"})
     public void testUserStoryDetailPageInEnglish() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories/{id}", testProject.getId(), testUserStory.getId())
                         .param("lang", "en"))
@@ -202,7 +202,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"READ_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"READ_USER_STORY", "TENANT_test"})
     public void testUserStoryDetailPageInItalian() throws Exception {
         LocaleContextHolder.setLocale(Locale.ITALIAN);
 
@@ -214,7 +214,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY", "TENANT_test"})
     public void testUserStoryFormPageInEnglish() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories/new", testProject.getId())
                         .param("lang", "en"))
@@ -223,7 +223,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"CREATE_USER_STORY", "TENANT_test"})
     public void testUserStoryFormPageInItalian() throws Exception {
         LocaleContextHolder.setLocale(Locale.ITALIAN);
 
@@ -234,7 +234,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY", "TENANT_test"})
     public void testUserStoryEditFormPageInEnglish() throws Exception {
         mockMvc.perform(get("/projects/{projectId}/user-stories/{id}/edit", testProject.getId(), testUserStory.getId())
                         .param("lang", "en"))
@@ -243,7 +243,7 @@ public class UserStoryControllerI18nIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY"})
+    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY", "TENANT_test"})
     public void testUserStoryEditFormPageInItalian() throws Exception {
         LocaleContextHolder.setLocale(Locale.ITALIAN);
 

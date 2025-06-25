@@ -27,52 +27,52 @@ public class UserService {
     private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<User> findAll() {
         return userRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Page<User> findAll(Pageable pageable) {
         return userRepository.findAll(pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public User save(User user) {
         return userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteById(Long id) {
         userRepository.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public User inviteUser(String username, String email, Set<Role> roles, Locale locale) {
         // Generate a random password
         String temporaryPassword = generateRandomPassword();
@@ -99,7 +99,7 @@ public class UserService {
         return RandomStringUtils.secure().nextAlphanumeric(12);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void createPasswordResetToken(String email, Locale locale) {
         userRepository.findByEmail(email).ifPresent(user -> {
             String token = generateSecureToken();
@@ -110,14 +110,14 @@ public class UserService {
         });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public boolean validateResetToken(String token) {
         return userRepository.findByResetToken(token)
             .filter(user -> user.getResetTokenExpiry().isAfter(LocalDateTime.now()))
             .isPresent();
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void resetPassword(String token, String newPassword) {
         userRepository.findByResetToken(token)
             .filter(user -> user.getResetTokenExpiry().isAfter(LocalDateTime.now()))

@@ -20,12 +20,12 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final MessageSource messageSource;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<Permission> findAll() {
         return permissionRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Map<String, List<Permission>> findAllGroupedByCategory() {
         return permissionRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
@@ -33,22 +33,22 @@ public class PermissionService {
                 ));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<Permission> findById(Long id) {
         return permissionRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<Permission> findByName(String name) {
         return permissionRepository.findByName(name);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public Permission save(Permission permission) {
         return permissionRepository.save(permission);
     }
 
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteById(Long id) {
         permissionRepository.deleteById(id);
     }
