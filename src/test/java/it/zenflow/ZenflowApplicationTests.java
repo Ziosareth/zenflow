@@ -10,4 +10,11 @@ class ZenflowApplicationTests {
 	@Test
 	void contextLoads() {
 	}
+
+	@Test
+	void testBCryptPasswordEncoder() {
+		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+		String encoded = encoder.encode("password");
+		System.out.println(encoded);
+	}
 }

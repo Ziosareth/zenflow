@@ -43,6 +43,15 @@ public class TenantFilter extends OncePerRequestFilter {
         }
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/master/")
+                || request.getRequestURI().startsWith("/webjars/")
+                || request.getRequestURI().startsWith("/css/")
+                || request.getRequestURI().startsWith("/js/")
+                || request.getRequestURI().endsWith(".ico");
+    }
+
     private String extractTenantName(HttpServletRequest request) {
         // Priority 1: Header X-TenantID
         String tenantName = request.getHeader(TENANT_HEADER);

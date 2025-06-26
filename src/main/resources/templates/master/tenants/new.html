@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenFlow Master - Nuovo Tenant</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/master/css/master-style.css}">
+</head>
+<body>
+    <!-- Master Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">ZenFlow Master</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#masterNavbar"
+                    aria-controls="masterNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="masterNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/master/dashboard}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" th:href="@{/master/tenants}">Gestione Tenant</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <form th:action="@{/master/logout}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-outline-light">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Nuovo Tenant</h1>
+            <div>
+                <a th:href="@{/master/tenants}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Torna alla Lista
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Crea Nuovo Tenant</h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/master/tenants}" method="post" th:object="${tenant}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        <div class="text-danger" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL</label>
+                        <input type="text" class="form-control" id="url" th:field="*{url}" 
+                               placeholder="jdbc:postgresql://localhost:5432/nome_tenant" required>
+                        <div class="text-danger" th:if="${#fields.hasErrors('url')}" th:errors="*{url}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" th:field="*{username}" required>
+                        <div class="text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" th:field="*{password}" required>
+                        <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="driver" class="form-label">Driver</label>
+                        <input type="text" class="form-control" id="driver" th:field="*{driver}" 
+                               placeholder="org.postgresql.Driver">
+                        <div class="text-danger" th:if="${#fields.hasErrors('driver')}" th:errors="*{driver}"></div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enabled" th:field="*{enabled}">
+                        <label class="form-check-label" for="enabled">Abilitato</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Crea Tenant</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

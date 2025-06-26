@@ -47,7 +47,9 @@ public class TenantAuthorizationFilter extends OncePerRequestFilter {
         return request.getRequestURI().startsWith("/webjars/")
                 || request.getRequestURI().startsWith("/css/")
                 || request.getRequestURI().startsWith("/js/")
-                || request.getRequestURI().endsWith(".ico");
+                || request.getRequestURI().endsWith(".ico")
+                || request.getRequestURI().startsWith("/master/")  // Add this line
+                ;
     }
 
     private String extractTenantFromAuthorities(UserDetails userDetails) {
