@@ -47,7 +47,7 @@ public class MasterSecurityConfig {
             .formLogin(form -> form
                 .loginPage("/master/login")
                 .loginProcessingUrl("/master/login")
-                .defaultSuccessUrl("/master/dashboard")
+                .defaultSuccessUrl("/master/dashboard", true)
                 .permitAll()
             )
             .logout(logout -> logout
