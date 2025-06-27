@@ -24,11 +24,9 @@ public class MasterSecurityConfig {
 
     @Bean
     public UserDetailsService masterUserDetailsService() {
-        // For simplicity, we use an in-memory user
-        // In production, this should be replaced with a user repository
         InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
         manager.createUser(User.withUsername("admin")
-                .password("$2a$10$CaRdS0qzQVo8Qe7CM.DZIeGUTlPHeYefedawhUjcre5fas7BLKpnS") // Using {noop} prefix to indicate no encoding
+                .password("$2a$10$CaRdS0qzQVo8Qe7CM.DZIeGUTlPHeYefedawhUjcre5fas7BLKpnS")
                 .roles("MASTER_ADMIN")
                 .build());
         return manager;
