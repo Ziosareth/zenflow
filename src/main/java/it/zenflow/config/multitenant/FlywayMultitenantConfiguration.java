@@ -5,13 +5,12 @@ import it.zenflow.model.master.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 
 import javax.sql.DataSource;
@@ -21,9 +20,10 @@ import java.util.List;
 @Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
-public class FlywayMultitenantConfiguration {
+public class FlywayMultitenantConfiguration implements DisposableBean {
 
     private final TenantRepository tenantRepository;
+    private final TenantDataSourcePool tenantDataSourcePool;
 
     @Value("${flyway.locations:classpath:db/migration/tenant}")
     private String flywayLocations;
@@ -56,8 +56,11 @@ public class FlywayMultitenantConfiguration {
         try {
             log.info("Executing Flyway migration for tenant: {}", tenant.getName());
 
+            // Use the shared connection pool instead of creating a new connection
+            DataSource dataSource = tenantDataSourcePool.getOrCreate(tenant.getName());
+
             Flyway flyway = Flyway.configure()
-                    .dataSource(tenant.getUrl(), tenant.getUsername(), tenant.getPassword())
+                    .dataSource(dataSource)
                     .locations(flywayLocations)
                     .baselineOnMigrate(baselineOnMigrate)
                     .schemas(defaultSchema)
@@ -72,5 +75,21 @@ public class FlywayMultitenantConfiguration {
             log.error("Error executing Flyway migration for tenant: {}", tenant.getName(), e);
             throw new RuntimeException("Error executing Flyway migration for tenant: " + tenant.getName(), e);
         }
+    }
+
+    /**
+     * Handle application shutdown event
+     * This is an additional safety measure to ensure connections are closed
+     */
+    @EventListener(ContextClosedEvent.class)
+    public void onApplicationShutdown() {
+        log.info("Application shutdown event received, ensuring all connections are closed");
+        // No specific action needed here as the TenantDataSourcePool will handle cleanup via DisposableBean
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        // No specific cleanup needed here as the TenantDataSourcePool manages the lifecycle of DataSources
+        log.info("FlywayMultitenantConfiguration is being destroyed");
     }
 }

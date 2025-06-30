@@ -2,6 +2,8 @@ package it.zenflow.config.multitenant;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
@@ -22,7 +24,10 @@ import java.util.Properties;
     entityManagerFactoryRef = "masterEntityManagerFactory",
     transactionManagerRef = "masterTransactionManager"
 )
-public class MasterDatabaseConfiguration {
+@Slf4j
+public class MasterDatabaseConfiguration implements DisposableBean {
+
+    private HikariDataSource masterDataSourceInstance;
 
     @Value("${master.datasource.url:jdbc:postgresql://localhost:5432/zenflow}")
     private String masterUrl;
@@ -46,9 +51,34 @@ public class MasterDatabaseConfiguration {
         config.setPassword(masterPassword);
         config.setDriverClassName(masterDriverClassName);
         config.setPoolName("master-db-pool");
-        config.setMaximumPoolSize(10);
-        config.setMinimumIdle(2);
-        return new HikariDataSource(config);
+
+        // Configure connection pool settings to prevent leaks
+        config.setMaximumPoolSize(5);
+        config.setMinimumIdle(1);
+        config.setIdleTimeout(30000); // 30 seconds
+        config.setMaxLifetime(60000); // 60 seconds
+        config.setConnectionTimeout(5000); // 5 seconds
+        config.setLeakDetectionThreshold(60000); // 60 seconds
+        config.setAutoCommit(true);
+
+        log.info("Creating master datasource");
+        masterDataSourceInstance = new HikariDataSource(config);
+
+        return masterDataSourceInstance;
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (masterDataSourceInstance != null) {
+            log.info("Closing master datasource");
+            try {
+                masterDataSourceInstance.close();
+
+            } catch (Exception e) {
+                log.error("Error closing master datasource", e);
+            }
+            log.info("Master datasource closed");
+        }
     }
 
     @Bean(name = "masterEntityManagerFactory")
@@ -56,10 +86,10 @@ public class MasterDatabaseConfiguration {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(masterDataSource());
         em.setPackagesToScan("it.zenflow.model.master");
-        
+
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
-        
+
         Properties properties = new Properties();
         properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         properties.setProperty("hibernate.hbm2ddl.auto", "none");
@@ -67,7 +97,7 @@ public class MasterDatabaseConfiguration {
         properties.setProperty("hibernate.default_schema", "zenflow"); // Add this line
         em.setJpaProperties(properties);
         em.setJpaProperties(properties);
-        
+
         return em;
     }
 
