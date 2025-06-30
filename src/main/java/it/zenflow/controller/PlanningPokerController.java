@@ -275,8 +275,8 @@ public class PlanningPokerController {
         return planningPokerSessionService.findById(id)
                 .map(session -> {
                     // Only facilitator can delete the session
-                    if (!session.getFacilitator().getId().equals(currentUser.getId()) && 
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                    if (!session.getFacilitator().getId().equals(currentUser.getId()) &&
+                            userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
                         String errorMessage = messageSource.getMessage(
                                 "planningpoker.error.not.facilitator", 
                                 null, 

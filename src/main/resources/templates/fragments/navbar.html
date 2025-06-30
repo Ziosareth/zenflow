@@ -38,7 +38,7 @@
             <a class="nav-link" th:href="@{/settings}" th:text="#{navbar.settings}"></a>
           </li>
           <!-- Admin dropdown menu -->
-          <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN', 'TECHLEAD')">
+          <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN')">
             <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" 
                data-bs-toggle="dropdown" aria-expanded="false" th:text="#{navbar.admin}">
 
