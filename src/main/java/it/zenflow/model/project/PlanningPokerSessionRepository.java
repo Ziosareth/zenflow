@@ -13,22 +13,30 @@ import java.util.Optional;
 @Repository
 public interface PlanningPokerSessionRepository extends JpaRepository<PlanningPokerSession, Long> {
 
-    List<PlanningPokerSession> findByProject(Project project);
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants")
+    List<PlanningPokerSession> findAll();
 
-    List<PlanningPokerSession> findByProjectId(Long projectId);
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.project = :project")
+    List<PlanningPokerSession> findByProject(@Param("project") Project project);
 
-    List<PlanningPokerSession> findByFacilitator(User facilitator);
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.project.id = :projectId")
+    List<PlanningPokerSession> findByProjectId(@Param("projectId") Long projectId);
 
-    List<PlanningPokerSession> findByStatus(SessionStatus status);
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.facilitator = :facilitator")
+    List<PlanningPokerSession> findByFacilitator(@Param("facilitator") User facilitator);
 
-    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.participants WHERE s.id = :id")
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.status = :status")
+    List<PlanningPokerSession> findByStatus(@Param("status") SessionStatus status);
+
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.id = :id")
     Optional<PlanningPokerSession> findByIdWithParticipants(@Param("id") Long id);
 
-    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.votes WHERE s.id = :id")
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants LEFT JOIN FETCH s.votes WHERE s.id = :id")
     Optional<PlanningPokerSession> findByIdWithVotes(@Param("id") Long id);
 
-    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants LEFT JOIN FETCH s.votes WHERE s.id = :id")
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants LEFT JOIN FETCH s.votes LEFT JOIN FETCH s.project LEFT JOIN FETCH s.userStory WHERE s.id = :id")
     Optional<PlanningPokerSession> findByIdWithParticipantsAndVotes(@Param("id") Long id);
 
-    List<PlanningPokerSession> findByUserStory(UserStory userStory);
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.userStory = :userStory")
+    List<PlanningPokerSession> findByUserStory(@Param("userStory") UserStory userStory);
 }

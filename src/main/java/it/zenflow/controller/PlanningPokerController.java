@@ -132,7 +132,7 @@ public class PlanningPokerController {
         return planningPokerSessionService.findByIdWithParticipantsAndVotes(id)
                 .map(session -> {
                     Project project = session.getProject();
-                    List<EstimationVote> votes = estimationVoteService.findBySessionId(id);
+                    List<EstimationVote> votes = estimationVoteService.findBySessionIdWithVoter(id);
 
                     model.addAttribute("pokerSession", session);
                     model.addAttribute("project", project);
@@ -310,7 +310,7 @@ public class PlanningPokerController {
 
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findById(id)
+        return planningPokerSessionService.findByIdWithParticipants(id)
                 .map(session -> userStoryService.findById(userStoryId)
                         .map(userStory -> {
                             // Check if user is a participant
@@ -361,7 +361,7 @@ public class PlanningPokerController {
 
         if (bindingResult.hasErrors()) {
             User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-            PlanningPokerSession session = planningPokerSessionService.findById(id).orElseThrow();
+            PlanningPokerSession session = planningPokerSessionService.findByIdWithParticipants(id).orElseThrow();
             UserStory userStory = userStoryService.findById(userStoryId).orElseThrow();
 
             model.addAttribute("session", session);

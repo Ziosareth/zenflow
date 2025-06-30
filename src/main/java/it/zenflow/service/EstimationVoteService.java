@@ -39,6 +39,11 @@ public class EstimationVoteService {
     }
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public List<EstimationVote> findBySessionIdWithVoter(Long sessionId) {
+        return estimationVoteRepository.findBySessionIdWithVoter(sessionId);
+    }
+
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findByUserStory(UserStory userStory) {
         return estimationVoteRepository.findByUserStory(userStory);
     }

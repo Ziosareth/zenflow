@@ -104,7 +104,7 @@ public class UserStoryServiceTest {
     @Test
     public void testFindByProject() {
         // Arrange
-        when(userStoryRepository.findByProject(project)).thenReturn(Arrays.asList(userStory1, userStory2));
+        when(userStoryRepository.findByProjectWithAssignedUser(project)).thenReturn(Arrays.asList(userStory1, userStory2));
 
         // Act
         List<UserStory> result = userStoryService.findByProject(project);
@@ -112,7 +112,7 @@ public class UserStoryServiceTest {
         // Assert
         assertThat(result).hasSize(2);
         assertThat(result).contains(userStory1, userStory2);
-        verify(userStoryRepository, times(1)).findByProject(project);
+        verify(userStoryRepository, times(1)).findByProjectWithAssignedUser(project);
     }
 
     @Test

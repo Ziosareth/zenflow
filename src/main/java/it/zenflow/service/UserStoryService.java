@@ -36,7 +36,7 @@ public class UserStoryService {
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByProject(Project project) {
-        return userStoryRepository.findByProject(project);
+        return userStoryRepository.findByProjectWithAssignedUser(project);
     }
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")

@@ -15,6 +15,9 @@ public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
 
     List<UserStory> findByProject(Project project);
 
+    @Query("SELECT us FROM UserStory us LEFT JOIN FETCH us.assignedTo WHERE us.project = :project")
+    List<UserStory> findByProjectWithAssignedUser(@Param("project") Project project);
+
     List<UserStory> findByProjectAndStatus(Project project, StoryStatus status);
 
     List<UserStory> findByAssignedTo(User user);
