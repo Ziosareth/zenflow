@@ -435,9 +435,280 @@ L'approccio ai test include:
 - **Test di sicurezza**: Verifica delle regole di autorizzazione e autenticazione
 - **Test end-to-end**: Simulazione di scenari utente completi
 
-## 6. Discussione e considerazioni
+## 6. Architettura Multi-tenant
 
-### 6.1 Problemi incontrati
+### 6.1 Introduzione al Multi-tenancy
+ZenFlow implementa un'architettura multi-tenant che permette di servire più organizzazioni (tenant) dalla stessa istanza dell'applicazione, mantenendo i dati di ciascun tenant completamente isolati. Questo approccio offre numerosi vantaggi:
+
+- **Isolamento dei dati**: Ogni tenant ha il proprio database separato, garantendo la massima sicurezza e privacy
+- **Personalizzazione**: Ogni tenant può avere configurazioni specifiche senza impattare gli altri
+- **Scalabilità**: Possibilità di scalare singoli tenant in base alle loro esigenze
+- **Manutenzione semplificata**: Una singola istanza dell'applicazione da mantenere e aggiornare
+
+L'implementazione adotta il pattern "database-per-tenant", dove ogni organizzazione ha un database PostgreSQL dedicato, mentre un database "master" centrale gestisce le informazioni sui tenant e le loro connessioni.
+
+### 6.2 Componenti dell'architettura multi-tenant
+
+#### 6.2.1 Database Master
+Il database master contiene una tabella `tenants` che memorizza le informazioni di connessione per ciascun tenant:
+
+```java
+@Entity
+@Table(name = "tenants")
+public class Tenant {
+    @Id
+    @Column(name = "name", nullable = false, unique = true)
+    private String name;
+    private String url;
+    private String username;
+    private String password;
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'org.postgresql.Driver'")
+    private String driver;
+    private boolean enabled;
+}
+```
+
+Questa entità contiene tutte le informazioni necessarie per connettersi al database specifico del tenant:
+- `name`: Identificatore univoco del tenant
+- `url`: URL di connessione JDBC al database del tenant
+- `username` e `password`: Credenziali di accesso
+- `driver`: Driver JDBC da utilizzare (default: PostgreSQL)
+- `enabled`: Flag che indica se il tenant è attivo
+
+#### 6.2.2 TenantContext
+Il `TenantContext` è una classe utility che utilizza un `ThreadLocal` per memorizzare l'identificativo del tenant corrente durante l'elaborazione di una richiesta:
+
+```java
+public class TenantContext {
+    private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
+
+    public static String getCurrentTenant() {
+        return CURRENT_TENANT.get();
+    }
+
+    public static void setCurrentTenant(String tenant) {
+        CURRENT_TENANT.set(tenant);
+    }
+
+    public static void clear() {
+        CURRENT_TENANT.remove();
+    }
+}
+```
+
+Questo approccio garantisce che:
+- Ogni thread ha il proprio contesto tenant isolato
+- L'ID del tenant è accessibile in qualsiasi punto dell'applicazione senza doverlo passare come parametro
+- Il contesto viene pulito al termine della richiesta per prevenire memory leak
+
+#### 6.2.3 TenantFilter
+Il `TenantFilter` è un filtro servlet che intercetta le richieste HTTP in ingresso e determina a quale tenant appartengono:
+
+```java
+@Component
+public class TenantFilter extends OncePerRequestFilter {
+    // ...
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
+                                   FilterChain filterChain) throws ServletException, IOException {
+        String tenantName = extractTenantName(request);
+        if (tenantName == null) {
+            tenantName = defaultTenant;
+        }
+        TenantContext.setCurrentTenant(tenantName);
+
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+    // ...
+}
+```
+
+Il filtro estrae l'identificativo del tenant da diverse fonti, in ordine di priorità:
+1. Header HTTP `X-TenantID`
+2. Parametro query `tenant`
+3. Segmento del path nelle API REST (es. `/api/v1/{tenant}/...`)
+4. Sottodominio (es. `tenant1.example.com`)
+
+Se nessun tenant viene identificato, viene utilizzato un tenant di default configurato nell'applicazione.
+
+#### 6.2.4 Routing dinamico dei DataSource
+La classe `MultitenantConfiguration` configura un `AbstractRoutingDataSource` che seleziona dinamicamente il DataSource appropriato in base al tenant corrente:
+
+```java
+@Configuration
+public class MultitenantConfiguration {
+    // ...
+    @Bean
+    public DataSource routingDataSource() {
+        return new AbstractRoutingDataSource() {
+            @Override
+            protected Object determineCurrentLookupKey() {
+                return Optional.ofNullable(TenantContext.getCurrentTenant())
+                        .orElse(defaultTenant);
+            }
+
+            @Override
+            protected DataSource determineTargetDataSource() {
+                String tenantName = (String) determineCurrentLookupKey();
+                return pool.getOrCreate(tenantName);
+            }
+            // ...
+        };
+    }
+}
+```
+
+Questo componente:
+- Utilizza il `TenantContext` per determinare il tenant corrente
+- Ottiene o crea il DataSource appropriato dal pool
+- Instrada automaticamente tutte le operazioni database al DataSource corretto
+
+#### 6.2.5 Pool di DataSource
+La classe `TenantDataSourcePool` gestisce i DataSource per ciascun tenant:
+
+```java
+@Component
+public class TenantDataSourcePool implements DisposableBean {
+    private final TenantRepository repo;
+    private final Map<String, DataSource> cache = new ConcurrentHashMap<>();
+
+    public DataSource getOrCreate(String tenantName) {
+        return cache.computeIfAbsent(tenantName, name -> repo.findById(name)
+            .map(this::build)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant " + name + " not found")));
+    }
+    // ...
+}
+```
+
+Questo componente:
+- Mantiene una cache di DataSource, uno per ogni tenant
+- Crea DataSource on-demand quando un tenant viene acceduto per la prima volta
+- Configura il connection pooling con HikariCP per prestazioni ottimali
+- Implementa `DisposableBean` per chiudere correttamente tutti i DataSource quando l'applicazione si spegne
+
+#### 6.2.6 Migrazioni database con Flyway
+La classe `FlywayMultitenantConfiguration` gestisce le migrazioni del database per ciascun tenant:
+
+```java
+@Configuration
+public class FlywayMultitenantConfiguration implements DisposableBean {
+    // ...
+    @EventListener(ApplicationReadyEvent.class)
+    public void migrateTenants() {
+        List<Tenant> enabledTenants = tenantRepository.findByEnabledTrue();
+        // ...
+        for (Tenant tenant : enabledTenants) {
+            migrateTenant(tenant);
+        }
+        // ...
+    }
+
+    private void migrateTenant(Tenant tenant) {
+        // ...
+        DataSource dataSource = tenantDataSourcePool.getOrCreate(tenant.getName());
+        Flyway flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .locations(flywayLocations)
+                .baselineOnMigrate(baselineOnMigrate)
+                .schemas(defaultSchema)
+                .defaultSchema(defaultSchema)
+                .load();
+        flyway.migrate();
+        // ...
+    }
+    // ...
+}
+```
+
+Questo componente:
+- Si attiva quando l'applicazione è pronta (evento `ApplicationReadyEvent`)
+- Recupera tutti i tenant abilitati dal database master
+- Per ciascun tenant, esegue le migrazioni Flyway per aggiornare lo schema del database
+- Utilizza lo stesso pool di DataSource per evitare di creare connessioni duplicate
+
+### 6.3 Transazioni e persistenza multi-tenant
+Tutti i service dell'applicazione utilizzano transazioni specifiche per tenant:
+
+```java
+@Service
+public class UserStoryService {
+    // ...
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Optional<UserStory> findById(Long id) {
+        return userStoryRepository.findById(id);
+    }
+
+    @Transactional(transactionManager = "tenantTransactionManager")
+    public UserStory save(UserStory userStory) {
+        // ...
+    }
+    // ...
+}
+```
+
+L'annotazione `@Transactional` specifica esplicitamente `tenantTransactionManager` per garantire che:
+- Le transazioni utilizzino il DataSource del tenant corrente
+- L'isolamento dei dati sia mantenuto a livello transazionale
+- Le operazioni di lettura siano ottimizzate con `readOnly = true` quando appropriato
+
+### 6.4 Sicurezza multi-tenant
+L'architettura include anche meccanismi di sicurezza specifici per tenant:
+
+1. **TenantAuthorizationFilter**: Verifica che l'utente abbia accesso al tenant richiesto
+2. **Autorizzazioni basate su tenant**: Gli utenti hanno un'autorità speciale `TENANT_{nome}` che limita l'accesso ai soli tenant autorizzati
+3. **Autenticazione tenant-aware**: Il servizio di autenticazione verifica che l'utente appartenga al tenant corrente
+
+Per esempio, nel UserDetailsService viene aggiunta un'autorità specifica per il tenant:
+
+```
+// Nel UserDetailsService
+authoritiesSet.add(new SimpleGrantedAuthority("TENANT_" + user.getTenant()));
+```
+
+### 6.5 Vantaggi dell'architettura multi-tenant implementata
+L'architettura multi-tenant di ZenFlow offre numerosi vantaggi:
+
+1. **Isolamento completo dei dati**: Ogni tenant ha un database separato, eliminando il rischio di accessi non autorizzati tra tenant
+2. **Flessibilità di deployment**: Possibilità di distribuire tenant su server database diversi per bilanciare il carico
+3. **Personalizzazione dello schema**: Ogni tenant può avere estensioni specifiche dello schema senza impattare gli altri
+4. **Backup e recovery granulari**: Possibilità di eseguire backup e restore per singoli tenant
+5. **Prestazioni ottimizzate**: Connection pooling dedicato per ciascun tenant
+6. **Scalabilità orizzontale**: Possibilità di distribuire tenant su cluster di database
+
+### 6.6 Sfide e soluzioni
+
+#### 6.6.1 Gestione delle risorse
+Una sfida significativa è stata la gestione efficiente delle connessioni database per evitare leak di risorse. La soluzione implementata include:
+
+- **Connection pooling ottimizzato**: Configurazione di HikariCP con parametri appropriati per ciascun tenant
+- **Chiusura esplicita delle connessioni**: Implementazione di `DisposableBean` per garantire la pulizia delle risorse
+- **Monitoraggio delle connessioni**: Configurazione di leak detection per identificare problemi
+
+#### 6.6.2 Inizializzazione lazy vs eager
+Un'altra sfida è stata decidere quando inizializzare i DataSource dei tenant:
+
+- **Approccio lazy**: Creazione dei DataSource solo quando necessario (primo accesso)
+- **Approccio eager**: Precaricamento di tutti i DataSource all'avvio dell'applicazione
+
+La soluzione implementata combina entrambi gli approcci:
+- Precaricamento dei DataSource per i tenant abilitati all'avvio (warm-up)
+- Creazione lazy per tenant aggiunti durante l'esecuzione dell'applicazione
+
+#### 6.6.3 Gestione delle migrazioni
+La gestione delle migrazioni database per numerosi tenant ha presentato sfide di performance e coerenza. La soluzione implementata:
+
+- Esegue le migrazioni in modo sequenziale all'avvio dell'applicazione
+- Utilizza lo stesso pool di connessioni per evitare overhead
+- Fornisce meccanismi per migrazioni on-demand per nuovi tenant
+
+## 7. Discussione e considerazioni
+
+### 7.1 Problemi incontrati
 Durante lo sviluppo sono state affrontate diverse sfide:
 
 - **Gestione delle relazioni JPA**: Configurazione corretta di fetch type e cascading
