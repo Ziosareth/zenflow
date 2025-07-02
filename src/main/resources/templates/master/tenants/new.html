@@ -67,12 +67,12 @@
                         <div class="text-danger" th:if="${#fields.hasErrors('url')}" th:errors="*{url}"></div>
                     </div>
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">Username DB</label>
                         <input type="text" class="form-control" id="username" th:field="*{username}" required>
                         <div class="text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">Password DB</label>
                         <input type="password" class="form-control" id="password" th:field="*{password}" required>
                         <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                     </div>
@@ -85,6 +85,14 @@
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="enabled" th:field="*{enabled}">
                         <label class="form-check-label" for="enabled">Abilitato</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="adminEmail" class="form-label">Email Utente Admin</label>
+                        <input type="email" class="form-control" id="adminEmail" th:field="*{adminEmail}" 
+                               placeholder="admin@example.com">
+                        <div class="form-text">Se specificata, verrà creato un utente admin per questo tenant e inviata un'email con le credenziali.</div>
+                        <div class="text-danger" th:if="${#fields.hasErrors('adminEmail')}" th:errors="*{adminEmail}"></div>
                     </div>
 
                     <button type="submit" class="btn btn-success">Crea Tenant</button>

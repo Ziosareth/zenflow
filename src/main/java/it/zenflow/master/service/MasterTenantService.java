@@ -1,9 +1,13 @@
 package it.zenflow.master.service;
 
+import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.master.dto.CreateTenantDTO;
 import it.zenflow.master.dto.UpdateTenantDTO;
 import it.zenflow.model.master.Tenant;
 import it.zenflow.model.master.TenantRepository;
+import it.zenflow.model.rbac.Role;
+import it.zenflow.model.rbac.RoleRepository;
+import it.zenflow.service.rbac.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
@@ -13,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Transactional(transactionManager = "masterTransactionManager")
@@ -22,6 +29,8 @@ import java.util.Optional;
 public class MasterTenantService {
 
     private final TenantRepository tenantRepository;
+    private final UserService userService;
+    private final RoleRepository roleRepository;
 
     @Transactional(readOnly = true, transactionManager = "masterTransactionManager")
     public Page<Tenant> findAll(Pageable pageable) {
@@ -49,7 +58,61 @@ public class MasterTenantService {
         tenant.setEnabled(dto.isEnabled());
 
         // Save tenant to master database
-        return tenantRepository.save(tenant);
+        Tenant savedTenant = tenantRepository.save(tenant);
+
+        // Inizializza il database del tenant
+        initializeTenantDatabase(dto.getName());
+
+        // Crea l'utente admin per il tenant in una transazione separata
+        if (dto.getAdminEmail() != null && !dto.getAdminEmail().isEmpty()) {
+            try {
+                createAdminUserForTenant(dto.getName(), dto.getAdminEmail());
+            } catch (Exception e) {
+                log.error("Errore nella creazione dell'utente admin per il tenant: {}", dto.getName(), e);
+                // Non facciamo fallire la creazione del tenant se fallisce la creazione dell'utente admin
+                // L'amministratore potrà creare l'utente admin manualmente in seguito
+            }
+        }
+
+        return savedTenant;
+    }
+
+    /**
+     * Crea un utente admin per il tenant specificato.
+     * Questo metodo non è transazionale a livello di metodo perché deve impostare
+     * il contesto del tenant prima di chiamare il userService che è transazionale.
+     */
+    private void createAdminUserForTenant(String tenantName, String adminEmail) {
+        log.info("Creazione utente admin per il tenant: {}", tenantName);
+
+        // Imposta il contesto del tenant
+        String previousTenant = TenantContext.getCurrentTenant();
+        try {
+            TenantContext.setCurrentTenant(tenantName);
+
+            // Recupera il ruolo admin
+            Role adminRole = roleRepository.findByName("ADMIN")
+                .orElseThrow(() -> new RuntimeException("Ruolo admin non trovato"));
+
+            // Crea l'utente admin
+            String username = "admin";
+            Set<Role> roles = new HashSet<>();
+            roles.add(adminRole);
+
+            // Usa il metodo esistente per invitare l'utente e inviare l'email
+            // Questo metodo è già annotato con @Transactional(transactionManager = "tenantTransactionManager")
+            // quindi creerà una nuova transazione sul database del tenant
+            userService.inviteUser(username, adminEmail, roles, Locale.ITALIAN);
+
+            log.info("Utente admin creato con successo per il tenant: {}", tenantName);
+        } finally {
+            // Ripristina il contesto precedente
+            if (previousTenant != null) {
+                TenantContext.setCurrentTenant(previousTenant);
+            } else {
+                TenantContext.clear();
+            }
+        }
     }
 
     public Tenant updateTenant(String name, UpdateTenantDTO dto) {
