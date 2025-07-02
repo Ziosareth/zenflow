@@ -1,7 +1,7 @@
 package it.zenflow.config.multitenant;
 
-import it.zenflow.model.master.Tenant;
-import it.zenflow.model.master.TenantRepository;
+import it.zenflow.master.model.Tenant;
+import it.zenflow.master.model.TenantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,10 +10,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
 import javax.sql.DataSource;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MultitenantConfigurationTest {

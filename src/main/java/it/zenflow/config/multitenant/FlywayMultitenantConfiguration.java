@@ -1,7 +1,7 @@
 package it.zenflow.config.multitenant;
 
-import it.zenflow.model.master.Tenant;
-import it.zenflow.model.master.TenantRepository;
+import it.zenflow.master.model.Tenant;
+import it.zenflow.master.model.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;

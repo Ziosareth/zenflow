@@ -17,7 +17,7 @@ import java.util.Properties;
         basePackages = "it.zenflow.model",
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.REGEX,
-                pattern = "it\\.zenflow\\.model\\.master\\..*"
+                pattern = "it\\.zenflow\\.master\\.model\\..*"
         ),
         entityManagerFactoryRef = "tenantEntityManagerFactory",
         transactionManagerRef  = "tenantTransactionManager"

@@ -2,8 +2,8 @@ package it.zenflow.master.service;
 
 import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.master.dto.CreateTenantDTO;
-import it.zenflow.model.master.Tenant;
-import it.zenflow.model.master.TenantRepository;
+import it.zenflow.master.model.Tenant;
+import it.zenflow.master.model.TenantRepository;
 import it.zenflow.model.rbac.Role;
 import it.zenflow.model.rbac.RoleRepository;
 import it.zenflow.service.rbac.UserService;
@@ -14,7 +14,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;

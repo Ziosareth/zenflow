@@ -20,7 +20,7 @@ import java.util.Properties;
 @Profile("!test")
 @Configuration
 @EnableJpaRepositories(
-    basePackages = "it.zenflow.model.master",
+    basePackages = "it.zenflow.master.model",
     entityManagerFactoryRef = "masterEntityManagerFactory",
     transactionManagerRef = "masterTransactionManager"
 )
@@ -85,7 +85,7 @@ public class MasterDatabaseConfiguration implements DisposableBean {
     public LocalContainerEntityManagerFactoryBean masterEntityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(masterDataSource());
-        em.setPackagesToScan("it.zenflow.model.master");
+        em.setPackagesToScan("it.zenflow.master.model");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

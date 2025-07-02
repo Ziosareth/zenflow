@@ -1,4 +1,4 @@
-package it.zenflow.model.master;
+package it.zenflow.master.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
