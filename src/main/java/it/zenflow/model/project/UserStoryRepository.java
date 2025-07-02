@@ -30,4 +30,7 @@ public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
 
     @Query("SELECT us FROM UserStory us LEFT JOIN FETCH us.tasks WHERE us.id = :id")
     Optional<UserStory> findByIdWithTasks(@Param("id") Long id);
+
+    @Query("SELECT us FROM UserStory us JOIN FETCH us.project WHERE us.id = :id")
+    Optional<UserStory> findByIdWithProject(@Param("id") Long id);
 }

@@ -1,5 +1,6 @@
 package it.zenflow.service.rbac;
 
+import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.model.rbac.Role;
 import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
@@ -85,6 +86,8 @@ public class UserService {
         user.setEnabled(true);
         user.setRoles(roles);
         user.setPasswordChangeRequired(true);
+
+        user.setTenant(TenantContext.getCurrentTenant());
 
         User savedUser = userRepository.save(user);
 

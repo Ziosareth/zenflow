@@ -2,6 +2,8 @@ package it.zenflow.service;
 
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.ProjectRepository;
+import it.zenflow.model.project.UserStory;
+import it.zenflow.model.project.UserStoryRepository;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.rbac.User;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProjectService {
     private final ProjectRepository projectRepository;
+    private final UserStoryRepository userStoryRepository;
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<Project> findAll() {
@@ -90,5 +93,19 @@ public class ProjectService {
 
         // Create a new page with the same metadata but with the projects that have owners loaded
         return new PageImpl<>(projectsWithOwners, pageable, projectPage.getTotalElements());
+    }
+
+    @Transactional(transactionManager = "tenantTransactionManager")
+    public void updateProjectTotalStoryPoints(Long projectId) {
+        projectRepository.findById(projectId).ifPresent(project -> {
+            List<UserStory> allStories = userStoryRepository.findByProject(project);
+            int totalPoints = allStories.stream()
+                .filter(story -> story.getStoryPoints() != null)
+                .mapToInt(UserStory::getStoryPoints)
+                .sum();
+
+            project.setTotalStoryPoints(totalPoints);
+            projectRepository.save(project);
+        });
     }
 }

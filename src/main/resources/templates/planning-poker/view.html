@@ -167,36 +167,12 @@
 
                                         <div th:unless="${#lists.isEmpty(userStoryVotes)}">
                                             <!-- Vote Statistics -->
-                                            <div class="row mb-3" th:if="${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'}">
-                                                <div class="col-md-3 text-center">
+                                            <div class="row justify-content-center mb-3" th:if="${pokerSession.status != null and pokerSession.status.name() == 'COMPLETED'}">
+                                                <div class="col-md-4 col-sm-6 col-8">
                                                     <div class="card">
-                                                        <div class="card-body">
-                                                            <h6 class="card-title" th:text="#{planningpoker.vote.average}">Average</h6>
-                                                            <p class="h4">4.5</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3 text-center">
-                                                    <div class="card">
-                                                        <div class="card-body">
+                                                        <div class="card-body text-center">
                                                             <h6 class="card-title" th:text="#{planningpoker.vote.median}">Median</h6>
-                                                            <p class="h4" th:text="${userStory.storyPoints}">5</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3 text-center">
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <h6 class="card-title" th:text="#{planningpoker.vote.min}">Minimum</h6>
-                                                            <p class="h4">3</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3 text-center">
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <h6 class="card-title" th:text="#{planningpoker.vote.max}">Maximum</h6>
-                                                            <p class="h4">8</p>
+                                                            <p class="h4" th:text="${userStory.storyPoints}"></p>
                                                         </div>
                                                     </div>
                                                 </div>

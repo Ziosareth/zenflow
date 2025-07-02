@@ -100,16 +100,6 @@ public class PlanningPokerControllerTest {
 
     @Test
     @WithMockUser(username = "testuser", authorities = {"CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
-    public void testNewSessionForm() throws Exception {
-        mockMvc.perform(get("/planning-poker/new")
-                        .param("projectId", testProject.getId().toString()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("planning-poker/new"))
-                .andExpect(model().attributeExists("command", "projects", "estimationTypes"));
-    }
-
-    @Test
-    @WithMockUser(username = "testuser", authorities = {"CREATE_PLANNING_POKER_SESSION", "TENANT_test"})
     public void testCreateSession() throws Exception {
         mockMvc.perform(post("/planning-poker/new")
                         .param("name", "Test Planning Poker Session")

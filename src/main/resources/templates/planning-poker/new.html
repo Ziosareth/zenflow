@@ -49,20 +49,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="estimationType" class="form-label" th:text="#{planningpoker.estimationType}">Estimation Type</label>
-                        <select class="form-select" id="estimationType" th:field="*{estimationType}" required>
-                            <option th:each="type : ${estimationTypes}" 
-                                    th:value="${type}" 
-                                    th:text="${type}">
-                                Estimation Type
-                            </option>
-                        </select>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('estimationType')}" th:errors="*{estimationType}">
-                            Please select an estimation type.
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
                         <label class="form-label" th:text="#{planningpoker.userStories}">User Story</label>
                         <div class="alert alert-info" id="userStoriesLoading">
                             <i class="bi bi-info-circle"></i> Please select a project to load user stories.

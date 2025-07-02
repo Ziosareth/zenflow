@@ -88,7 +88,6 @@ public class PlanningPokerController {
 
         model.addAttribute("command", command);
         model.addAttribute("projects", projectService.findAll());
-        model.addAttribute("estimationTypes", EstimationType.values());
         model.addAttribute("currentUser", currentUser);
 
         return "planning-poker/new";
@@ -105,7 +104,6 @@ public class PlanningPokerController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("projects", projectService.findAll());
-            model.addAttribute("estimationTypes", EstimationType.values());
             return "planning-poker/new";
         }
 

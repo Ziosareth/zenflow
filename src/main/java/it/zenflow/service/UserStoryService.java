@@ -107,17 +107,10 @@ public class UserStoryService {
         // Save the user story
         UserStory savedUserStory = userStoryRepository.save(userStory);
 
-        // Update the project's total story points
-        Project project = userStory.getProject();
-        if (project != null) {
-            List<UserStory> allStories = userStoryRepository.findByProject(project);
-            int totalPoints = allStories.stream()
-                .filter(story -> story.getStoryPoints() != null)
-                .mapToInt(UserStory::getStoryPoints)
-                .sum();
-
-            project.setTotalStoryPoints(totalPoints);
-            projectService.save(project);
+        // Update the project's total story points in a separate transaction
+        if (userStory.getProject() != null) {
+            Long projectId = userStory.getProject().getId();
+            projectService.updateProjectTotalStoryPoints(projectId);
         }
 
         return savedUserStory;
@@ -126,27 +119,19 @@ public class UserStoryService {
     @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteById(Long id) {
         // Get the user story and its project before deleting
-        Optional<UserStory> userStoryOpt = userStoryRepository.findById(id);
-        if (userStoryOpt.isPresent()) {
-            Project project = userStoryOpt.get().getProject();
+        Optional<UserStory> userStoryOpt = userStoryRepository.findByIdWithProject(id);
+        Long projectId = null;
 
-            // Delete the user story
-            userStoryRepository.deleteById(id);
+        if (userStoryOpt.isPresent() && userStoryOpt.get().getProject() != null) {
+            projectId = userStoryOpt.get().getProject().getId();
+        }
 
-            // Update the project's total story points
-            if (project != null) {
-                List<UserStory> remainingStories = userStoryRepository.findByProject(project);
-                int totalPoints = remainingStories.stream()
-                    .filter(story -> story.getStoryPoints() != null)
-                    .mapToInt(UserStory::getStoryPoints)
-                    .sum();
+        // Delete the user story
+        userStoryRepository.deleteById(id);
 
-                project.setTotalStoryPoints(totalPoints);
-                projectService.save(project);
-            }
-        } else {
-            // If the user story doesn't exist, just try to delete it
-            userStoryRepository.deleteById(id);
+        // Update the project's total story points in a separate transaction
+        if (projectId != null) {
+            projectService.updateProjectTotalStoryPoints(projectId);
         }
     }
 }

@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface PlanningPokerSessionRepository extends JpaRepository<PlanningPokerSession, Long> {
 
-    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants")
+    @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants LEFT JOIN FETCH s.project")
     List<PlanningPokerSession> findAll();
 
     @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.project = :project")
