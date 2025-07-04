@@ -12,7 +12,3 @@ CREATE TABLE zenflow.tenants (
                                  CONSTRAINT pk_tenants PRIMARY KEY (name),
                                  CONSTRAINT uk_tenants_name UNIQUE (name)
 );
-
--- Insert with schema qualification
-INSERT INTO zenflow.tenants (name, url, username, password, driver, enabled) VALUES
-    ('tenant1', 'jdbc:postgresql://localhost:5432/tenant1', 'postgres', 'postgres', 'org.postgresql.Driver', true);

@@ -40,6 +40,7 @@ public class MasterTenantController {
         model.addAttribute("totalItems", tenantPage.getTotalElements());
         model.addAttribute("pageSize", size);
         model.addAttribute("sortField", sort);
+        model.addAttribute("currentSection", "tenants");
 
         return "master/tenants/list";
     }
@@ -49,6 +50,7 @@ public class MasterTenantController {
         return tenantService.findByName(name)
                 .map(tenant -> {
                     model.addAttribute("tenant", tenant);
+                    model.addAttribute("currentSection", "tenants");
                     return "master/tenants/detail";
                 })
                 .orElse("redirect:/master/tenants");
@@ -57,6 +59,7 @@ public class MasterTenantController {
     @GetMapping("/new")
     public String newTenantForm(Model model) {
         model.addAttribute("tenant", new CreateTenantDTO());
+        model.addAttribute("currentSection", "tenants");
         return "master/tenants/new";
     }
 
@@ -87,9 +90,10 @@ public class MasterTenantController {
                     dto.setUsername(tenant.getUsername());
                     dto.setDriver(tenant.getDriver());
                     dto.setEnabled(tenant.isEnabled());
-                    
+
                     model.addAttribute("tenant", dto);
                     model.addAttribute("tenantName", name);
+                    model.addAttribute("currentSection", "tenants");
                     return "master/tenants/edit";
                 })
                 .orElse("redirect:/master/tenants");

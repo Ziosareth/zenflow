@@ -1,6 +1,7 @@
 package it.zenflow.master.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -14,7 +15,8 @@ public class MasterAuthController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(Model model) {
+        model.addAttribute("currentSection", "dashboard");
         return "master/dashboard";
     }
 }

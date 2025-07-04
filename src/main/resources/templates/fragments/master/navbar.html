@@ -12,11 +12,14 @@
             <div class="collapse navbar-collapse" id="masterNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/master/dashboard' ? 'active' : ''}" 
-                           th:href="@{/master/dashboard}">Dashboard</a>
+                        <a class="nav-link"
+                           th:classappend="${currentSection == 'dashboard' ? 'active' : ''}"
+                           th:href="@{/master/dashboard}">
+                            Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:classappend="${#httpServletRequest.requestURI.startsWith('/master/tenants') ? 'active' : ''}" 
+                        <a class="nav-link" th:classappend="${currentSection == 'tenants' ? 'active' : ''}"
                            th:href="@{/master/tenants}">Gestione Tenant</a>
                     </li>
                 </ul>

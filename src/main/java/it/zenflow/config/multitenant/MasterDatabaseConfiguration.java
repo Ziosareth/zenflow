@@ -41,6 +41,27 @@ public class MasterDatabaseConfiguration implements DisposableBean {
     @Value("${master.datasource.driver-class-name:org.postgresql.Driver}")
     private String masterDriverClassName;
 
+    @Value("${master.datasource.hikari.maximum-pool-size}")
+    private Integer masterMaximumPoolSize;
+
+    @Value("${master.datasource.hikari.minimum-idle}")
+    private Integer masterMinimumIdle;
+
+    @Value("${master.datasource.hikari.idle-timeout}")
+    private Integer masterIdleTimeout;
+
+    @Value("${master.datasource.hikari.max-lifetime}")
+    private Integer masterMaxLifetime;
+
+    @Value("${master.datasource.hikari.keepalive-time}")
+    private Integer masterKeepAliveTime;
+
+    @Value("${master.datasource.hikari.connection-timeout}")
+    private Integer masterConnectionTimeout;
+
+    @Value("${master.datasource.hikari.leak-detection-threshold}")
+    private Integer masterLeakDetectionThreshold;
+
     @Bean(name = "masterDataSource")
     @Primary
     @DependsOn("databaseInitialization")
@@ -53,12 +74,13 @@ public class MasterDatabaseConfiguration implements DisposableBean {
         config.setPoolName("master-db-pool");
 
         // Configure connection pool settings to prevent leaks
-        config.setMaximumPoolSize(5);
-        config.setMinimumIdle(1);
-        config.setIdleTimeout(30000); // 30 seconds
-        config.setMaxLifetime(60000); // 60 seconds
-        config.setConnectionTimeout(5000); // 5 seconds
-        config.setLeakDetectionThreshold(60000); // 60 seconds
+        config.setMaximumPoolSize(masterMaximumPoolSize);
+        config.setMinimumIdle(masterMinimumIdle);
+        config.setIdleTimeout(masterIdleTimeout);
+        config.setMaxLifetime(masterMaxLifetime);
+        config.setKeepaliveTime(masterKeepAliveTime);
+        config.setConnectionTimeout(masterConnectionTimeout);
+        config.setLeakDetectionThreshold(masterLeakDetectionThreshold);
         config.setAutoCommit(true);
 
         log.info("Creating master datasource");
