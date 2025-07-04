@@ -11,14 +11,17 @@ import it.zenflow.service.rbac.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,6 +34,9 @@ public class MasterTenantService {
     private final TenantRepository tenantRepository;
     private final UserService userService;
     private final RoleRepository roleRepository;
+
+    @Value("${defaultTenant}")
+    private String defaultTenant;
 
     @Transactional(readOnly = true, transactionManager = "masterTransactionManager")
     public Page<Tenant> findAll(Pageable pageable) {
@@ -178,12 +184,17 @@ public class MasterTenantService {
         try {
             log.info("Esecuzione della migrazione Flyway per il tenant: {}", tenant.getName());
 
+            // Set up placeholders for the migration
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("defaultTenant", defaultTenant);
+
             Flyway flyway = Flyway.configure()
                     .dataSource(tenant.getUrl(), tenant.getUsername(), tenant.getPassword())
                     .locations("classpath:db/migration/tenant")
                     .baselineOnMigrate(true)
                     .schemas("zenflow")
                     .defaultSchema("zenflow")
+                    .placeholders(placeholders)
                     .load();
 
             flyway.migrate();

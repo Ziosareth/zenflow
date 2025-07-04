@@ -5,6 +5,7 @@ import it.zenflow.master.model.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.callback.Context;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -14,7 +15,11 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @Profile("!test")
@@ -33,6 +38,9 @@ public class FlywayMultitenantConfiguration implements DisposableBean {
 
     @Value("${flyway.default-schema:zenflow}")
     private String defaultSchema;
+
+    @Value("${defaultTenant}")
+    private String defaultTenant;
 
     @EventListener(ApplicationReadyEvent.class)
     public void migrateTenants() {
@@ -59,12 +67,17 @@ public class FlywayMultitenantConfiguration implements DisposableBean {
             // Use the shared connection pool instead of creating a new connection
             DataSource dataSource = tenantDataSourcePool.getOrCreate(tenant.getName());
 
+            // Set up placeholders for the migration
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("defaultTenant", defaultTenant);
+
             Flyway flyway = Flyway.configure()
                     .dataSource(dataSource)
                     .locations(flywayLocations)
                     .baselineOnMigrate(baselineOnMigrate)
                     .schemas(defaultSchema)
                     .defaultSchema(defaultSchema)
+                    .placeholders(placeholders)
                     .load();
 
             flyway.migrate();

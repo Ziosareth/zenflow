@@ -16,7 +16,7 @@ import java.util.Optional;
 public class MultitenantConfiguration {
 
     private final TenantDataSourcePool pool;      // iniettato
-    @Value("${defaultTenant:default}")
+    @Value("${defaultTenant}")
     private String defaultTenant;                 // fallback
 
     /**

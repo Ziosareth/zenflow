@@ -14,7 +14,7 @@ class ZenflowApplicationTests {
 	@Test
 	void testBCryptPasswordEncoder() {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-		String encoded = encoder.encode("password");
+		String encoded = encoder.encode("changeme");
 		System.out.println(encoded);
 	}
 }

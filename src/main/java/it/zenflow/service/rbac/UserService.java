@@ -6,7 +6,6 @@ import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
 import it.zenflow.service.EmailService;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,7 +98,7 @@ public class UserService {
 
     private String generateRandomPassword() {
         // Generate a secure random password (12 characters)
-        return RandomStringUtils.secure().nextAlphanumeric(12);
+        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 12);
     }
 
     @Transactional(transactionManager = "tenantTransactionManager")
