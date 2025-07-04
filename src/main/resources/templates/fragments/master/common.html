@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">Default Title</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.13.1/font/bootstrap-icons.css}">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/master/css/master-style.css}">
+</head>
+<body>
+    <!-- Script fragment to be included at the end of body -->
+    <th:block th:fragment="scripts">
+        <!-- Bootstrap JS -->
+        <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+        <!-- Master Flow Animation -->
+        <script th:src="@{/master/js/masterFlowAnimation.js}"></script>
+    </th:block>
+</body>
+</html>
