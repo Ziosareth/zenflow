@@ -97,9 +97,12 @@
             const participantsContainer = document.getElementById('participantsContainer');
             const participantsLoading = document.getElementById('participantsLoading');
 
+            // Get initial user story ID if it exists
+            const initialUserStoryId = /*[[${command.userStoryId}]]*/ null;
+
             // Check if project is already selected
             if (projectSelect.value) {
-                loadUserStories(projectSelect.value);
+                loadUserStories(projectSelect.value, initialUserStoryId);
                 loadParticipants(projectSelect.value);
             }
 
@@ -107,7 +110,7 @@
             projectSelect.addEventListener('change', function() {
                 const projectId = this.value;
                 if (projectId) {
-                    loadUserStories(projectId);
+                    loadUserStories(projectId, null);
                     loadParticipants(projectId);
                 } else {
                     userStoriesContainer.style.display = 'none';
@@ -117,7 +120,7 @@
                 }
             });
 
-            function loadUserStories(projectId) {
+            function loadUserStories(projectId, initialUserStoryId) {
                 userStoriesLoading.style.display = 'block';
                 userStoriesContainer.style.display = 'none';
 
@@ -136,6 +139,12 @@
                                 const option = document.createElement('option');
                                 option.value = story.id;
                                 option.textContent = `${story.id} - ${story.title}`;
+
+                                // If this story matches the initialUserStoryId, select it
+                                if (initialUserStoryId && story.id == initialUserStoryId) {
+                                    option.selected = true;
+                                }
+
                                 userStorySelect.appendChild(option);
                             });
                         }

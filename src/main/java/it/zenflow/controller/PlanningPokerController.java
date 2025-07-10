@@ -78,12 +78,18 @@ public class PlanningPokerController {
 
     @GetMapping("/new")
     @PreAuthorize("hasAuthority('CREATE_PLANNING_POKER_SESSION')")
-    public String newSessionForm(Model model, @RequestParam(required = false) Long projectId, @AuthenticationPrincipal UserDetails userDetails) {
+    public String newSessionForm(Model model, 
+                            @RequestParam(required = false) Long projectId, 
+                            @RequestParam(required = false) Long userStoryId, 
+                            @AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
 
         CreatePlanningPokerSessionCommand command = new CreatePlanningPokerSessionCommand();
         if (projectId != null) {
             command.setProjectId(projectId);
+        }
+        if (userStoryId != null) {
+            command.setUserStoryId(userStoryId);
         }
 
         model.addAttribute("command", command);

@@ -15,6 +15,11 @@
                 <a th:href="@{/projects/{projectId}/user-stories(projectId=${project.id})}" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> <span th:text="#{userstory.back}">Back to User Stories</span>
                 </a>
+                <a sec:authorize="hasAuthority('CREATE_PLANNING_POKER_SESSION')"
+                   th:href="@{/planning-poker/new(projectId=${project.id},userStoryId=${userStory.id})}"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-card-list"></i> <span>Avvia Planning Poker</span>
+                </a>
                 <div class="btn-group" th:if="${isOwner or isTeamMember or #authorization.expression('hasAuthority(''UPDATE_USER_STORY'')')}">
                     <a th:href="@{/projects/{projectId}/user-stories/{id}/edit(projectId=${project.id},id=${userStory.id})}"
                        class="btn btn-primary">
