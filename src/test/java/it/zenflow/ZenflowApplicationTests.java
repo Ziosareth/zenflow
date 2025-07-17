@@ -1,10 +1,12 @@
 package it.zenflow;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootTest
+@Slf4j
 class ZenflowApplicationTests {
 
 	@Test
@@ -15,6 +17,6 @@ class ZenflowApplicationTests {
 	void testBCryptPasswordEncoder() {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 		String encoded = encoder.encode("changeme");
-		System.out.println(encoded);
+		log.debug("Encoded password: {}", encoded);
 	}
 }

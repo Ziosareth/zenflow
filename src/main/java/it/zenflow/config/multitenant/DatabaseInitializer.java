@@ -1,5 +1,6 @@
 package it.zenflow.config.multitenant;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
@@ -9,6 +10,7 @@ import java.sql.*;
 
 @Component
 @Profile("!test")
+@Slf4j
 public class DatabaseInitializer {
 
     @Value("${master.datasource.url}")
@@ -36,9 +38,9 @@ public class DatabaseInitializer {
             if (!rs.next()) {
                 // Create database if it doesn't exist
                 stmt.execute("CREATE DATABASE " + dbName);
-                System.out.println("Database " + dbName + " created successfully");
+                log.info("Database {} created successfully", dbName);
             } else {
-                System.out.println("Database " + dbName + " already exists");
+                log.info("Database {} already exists", dbName);
             }
 
             return true;
