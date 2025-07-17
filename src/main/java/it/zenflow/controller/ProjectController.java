@@ -70,8 +70,18 @@ public class ProjectController {
                 .map(project -> {
                     model.addAttribute("project", project);
                     model.addAttribute("currentUser", currentUser);
-                    model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
-                    model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));
+
+                    // Safely check if the current user is the owner
+                    boolean isOwner = project.getOwner() != null && 
+                                     project.getOwner().getId() != null && 
+                                     project.getOwner().getId().equals(currentUser.getId());
+                    model.addAttribute("isOwner", isOwner);
+
+                    // Safely check if the current user is a team member
+                    boolean isTeamMember = project.getTeamMembers() != null && 
+                                          project.getTeamMembers().contains(currentUser);
+                    model.addAttribute("isTeamMember", isTeamMember);
+
                     return "projects/detail";
                 })
                 .orElse("redirect:/projects");

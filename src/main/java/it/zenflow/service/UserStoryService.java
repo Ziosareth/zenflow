@@ -18,6 +18,7 @@ public class UserStoryService {
 
     private final UserStoryRepository userStoryRepository;
     private final ProjectService projectService;
+    private final SprintMetricsService sprintMetricsService;
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findAll() {
@@ -57,6 +58,11 @@ public class UserStoryService {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByAssignedTo(User user) {
         return userStoryRepository.findByAssignedTo(user);
+    }
+
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public List<UserStory> findUnassignedUserStories(Project project) {
+        return userStoryRepository.findByProjectAndSprintIsNull(project);
     }
 
     @Transactional(transactionManager = "tenantTransactionManager")
@@ -111,6 +117,12 @@ public class UserStoryService {
         if (userStory.getProject() != null) {
             Long projectId = userStory.getProject().getId();
             projectService.updateProjectTotalStoryPoints(projectId);
+        }
+        
+        // Update the sprint's planned story points if the user story is associated with a sprint
+        if (userStory.getSprint() != null) {
+            Long sprintId = userStory.getSprint().getId();
+            sprintMetricsService.updateSprintPlannedPoints(sprintId);
         }
 
         return savedUserStory;

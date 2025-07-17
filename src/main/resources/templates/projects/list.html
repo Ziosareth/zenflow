@@ -55,16 +55,17 @@
                                 <td th:text="${project.id}"></td>
                                 <td th:text="${project.name}"></td>
                                 <td>
-                                    <span class="badge bg-info" th:text="${project.type}">Type</span>
+                                    <span class="badge bg-info" th:text="${project.type != null ? project.type : '-'}">Type</span>
                                 </td>
                                 <td>
-                                    <span th:if="${project.status.name() == 'ACTIVE'}" class="badge bg-success" th:text="${project.status}">Active</span>
-                                    <span th:if="${project.status.name() == 'COMPLETED'}" class="badge bg-secondary" th:text="${project.status}">Completed</span>
-                                    <span th:if="${project.status.name() == 'ARCHIVED'}" class="badge bg-dark" th:text="${project.status}">Archived</span>
-                                    <span th:if="${project.status.name() == 'ON_HOLD'}" class="badge bg-warning" th:text="${project.status}">On Hold</span>
+                                    <span th:if="${project.status == null}" class="badge bg-secondary">-</span>
+                                    <span th:if="${project.status != null && project.status.name() == 'ACTIVE'}" class="badge bg-success" th:text="${project.status}">Active</span>
+                                    <span th:if="${project.status != null && project.status.name() == 'COMPLETED'}" class="badge bg-secondary" th:text="${project.status}">Completed</span>
+                                    <span th:if="${project.status != null && project.status.name() == 'ARCHIVED'}" class="badge bg-dark" th:text="${project.status}">Archived</span>
+                                    <span th:if="${project.status != null && project.status.name() == 'ON_HOLD'}" class="badge bg-warning" th:text="${project.status}">On Hold</span>
                                 </td>
-                                <td th:text="${project.owner.username}"></td>
-                                <td th:text="${project.teamMembers.size()}"></td>
+                                <td th:text="${project.owner != null ? project.owner.username : '-'}"></td>
+                                <td th:text="${project.teamMembers != null ? project.teamMembers.size() : '0'}"></td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a th:href="@{/projects/{id}(id=${project.id})}"
@@ -72,13 +73,13 @@
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         <a sec:authorize="hasAuthority('UPDATE_PROJECT')" 
-                                           th:if="${currentUser.id == project.owner.id}"
+                                           th:if="${project.owner != null && currentUser.id == project.owner.id}"
                                            th:href="@{/projects/{id}/edit(id=${project.id})}"
                                            class="btn btn-outline-secondary" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <a sec:authorize="hasAuthority('UPDATE_PROJECT') and hasAuthority('ADMIN')" 
-                                           th:unless="${currentUser.id == project.owner.id}"
+                                           th:unless="${project.owner != null && currentUser.id == project.owner.id}"
                                            th:href="@{/projects/{id}/edit(id=${project.id})}"
                                            class="btn btn-outline-secondary" title="Edit">
                                             <i class="bi bi-pencil"></i>
