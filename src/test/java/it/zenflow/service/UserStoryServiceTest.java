@@ -178,15 +178,8 @@ public class UserStoryServiceTest {
         userStory1.setEstimationType(EstimationType.STORY_POINTS);
         when(userStoryRepository.save(any(UserStory.class))).thenReturn(userStory1);
 
-        // Mock the findByProject to return a list of user stories
-        List<UserStory> projectUserStories = Arrays.asList(userStory1, userStory2);
-        when(userStoryRepository.findByProject(project)).thenReturn(projectUserStories);
-
-        // Set story points for the second user story
-        userStory2.setStoryPoints(3);
-
-        // Expected total story points: 5 + 3 = 8
-        when(projectService.save(project)).thenReturn(project);
+        // Mock the projectService.updateProjectTotalStoryPoints method
+        doNothing().when(projectService).updateProjectTotalStoryPoints(project.getId());
 
         // Act
         UserStory result = userStoryService.save(userStory1);
@@ -194,11 +187,7 @@ public class UserStoryServiceTest {
         // Assert
         assertThat(result).isEqualTo(userStory1);
         verify(userStoryRepository, times(1)).save(userStory1);
-        verify(userStoryRepository, times(1)).findByProject(project);
-        verify(projectService, times(1)).save(project);
-
-        // Verify that the project's total story points were updated
-        assertThat(project.getTotalStoryPoints()).isEqualTo(8);
+        verify(projectService, times(1)).updateProjectTotalStoryPoints(project.getId());
     }
 
     @Test
@@ -231,12 +220,8 @@ public class UserStoryServiceTest {
 
         when(userStoryRepository.save(any(UserStory.class))).thenReturn(savedUserStory);
 
-        // Mock the findByProject to return a list of user stories
-        List<UserStory> projectUserStories = Arrays.asList(savedUserStory);
-        when(userStoryRepository.findByProject(project)).thenReturn(projectUserStories);
-
-        // Mock projectService.save
-        when(projectService.save(project)).thenReturn(project);
+        // Mock the projectService.updateProjectTotalStoryPoints method
+        doNothing().when(projectService).updateProjectTotalStoryPoints(project.getId());
 
         // Act
         UserStory result = userStoryService.save(userStoryWithEstimates);
@@ -245,11 +230,7 @@ public class UserStoryServiceTest {
         assertThat(result.getPertEstimate()).isEqualTo(expectedPertEstimate);
         assertThat(result.getStoryPoints()).isEqualTo(expectedStoryPoints);
         verify(userStoryRepository, times(1)).save(any(UserStory.class));
-        verify(userStoryRepository, times(1)).findByProject(project);
-        verify(projectService, times(1)).save(project);
-
-        // Verify that the project's total story points were updated
-        assertThat(project.getTotalStoryPoints()).isEqualTo(expectedStoryPoints);
+        verify(projectService, times(1)).updateProjectTotalStoryPoints(project.getId());
     }
 
     @Test
@@ -259,30 +240,22 @@ public class UserStoryServiceTest {
         userStory2.setStoryPoints(3);
         project.setTotalStoryPoints(8); // Initial total
 
-        // Mock findById to return the user story
-        when(userStoryRepository.findById(1L)).thenReturn(Optional.of(userStory1));
+        // Mock findByIdWithProject to return the user story
+        when(userStoryRepository.findByIdWithProject(1L)).thenReturn(Optional.of(userStory1));
 
         // Mock deleteById
         doNothing().when(userStoryRepository).deleteById(1L);
 
-        // Mock findByProject to return only the remaining user story after deletion
-        when(userStoryRepository.findByProject(project)).thenReturn(Arrays.asList(userStory2));
-
-        // Mock projectService.save
-        when(projectService.save(project)).thenReturn(project);
+        // Mock projectService.updateProjectTotalStoryPoints
+        doNothing().when(projectService).updateProjectTotalStoryPoints(project.getId());
 
         // Act
         userStoryService.deleteById(1L);
 
         // Assert
-        verify(userStoryRepository, times(1)).findById(1L);
+        verify(userStoryRepository, times(1)).findByIdWithProject(1L);
         verify(userStoryRepository, times(1)).deleteById(1L);
-        verify(userStoryRepository, times(1)).findByProject(project);
-        verify(projectService, times(1)).save(project);
-
-        // Verify that the project's total story points were updated
-        // Expected: 8 - 5 = 3 (only userStory2 remains with 3 points)
-        assertThat(project.getTotalStoryPoints()).isEqualTo(3);
+        verify(projectService, times(1)).updateProjectTotalStoryPoints(project.getId());
     }
 
     @Test
@@ -305,30 +278,22 @@ public class UserStoryServiceTest {
         planningSessions.add(session);
         userStory1.setPlanningSessions(planningSessions);
 
-        // Mock findById to return the user story
-        when(userStoryRepository.findById(1L)).thenReturn(Optional.of(userStory1));
+        // Mock findByIdWithProject to return the user story
+        when(userStoryRepository.findByIdWithProject(1L)).thenReturn(Optional.of(userStory1));
 
         // Mock deleteById
         doNothing().when(userStoryRepository).deleteById(1L);
 
-        // Mock findByProject to return an empty list after deletion
-        when(userStoryRepository.findByProject(project)).thenReturn(Arrays.asList());
-
-        // Mock projectService.save
-        when(projectService.save(project)).thenReturn(project);
+        // Mock projectService.updateProjectTotalStoryPoints
+        doNothing().when(projectService).updateProjectTotalStoryPoints(project.getId());
 
         // Act
         userStoryService.deleteById(1L);
 
         // Assert
-        verify(userStoryRepository, times(1)).findById(1L);
+        verify(userStoryRepository, times(1)).findByIdWithProject(1L);
         verify(userStoryRepository, times(1)).deleteById(1L);
-        verify(userStoryRepository, times(1)).findByProject(project);
-        verify(projectService, times(1)).save(project);
-
-        // Verify that the project's total story points were updated
-        // Expected: 5 - 5 = 0 (no user stories remain)
-        assertThat(project.getTotalStoryPoints()).isEqualTo(0);
+        verify(projectService, times(1)).updateProjectTotalStoryPoints(project.getId());
 
         // The cascade delete should happen automatically through JPA, so we don't need to verify
         // any explicit deletion of planning poker sessions in the service layer
