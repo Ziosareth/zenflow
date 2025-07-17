@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="#{sprint.detail.title}">Sprint Detail</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}">Success message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <div class="d-flex justify-content-end mb-2">
+            <a th:href="@{/projects/{id}/sprints(id=${project.id})}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> <span th:text="#{sprint.button.back}">Back to Sprints</span>
+            </a>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0" th:text="${sprint.name}">Sprint Name</h1>
+                    <div>
+                        <span th:if="${sprint.status != null && sprint.status.name() == 'PLANNED'}" 
+                              class="badge bg-secondary" th:text="#{sprint.status.planned}">Planned</span>
+                        <span th:if="${sprint.status != null && sprint.status.name() == 'ACTIVE'}" 
+                              class="badge bg-success" th:text="#{sprint.status.active}">Active</span>
+                        <span th:if="${sprint.status != null && sprint.status.name() == 'COMPLETED'}" 
+                              class="badge bg-dark" th:text="#{sprint.status.completed}">Completed</span>
+                        <span th:if="${sprint.status != null && sprint.status.name() == 'CANCELLED'}" 
+                              class="badge bg-danger" th:text="#{sprint.status.cancelled}">Cancelled</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5 th:text="#{sprint.goal.label}">Sprint Goal</h5>
+                        <p th:text="${sprint.goal}">Goal description</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 th:text="#{sprint.dates.label}">Dates</h5>
+                        <p th:text="#{sprint.dates(${#temporals.format(sprint.startDate, 'dd/MM/yyyy')}, ${#temporals.format(sprint.endDate, 'dd/MM/yyyy')})}">
+                            01/01/2023 - 15/01/2023
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" th:text="#{sprint.planned_points}">Planned Points</h5>
+                                <p class="card-text display-4" th:text="${sprint.plannedStoryPoints}">30</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" th:text="#{sprint.completed_points.label}">Completed Points</h5>
+                                <p class="card-text display-4" th:text="${sprint.completedStoryPoints}">25</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" th:text="#{sprint.velocity.label}">Velocity</h5>
+                                <p class="card-text display-4" th:text="${#numbers.formatDecimal(sprint.sprintVelocity, 1, 1)}">12.5</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-4" th:if="${isOwner or isTeamMember}">
+                    <div>
+                        <a th:href="@{/projects/{projectId}/sprints/{id}/edit(projectId=${project.id},id=${sprint.id})}" 
+                           class="btn btn-outline-primary me-2" th:if="${sprint.status == null || sprint.status.name() != 'COMPLETED'}">
+                            <i class="bi bi-pencil"></i> <span th:text="#{sprint.edit}">Edit</span>
+                        </a>
+                    </div>
+                    <div>
+                        <form th:if="${sprint.status != null && sprint.status.name() == 'PLANNED'}" 
+                              th:action="@{/projects/{projectId}/sprints/{id}/start(projectId=${project.id},id=${sprint.id})}" 
+                              method="post" class="d-inline">
+                            <button type="submit" class="btn btn-success me-2">
+                                <i class="bi bi-play-fill"></i> <span th:text="#{sprint.start}">Start Sprint</span>
+                            </button>
+                        </form>
+                        <form th:if="${sprint.status != null && sprint.status.name() == 'ACTIVE'}" 
+                              th:action="@{/projects/{projectId}/sprints/{id}/complete(projectId=${project.id},id=${sprint.id})}" 
+                              method="post" class="d-inline">
+                            <button type="submit" class="btn btn-dark me-2">
+                                <i class="bi bi-check-lg"></i> <span th:text="#{sprint.complete}">Complete Sprint</span>
+                            </button>
+                        </form>
+                        <form th:if="${sprint.status != null && (sprint.status.name() == 'PLANNED' || sprint.status.name() == 'ACTIVE')}" 
+                              th:action="@{/projects/{projectId}/sprints/{id}/cancel(projectId=${project.id},id=${sprint.id})}" 
+                              method="post" class="d-inline">
+                            <button type="submit" class="btn btn-danger" 
+                                    onclick="return confirm(/*[[#{sprint.cancel.confirm}]]*/'Are you sure?')">
+                                <i class="bi bi-x-lg"></i> <span th:text="#{sprint.cancel}">Cancel Sprint</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <h4 th:text="#{sprint.user_stories}">User Stories</h4>
+
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th th:text="#{userstory.title}">Title</th>
+                                        <th th:text="#{userstory.status}">Status</th>
+                                        <th th:text="#{userstory.points}">Points</th>
+                                        <th th:text="#{userstory.assignee}">Assignee</th>
+                                        <th th:if="${isOwner or isTeamMember}"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(sprint.stories)}">
+                                        <td colspan="5" class="text-center" th:text="#{sprint.no_stories}">No user stories in this sprint</td>
+                                    </tr>
+                                    <tr th:each="story : ${sprint.stories}">
+                                        <td>
+                                            <a th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${project.id},id=${story.id})}" 
+                                               th:text="${story.title}">User Story Title</a>
+                                        </td>
+                                        <td>
+                                            <span th:if="${story.status != null && story.status.name() == 'BACKLOG'}" 
+                                                  class="badge bg-secondary" th:text="#{userstory.status.backlog}">Backlog</span>
+                                            <span th:if="${story.status != null && story.status.name() == 'TODO'}" 
+                                                  class="badge bg-info" th:text="#{userstory.status.todo}">To Do</span>
+                                            <span th:if="${story.status != null && story.status.name() == 'IN_PROGRESS'}" 
+                                                  class="badge bg-primary" th:text="#{userstory.status.in_progress}">In Progress</span>
+                                            <span th:if="${story.status != null && story.status.name() == 'REVIEW'}" 
+                                                  class="badge bg-warning" th:text="#{userstory.status.review}">Review</span>
+                                            <span th:if="${story.status != null && story.status.name() == 'DONE'}" 
+                                                  class="badge bg-success" th:text="#{userstory.status.done}">Done</span>
+                                        </td>
+                                        <td th:text="${story.storyPoints}">5</td>
+                                        <td th:text="${story.assignedTo != null ? story.assignedTo.fullName : '-'}">John Doe</td>
+                                        <td th:if="${isOwner or isTeamMember}">
+                                            <form th:if="${sprint.status == null || sprint.status.name() != 'COMPLETED'}" 
+                                                  th:action="@{/projects/{projectId}/sprints/{sprintId}/remove-story/{storyId}(projectId=${project.id},sprintId=${sprint.id},storyId=${story.id})}" 
+                                                  method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-dash-circle"></i> <span th:text="#{sprint.remove_story}">Remove</span>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4" th:if="${isOwner or isTeamMember and (sprint.status == null || sprint.status.name() != 'COMPLETED')}">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0" th:text="#{sprint.add_stories}">Add User Stories</h5>
+                            </div>
+                            <div class="card-body">
+                                <div th:if="${#lists.isEmpty(availableUserStories)}">
+                                    <p th:text="#{sprint.no_available_stories}">No available user stories</p>
+                                </div>
+                                <div th:unless="${#lists.isEmpty(availableUserStories)}">
+                                    <div class="list-group">
+                                        <div th:each="story : ${availableUserStories}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1" th:text="${story.title}">User Story Title</h6>
+                                                <small th:text="#{userstory.points.value(${story.storyPoints != null ? story.storyPoints : 0})}">5 points</small>
+                                            </div>
+                                            <form th:action="@{/projects/{projectId}/sprints/{sprintId}/add-story/{storyId}(projectId=${project.id},sprintId=${sprint.id},storyId=${story.id})}" 
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-plus-circle"></i> <span th:text="#{sprint.add}">Add</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

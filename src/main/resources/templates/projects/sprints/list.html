@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+
+    <title th:text="#{sprint.list.title}">Sprint List</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 th:text="#{sprint.list.heading(${project.name})}">Sprints for Project</h1>
+                <div th:if="${isOwner or isTeamMember}">
+                    <a th:href="@{/projects/{id}/sprints/new(id=${project.id})}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> <span th:text="#{sprint.new}">New Sprint</span>
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <span th:text="${message}">Success message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0" th:text="#{sprint.active}">Active Sprint</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #lists.isEmpty(sprints)}" th:with="hasActive=${false}" th:remove="tag">
+                        <div th:each="sprint : ${sprints}">
+                            <div th:if="${sprint.status.name() == 'ACTIVE'}" th:with="hasActive=${true}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title">
+                                        <a th:href="@{/projects/{projectId}/sprints/{id}(projectId=${project.id},id=${sprint.id})}" 
+                                           th:text="${sprint.name}">Sprint Name</a>
+                                    </h5>
+                                    <span class="badge bg-success" th:text="#{sprint.status.active}">Active</span>
+                                </div>
+                                <p class="card-text" th:text="${sprint.goal}">Sprint Goal</p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted" 
+                                           th:text="#{sprint.dates(${#temporals.format(sprint.startDate, 'dd/MM/yyyy')}, ${#temporals.format(sprint.endDate, 'dd/MM/yyyy')})}">
+                                        01/01/2023 - 15/01/2023
+                                    </small>
+                                    <span class="badge bg-info" th:text="#{sprint.points(${sprint.plannedStoryPoints})}">30 points</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(sprints) || !hasActive}">
+                        <p th:text="#{sprint.no_active}">No active sprint</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0" th:text="#{sprint.planned}">Planned Sprints</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #lists.isEmpty(sprints)}" th:with="hasPlanned=${false}" th:remove="tag">
+                        <div th:each="sprint : ${sprints}">
+                            <div th:if="${sprint.status.name() == 'PLANNED'}" th:with="hasPlanned=${true}" class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title">
+                                        <a th:href="@{/projects/{projectId}/sprints/{id}(projectId=${project.id},id=${sprint.id})}" 
+                                           th:text="${sprint.name}">Sprint Name</a>
+                                    </h5>
+                                    <span class="badge bg-secondary" th:text="#{sprint.status.planned}">Planned</span>
+                                </div>
+                                <p class="card-text" th:text="${sprint.goal}">Sprint Goal</p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted" 
+                                           th:text="#{sprint.dates(${#temporals.format(sprint.startDate, 'dd/MM/yyyy')}, ${#temporals.format(sprint.endDate, 'dd/MM/yyyy')})}">
+                                        01/01/2023 - 15/01/2023
+                                    </small>
+                                    <span class="badge bg-info" th:text="#{sprint.points(${sprint.plannedStoryPoints})}">30 points</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(sprints) || !hasPlanned}">
+                        <p th:text="#{sprint.no_planned}">No planned sprints</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0" th:text="#{sprint.completed_sprints}">Completed Sprints</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #lists.isEmpty(sprints)}" th:with="hasCompleted=${false}" th:remove="tag">
+                        <div th:each="sprint : ${sprints}">
+                            <div th:if="${sprint.status.name() == 'COMPLETED'}" th:with="hasCompleted=${true}" class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title">
+                                        <a th:href="@{/projects/{projectId}/sprints/{id}(projectId=${project.id},id=${sprint.id})}" 
+                                           th:text="${sprint.name}">Sprint Name</a>
+                                    </h5>
+                                    <span class="badge bg-dark" th:text="#{sprint.status.completed}">Completed</span>
+                                </div>
+                                <p class="card-text" th:text="${sprint.goal}">Sprint Goal</p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted" 
+                                           th:text="#{sprint.dates(${#temporals.format(sprint.startDate, 'dd/MM/yyyy')}, ${#temporals.format(sprint.endDate, 'dd/MM/yyyy')})}">
+                                        01/01/2023 - 15/01/2023
+                                    </small>
+                                    <div>
+                                        <span class="badge bg-success" th:text="#{sprint.completed_points_value(${sprint.completedStoryPoints})}">25 points</span>
+                                        <span class="badge bg-info" th:text="#{sprint.velocity(${sprint.sprintVelocity})}">12.5 pts/week</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(sprints) || !hasCompleted}">
+                        <p th:text="#{sprint.no_completed}">No completed sprints</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>

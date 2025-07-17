@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+    <title th:text="${isNew ? #messages.msg('sprint.new.title') : #messages.msg('sprint.edit.title')}">New/Edit Sprint</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0" th:text="${isNew ? #messages.msg('sprint.new.heading') : #messages.msg('sprint.edit.heading')}">New/Edit Sprint</h1>
+            <div>
+                <a th:href="@{/projects/{id}/sprints(id=${project.id})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> <span th:text="#{sprint.button.back}">Back to Sprints</span>
+                </a>
+            </div>
+        </div>
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/projects}" th:text="#{project.list}">Projects</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/projects/{id}(id=${project.id})}" th:text="${project.name}">Project Name</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/projects/{id}/sprints(id=${project.id})}" th:text="#{nav.sprints}">Sprints</a></li>
+                <li class="breadcrumb-item active" aria-current="page" 
+                    th:text="${isNew ? #messages.msg('sprint.new.breadcrumb') : #messages.msg('sprint.edit.breadcrumb')}">New/Edit Sprint</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-body">
+                <form th:action="${isNew ? 
+                           '/projects/' + project.id + '/sprints/new' : 
+                           '/projects/' + project.id + '/sprints/' + sprintDTO.id + '/edit'}" 
+                      th:object="${sprintDTO}" method="post">
+
+                    <input type="hidden" th:field="*{id}" />
+                    <input type="hidden" th:field="*{projectId}" />
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label" th:text="#{sprint.name.label}">Name</label>
+                        <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+                            Please provide a name.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="goal" class="form-label" th:text="#{sprint.goal.label}">Goal</label>
+                        <textarea class="form-control" id="goal" th:field="*{goal}" rows="3"></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="startDate" class="form-label" th:text="#{sprint.startDate.label}">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" th:field="*{startDate}" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}">
+                                Please provide a start date.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endDate" class="form-label" th:text="#{sprint.endDate.label}">End Date</label>
+                            <input type="date" class="form-control" id="endDate" th:field="*{endDate}" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}">
+                                Please provide an end date.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> <span th:text="#{button.save}">Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+</body>
+</html>
