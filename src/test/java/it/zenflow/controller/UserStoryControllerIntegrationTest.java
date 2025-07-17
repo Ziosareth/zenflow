@@ -1,16 +1,20 @@
 package it.zenflow.controller;
 
-import it.zenflow.dto.UserStoryDTO;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.ProjectRepository;
+import it.zenflow.model.project.Sprint;
+import it.zenflow.model.project.SprintRepository;
 import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.UserStoryRepository;
 import it.zenflow.model.project.enums.Priority;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.project.enums.ProjectType;
+import it.zenflow.model.project.enums.SprintStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.*;
 import it.zenflow.service.ProjectService;
+import it.zenflow.service.SprintMetricsService;
+import it.zenflow.service.SprintService;
 import it.zenflow.service.UserStoryService;
 import it.zenflow.service.rbac.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,10 +51,19 @@ public class UserStoryControllerIntegrationTest {
     private UserStoryRepository userStoryRepository;
 
     @Autowired
+    private SprintRepository sprintRepository;
+
+    @Autowired
     private ProjectService projectService;
 
     @Autowired
     private UserStoryService userStoryService;
+
+    @Autowired
+    private SprintService sprintService;
+
+    @Autowired
+    private SprintMetricsService sprintMetricsService;
 
     @Autowired
     private UserRepository userRepository;
@@ -453,4 +466,44 @@ public class UserStoryControllerIntegrationTest {
         // Verify story points (rounded PERT estimate): round(4.67) = 5
         assert savedUserStory.getStoryPoints() == 5;
     }
+    
+    @Test
+    @WithMockUser(username = "user", authorities = {"UPDATE_USER_STORY", "TENANT_test"})
+    public void testUpdateUserStoryToDoneUpdatesSprintMetrics() throws Exception {
+        // Create a sprint for the test project
+        Sprint sprint = new Sprint();
+        sprint.setName("Test Sprint");
+        sprint.setStatus(SprintStatus.ACTIVE);
+        sprint.setStartDate(LocalDate.now().minusDays(7));
+        sprint.setEndDate(LocalDate.now().plusDays(7));
+        sprint.setProject(testProject);
+        sprint.setPlannedStoryPoints(5); // Initial planned points
+        sprint.setCompletedStoryPoints(0); // Initial completed points
+        sprint.setSprintVelocity(0.0); // Initial velocity
+        sprint = sprintService.save(sprint);
+        
+        // Associate the test user story with the sprint
+        testUserStory.setSprint(sprint);
+        testUserStory = userStoryService.save(testUserStory);
+        
+        // Update the user story to DONE
+        mockMvc.perform(post("/projects/{projectId}/user-stories/{id}/edit", testProject.getId(), testUserStory.getId())
+                .param("title", testUserStory.getTitle())
+                .param("description", testUserStory.getDescription())
+                .param("acceptanceCriteria", testUserStory.getAcceptanceCriteria())
+                .param("status", "DONE") // Change status to DONE
+                .param("priority", testUserStory.getPriority().toString())
+                .param("storyPoints", String.valueOf(testUserStory.getStoryPoints()))
+                .param("businessValue", String.valueOf(testUserStory.getBusinessValue()))
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/projects/" + testProject.getId() + "/user-stories/" + testUserStory.getId()))
+                .andExpect(flash().attributeExists("message"));
+        
+        // Verify the user story was updated to DONE
+        UserStory updatedUserStory = userStoryService.findById(testUserStory.getId()).orElseThrow();
+        assert updatedUserStory.getStatus() == StoryStatus.DONE;
+    }
+
+
 }

@@ -108,4 +108,18 @@ public class ProjectService {
             projectRepository.save(project);
         });
     }
+    
+    /**
+     * Updates the project's team velocity based on the provided average velocity.
+     *
+     * @param projectId the ID of the project to update
+     * @param averageVelocity the average velocity to set
+     */
+    @Transactional(transactionManager = "tenantTransactionManager")
+    public void updateProjectVelocity(Long projectId, double averageVelocity) {
+        projectRepository.findById(projectId).ifPresent(project -> {
+            project.setTeamVelocity(averageVelocity);
+            projectRepository.save(project);
+        });
+    }
 }

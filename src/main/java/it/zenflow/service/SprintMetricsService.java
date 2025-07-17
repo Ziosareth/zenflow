@@ -1,14 +1,17 @@
 package it.zenflow.service;
 
+import it.zenflow.model.project.Project;
 import it.zenflow.model.project.Sprint;
 import it.zenflow.model.project.SprintRepository;
 import it.zenflow.model.project.UserStory;
+import it.zenflow.model.project.enums.SprintStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -21,6 +24,7 @@ import java.util.Optional;
 public class SprintMetricsService {
     
     private final SprintRepository sprintRepository;
+    private final ProjectService projectService;
     
     /**
      * Updates the planned story points for a sprint based on the story points of all user stories
@@ -69,15 +73,46 @@ public class SprintMetricsService {
     }
     
     /**
+     * Updates the completed story points and velocity of a sprint based on the story points
+     * of all user stories with status DONE associated with the sprint.
+     *
+     * @param sprintId the ID of the sprint to update
+     */
+    @Transactional(transactionManager = "tenantTransactionManager")
+    public void updateSprintCompletedPoints(Long sprintId) {
+        findSprintWithStories(sprintId).ifPresent(sprint -> {
+            int completedPoints = calculateCompletedStoryPoints(sprint);
+            double velocity = calculateSprintVelocity(sprint, completedPoints);
+            
+            sprint.setCompletedStoryPoints(completedPoints);
+            sprint.setSprintVelocity(velocity);
+            sprintRepository.save(sprint);
+            
+            // Update the project velocity as well
+            updateProjectVelocity(sprint.getProject().getId());
+        });
+    }
+    
+    /**
      * Updates the project velocity based on the average velocity of completed sprints.
-     * This is a placeholder method that can be implemented in the future.
      *
      * @param projectId the ID of the project to update
      */
     @Transactional(transactionManager = "tenantTransactionManager")
     public void updateProjectVelocity(Long projectId) {
-        // Implementare la logica per aggiornare la velocità del team nel progetto
-        // basandosi sulla media delle velocità degli sprint completati
+        // Find all completed sprints for the project
+        List<Sprint> completedSprints = sprintRepository.findCompletedSprintsByProjectId(projectId);
+        
+        if (!completedSprints.isEmpty()) {
+            // Calculate the average velocity of completed sprints
+            double averageVelocity = completedSprints.stream()
+                .mapToDouble(Sprint::getSprintVelocity)
+                .average()
+                .orElse(0.0);
+            
+            // Update the project's velocity
+            projectService.updateProjectVelocity(projectId, averageVelocity);
+        }
     }
     
     /**

@@ -7,6 +7,7 @@ import it.zenflow.model.project.enums.Priority;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import it.zenflow.service.ProjectService;
+import it.zenflow.service.SprintMetricsService;
 import it.zenflow.service.UserStoryService;
 import it.zenflow.service.rbac.UserService;
 import jakarta.validation.Valid;
@@ -33,6 +34,7 @@ public class UserStoryController {
     private final UserStoryService userStoryService;
     private final ProjectService projectService;
     private final UserService userService;
+    private final SprintMetricsService sprintMetricsService;
     private final MessageSource messageSource;
 
     @GetMapping("")
@@ -290,7 +292,14 @@ public class UserStoryController {
                             userStory.setPessimisticEstimate(userStoryDTO.getPessimisticEstimate());
                             userStory.setMostLikelyEstimate(userStoryDTO.getMostLikelyEstimate());
 
+                            // Save the user story
                             userStoryService.save(userStory);
+
+                            // If the status is DONE and the user story is associated with a sprint,
+                            // update the sprint's completed points and velocity
+                            if (userStory.getStatus() == StoryStatus.DONE && userStory.getSprint() != null) {
+                                sprintMetricsService.updateSprintCompletedPoints(userStory.getSprint().getId());
+                            }
 
                             String message = messageSource.getMessage("userstory.updated", null, LocaleContextHolder.getLocale());
                             redirectAttributes.addFlashAttribute("message", message);

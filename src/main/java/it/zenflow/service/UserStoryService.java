@@ -130,12 +130,19 @@ public class UserStoryService {
 
     @Transactional(transactionManager = "tenantTransactionManager")
     public void deleteById(Long id) {
-        // Get the user story and its project before deleting
-        Optional<UserStory> userStoryOpt = userStoryRepository.findByIdWithProject(id);
+        // Get the user story with its project and sprint before deleting
+        Optional<UserStory> userStoryOpt = userStoryRepository.findByIdWithProjectAndSprint(id);
         Long projectId = null;
+        Long sprintId = null;
 
-        if (userStoryOpt.isPresent() && userStoryOpt.get().getProject() != null) {
-            projectId = userStoryOpt.get().getProject().getId();
+        if (userStoryOpt.isPresent()) {
+            UserStory userStory = userStoryOpt.get();
+            if (userStory.getProject() != null) {
+                projectId = userStory.getProject().getId();
+            }
+            if (userStory.getSprint() != null) {
+                sprintId = userStory.getSprint().getId();
+            }
         }
 
         // Delete the user story
@@ -144,6 +151,11 @@ public class UserStoryService {
         // Update the project's total story points in a separate transaction
         if (projectId != null) {
             projectService.updateProjectTotalStoryPoints(projectId);
+        }
+
+        // Update the sprint's planned points if the user story was associated with a sprint
+        if (sprintId != null) {
+            sprintMetricsService.updateSprintPlannedPoints(sprintId);
         }
     }
 }

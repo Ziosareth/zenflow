@@ -1,5 +1,6 @@
 package it.zenflow.model.project;
 
+import it.zenflow.model.project.enums.SprintStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +18,7 @@ public interface SprintRepository extends JpaRepository<Sprint, Long> {
     
     @Query("SELECT s FROM Sprint s WHERE s.project.id = :projectId ORDER BY s.startDate DESC")
     List<Sprint> findByProjectIdOrderByStartDateDesc(@Param("projectId") Long projectId);
+    
+    @Query("SELECT s FROM Sprint s WHERE s.project.id = :projectId AND s.status = 'COMPLETED'")
+    List<Sprint> findCompletedSprintsByProjectId(@Param("projectId") Long projectId);
 }
