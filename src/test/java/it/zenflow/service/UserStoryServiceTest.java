@@ -33,6 +33,9 @@ public class UserStoryServiceTest {
 
     @Mock
     private PlanningPokerSessionRepository planningPokerSessionRepository;
+    
+    @Mock
+    private SprintMetricsService sprintMetricsService;
 
     @InjectMocks
     private UserStoryService userStoryService;
@@ -240,8 +243,8 @@ public class UserStoryServiceTest {
         userStory2.setStoryPoints(3);
         project.setTotalStoryPoints(8); // Initial total
 
-        // Mock findByIdWithProject to return the user story
-        when(userStoryRepository.findByIdWithProject(1L)).thenReturn(Optional.of(userStory1));
+        // Mock findByIdWithProjectAndSprint to return the user story
+        when(userStoryRepository.findByIdWithProjectAndSprint(1L)).thenReturn(Optional.of(userStory1));
 
         // Mock deleteById
         doNothing().when(userStoryRepository).deleteById(1L);
@@ -253,9 +256,11 @@ public class UserStoryServiceTest {
         userStoryService.deleteById(1L);
 
         // Assert
-        verify(userStoryRepository, times(1)).findByIdWithProject(1L);
+        verify(userStoryRepository, times(1)).findByIdWithProjectAndSprint(1L);
         verify(userStoryRepository, times(1)).deleteById(1L);
         verify(projectService, times(1)).updateProjectTotalStoryPoints(project.getId());
+        // No sprint to update, so sprintMetricsService should not be called
+        verify(sprintMetricsService, never()).updateSprintPlannedPoints(any());
     }
 
     @Test
@@ -278,8 +283,8 @@ public class UserStoryServiceTest {
         planningSessions.add(session);
         userStory1.setPlanningSessions(planningSessions);
 
-        // Mock findByIdWithProject to return the user story
-        when(userStoryRepository.findByIdWithProject(1L)).thenReturn(Optional.of(userStory1));
+        // Mock findByIdWithProjectAndSprint to return the user story
+        when(userStoryRepository.findByIdWithProjectAndSprint(1L)).thenReturn(Optional.of(userStory1));
 
         // Mock deleteById
         doNothing().when(userStoryRepository).deleteById(1L);
@@ -291,11 +296,10 @@ public class UserStoryServiceTest {
         userStoryService.deleteById(1L);
 
         // Assert
-        verify(userStoryRepository, times(1)).findByIdWithProject(1L);
+        verify(userStoryRepository, times(1)).findByIdWithProjectAndSprint(1L);
         verify(userStoryRepository, times(1)).deleteById(1L);
         verify(projectService, times(1)).updateProjectTotalStoryPoints(project.getId());
+        verify(sprintMetricsService, never()).updateSprintPlannedPoints(any());
 
-        // The cascade delete should happen automatically through JPA, so we don't need to verify
-        // any explicit deletion of planning poker sessions in the service layer
     }
 }
