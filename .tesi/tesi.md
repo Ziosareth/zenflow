@@ -281,7 +281,7 @@ public class UserStory {
     private Project project;
 
     @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks = new ArrayList<>();
+    private final List<Task> tasks = new ArrayList<>();
 }
 ```
 
@@ -404,7 +404,7 @@ public class UserStoryDTO {
     private String description;
 
     @NotNull(message = "{validation.userstory.status.required}")
-    private StoryStatus status = StoryStatus.BACKLOG;
+    private final StoryStatus status = StoryStatus.BACKLOG;
 
     private Long projectId;
     private Long assignedToId;
@@ -766,7 +766,7 @@ Abbiamo aggiunto una relazione bidirezionale in `UserStory.java`:
 
 ```java
 @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<PlanningPokerSession> planningSessions = new ArrayList<>();
+private final List<PlanningPokerSession> planningSessions = new ArrayList<>();
 ```
 
 Questa annotazione indica a JPA che:

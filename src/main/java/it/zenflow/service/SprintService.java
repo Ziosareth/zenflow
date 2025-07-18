@@ -3,14 +3,12 @@ package it.zenflow.service;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.Sprint;
 import it.zenflow.model.project.SprintRepository;
-import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.SprintStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 

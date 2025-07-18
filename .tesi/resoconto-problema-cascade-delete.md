@@ -51,7 +51,7 @@ Abbiamo aggiunto una relazione bidirezionale in `UserStory.java`:
 
 ```java
 @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<PlanningPokerSession> planningSessions = new ArrayList<>();
+private final List<PlanningPokerSession> planningSessions = new ArrayList<>();
 ```
 
 Questa annotazione indica a JPA che:

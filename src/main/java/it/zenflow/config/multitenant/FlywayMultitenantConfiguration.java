@@ -5,7 +5,6 @@ import it.zenflow.master.model.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.callback.Context;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -15,8 +14,6 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +98,7 @@ public class FlywayMultitenantConfiguration implements DisposableBean {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         // No specific cleanup needed here as the TenantDataSourcePool manages the lifecycle of DataSources
         log.info("FlywayMultitenantConfiguration is being destroyed");
     }

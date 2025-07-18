@@ -2,8 +2,9 @@ package it.zenflow.master.controller;
 
 import it.zenflow.master.dto.CreateTenantDTO;
 import it.zenflow.master.dto.UpdateTenantDTO;
-import it.zenflow.master.service.MasterTenantService;
 import it.zenflow.master.model.Tenant;
+import it.zenflow.master.service.MasterTenantService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,8 +15,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/master/tenants")

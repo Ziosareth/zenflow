@@ -1,13 +1,12 @@
 package it.zenflow.config;
 
 import it.zenflow.model.audit.UserRevisionEntity;
+import jakarta.servlet.http.HttpServletRequest;
 import org.hibernate.envers.RevisionListener;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 public class UserAuditRevisionListener implements RevisionListener {
     

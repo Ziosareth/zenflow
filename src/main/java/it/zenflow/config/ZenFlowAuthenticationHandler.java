@@ -1,11 +1,9 @@
 package it.zenflow.config;
 
-import it.zenflow.config.multitenant.TenantContext;
 import it.zenflow.service.rbac.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -23,7 +21,7 @@ public class ZenFlowAuthenticationHandler implements AuthenticationSuccessHandle
     
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
-                                       Authentication authentication) throws IOException, ServletException {
+                                       Authentication authentication) {
         String username = authentication.getName();
         log.debug("User {} successfully authenticated", username);
 

@@ -1,7 +1,6 @@
 package it.zenflow.controller;
 
 import it.zenflow.dto.UserStoryDTO;
-import it.zenflow.model.project.Project;
 import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.Priority;
 import it.zenflow.model.project.enums.StoryStatus;

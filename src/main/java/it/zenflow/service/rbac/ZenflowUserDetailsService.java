@@ -1,7 +1,6 @@
 package it.zenflow.service.rbac;
 
 import it.zenflow.config.multitenant.TenantContext;
-import it.zenflow.model.rbac.Role;
 import it.zenflow.model.rbac.User;
 import it.zenflow.model.rbac.UserRepository;
 import lombok.RequiredArgsConstructor;

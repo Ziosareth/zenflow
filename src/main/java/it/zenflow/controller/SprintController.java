@@ -1,12 +1,10 @@
 package it.zenflow.controller;
 
 import it.zenflow.dto.SprintDTO;
-import it.zenflow.model.project.Project;
 import it.zenflow.model.project.Sprint;
 import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.project.enums.SprintStatus;
-import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.SprintService;
