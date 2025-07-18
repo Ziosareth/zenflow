@@ -1,16 +1,7 @@
 package it.zenflow.controller;
 
-import it.zenflow.model.project.Project;
-import it.zenflow.model.project.ProjectRepository;
-import it.zenflow.model.project.Sprint;
-import it.zenflow.model.project.SprintRepository;
-import it.zenflow.model.project.UserStory;
-import it.zenflow.model.project.UserStoryRepository;
-import it.zenflow.model.project.enums.Priority;
-import it.zenflow.model.project.enums.ProjectStatus;
-import it.zenflow.model.project.enums.ProjectType;
-import it.zenflow.model.project.enums.SprintStatus;
-import it.zenflow.model.project.enums.StoryStatus;
+import it.zenflow.model.project.*;
+import it.zenflow.model.project.enums.*;
 import it.zenflow.model.rbac.*;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.SprintMetricsService;

@@ -7,7 +7,6 @@ import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.EstimationType;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.project.enums.ProjectType;
-import it.zenflow.model.project.enums.SessionStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import it.zenflow.service.EstimationVoteService;
@@ -25,8 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;

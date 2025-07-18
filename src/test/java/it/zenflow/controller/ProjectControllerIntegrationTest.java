@@ -1,7 +1,6 @@
 package it.zenflow.controller;
 
 import it.zenflow.config.multitenant.TenantContext;
-import it.zenflow.dto.ProjectDTO;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.ProjectRepository;
 import it.zenflow.model.project.enums.ProjectStatus;
