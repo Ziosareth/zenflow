@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Confirmation Modal Fragment -->
+    <div th:fragment="confirmationModal(id, title, message, formAction, submitText, submitClass)">
+        <div class="modal fade" th:id="${id}" tabindex="-1" th:aria-labelledby="${id + 'Label'}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" th:id="${id + 'Label'}" th:text="${title}">Modal Title</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" th:utext="${message}">
+                        Modal message
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
+                        <form th:action="${formAction}" method="post">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                            <button type="submit" th:class="'btn ' + ${submitClass}" th:text="${submitText}">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Helper Functions -->
+    <script th:fragment="modalScripts">
+        function showModal(modalId) {
+            var modal = new bootstrap.Modal(document.getElementById(modalId));
+            modal.show();
+        }
+    </script>
+</body>
+</html>

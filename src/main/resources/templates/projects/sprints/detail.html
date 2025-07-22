@@ -98,14 +98,11 @@
                                 <i class="bi bi-check-lg"></i> <span th:text="#{sprint.complete}">Complete Sprint</span>
                             </button>
                         </form>
-                        <form th:if="${sprint.status != null && (sprint.status.name() == 'PLANNED' || sprint.status.name() == 'ACTIVE')}" 
-                              th:action="@{/projects/{projectId}/sprints/{id}/cancel(projectId=${project.id},id=${sprint.id})}" 
-                              method="post" class="d-inline">
-                            <button type="submit" class="btn btn-danger" 
-                                    onclick="return confirm(/*[[#{sprint.cancel.confirm}]]*/'Are you sure?')">
-                                <i class="bi bi-x-lg"></i> <span th:text="#{sprint.cancel}">Cancel Sprint</span>
-                            </button>
-                        </form>
+                        <button th:if="${sprint.status != null && (sprint.status.name() == 'PLANNED' || sprint.status.name() == 'ACTIVE')}" 
+                                type="button" class="btn btn-danger"
+                                onclick="confirmCancelSprint()">
+                            <i class="bi bi-x-lg"></i> <span th:text="#{sprint.cancel}">Cancel Sprint</span>
+                        </button>
                     </div>
                 </div>
 
@@ -194,6 +191,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Cancel Sprint Confirmation Modal -->
+    <div th:replace="~{fragments/modals :: confirmationModal(
+        'cancelSprintModal', 
+        #{sprint.cancel}, 
+        #{sprint.cancel.confirm}, 
+        @{/projects/{projectId}/sprints/{id}/cancel(projectId=${project.id},id=${sprint.id})}, 
+        #{sprint.cancel}, 
+        'btn-danger'
+    )}"></div>
+
+    <!-- Include modal scripts -->
+    <script th:replace="~{fragments/modals :: modalScripts}"></script>
+
+    <script th:inline="javascript">
+        function confirmCancelSprint() {
+            showModal('cancelSprintModal');
+        }
+    </script>
 
     <!-- Script -->
     <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>

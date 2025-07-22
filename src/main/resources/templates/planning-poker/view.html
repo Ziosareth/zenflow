@@ -219,85 +219,49 @@
     </div>
 
     <!-- Start Session Confirmation Modal -->
-    <div class="modal fade" id="startSessionModal" tabindex="-1" aria-labelledby="startSessionModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="startSessionModalLabel" th:text="#{planningpoker.start}">Start Session</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to start this planning poker session? Once started, participants can begin voting.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
-                    <form th:action="@{/planning-poker/{id}/start(id=${pokerSession.id})}" method="post">
-                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
-                        <button type="submit" class="btn btn-primary" th:text="#{planningpoker.start}">Start Session</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div th:replace="~{fragments/modals :: confirmationModal(
+        'startSessionModal', 
+        #{planningpoker.start}, 
+        '<p>' + #{planningpoker.start.confirm.message} + '</p>', 
+        @{/planning-poker/{id}/start(id=${pokerSession.id})}, 
+        #{planningpoker.start}, 
+        'btn-primary'
+    )}"></div>
 
     <!-- Complete Session Confirmation Modal -->
-    <div class="modal fade" id="completeSessionModal" tabindex="-1" aria-labelledby="completeSessionModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="completeSessionModalLabel" th:text="#{planningpoker.complete}">Complete Session</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to complete this planning poker session? This will finalize all estimates and apply them to the user stories.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
-                    <form th:action="@{/planning-poker/{id}/complete(id=${pokerSession.id})}" method="post">
-                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
-                        <button type="submit" class="btn btn-success" th:text="#{planningpoker.complete}">Complete Session</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div th:replace="~{fragments/modals :: confirmationModal(
+        'completeSessionModal', 
+        #{planningpoker.complete}, 
+        '<p>' + #{planningpoker.complete.confirm.message} + '</p>', 
+        @{/planning-poker/{id}/complete(id=${pokerSession.id})}, 
+        #{planningpoker.complete}, 
+        'btn-success'
+    )}"></div>
 
     <!-- Cancel Session Confirmation Modal -->
-    <div class="modal fade" id="cancelSessionModal" tabindex="-1" aria-labelledby="cancelSessionModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="cancelSessionModalLabel" th:text="#{planningpoker.cancel}">Cancel Session</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to cancel this planning poker session? No estimates will be applied to the user stories.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{userstory.cancel}">Cancel</button>
-                    <form th:action="@{/planning-poker/{id}/cancel(id=${pokerSession.id})}" method="post">
-                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
-                        <button type="submit" class="btn btn-warning" th:text="#{planningpoker.cancel}">Cancel Session</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div th:replace="~{fragments/modals :: confirmationModal(
+        'cancelSessionModal', 
+        #{planningpoker.cancel}, 
+        '<p>' + #{planningpoker.cancel.confirm.message} + '</p>', 
+        @{/planning-poker/{id}/cancel(id=${pokerSession.id})}, 
+        #{planningpoker.cancel}, 
+        'btn-warning'
+    )}"></div>
 
+    <!-- Include modal scripts -->
+    <script th:replace="~{fragments/modals :: modalScripts}"></script>
+    
     <script th:inline="javascript">
         function confirmStartSession() {
-            var modal = new bootstrap.Modal(document.getElementById('startSessionModal'));
-            modal.show();
+            showModal('startSessionModal');
         }
 
         function confirmCompleteSession() {
-            var modal = new bootstrap.Modal(document.getElementById('completeSessionModal'));
-            modal.show();
+            showModal('completeSessionModal');
         }
 
         function confirmCancelSession() {
-            var modal = new bootstrap.Modal(document.getElementById('cancelSessionModal'));
-            modal.show();
+            showModal('cancelSessionModal');
         }
     </script>
 
