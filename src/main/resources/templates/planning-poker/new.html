@@ -23,6 +23,11 @@
                 <h5 class="card-title mb-0" th:text="#{planningpoker.new.form}">Create New Planning Poker Session</h5>
             </div>
             <div class="card-body">
+                <!-- Display specific error for participants -->
+                <div class="alert alert-danger" th:if="${participantIdsError}" th:text="${participantIdsError}">
+                    At least one participant must be selected.
+                </div>
+                
                 <form th:action="@{/planning-poker/new}" th:object="${command}" method="post">
                     <div class="mb-3">
                         <label for="name" class="form-label" th:text="#{planningpoker.name}">Session Name</label>

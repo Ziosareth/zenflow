@@ -105,6 +105,16 @@ public class PlanningPokerController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("projects", planningPokerFacade.getAllProjects());
+            
+            // Add a specific error message for participantIds
+            if (bindingResult.hasFieldErrors("participantIds")) {
+                model.addAttribute("participantIdsError", messageSource.getMessage(
+                        "validation.planningpokersession.participants.required", 
+                        null, 
+                        "At least one participant must be selected", 
+                        LocaleContextHolder.getLocale()));
+            }
+            
             return "planning-poker/new";
         }
 
