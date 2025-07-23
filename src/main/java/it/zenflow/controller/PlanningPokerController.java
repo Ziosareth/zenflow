@@ -4,6 +4,7 @@ import it.zenflow.dto.CreatePlanningPokerSessionCommand;
 import it.zenflow.dto.EstimationVoteDTO;
 import it.zenflow.dto.UserDTO;
 import it.zenflow.dto.UserStoryDTO;
+import it.zenflow.facade.PlanningPokerFacade;
 import it.zenflow.model.project.EstimationVote;
 import it.zenflow.model.project.PlanningPokerSession;
 import it.zenflow.model.project.Project;
@@ -11,16 +12,12 @@ import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.SessionStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
-import it.zenflow.service.EstimationVoteService;
-import it.zenflow.service.PlanningPokerSessionService;
-import it.zenflow.service.ProjectService;
-import it.zenflow.service.UserStoryService;
-import it.zenflow.service.rbac.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,18 +36,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlanningPokerController {
 
-    private final PlanningPokerSessionService planningPokerSessionService;
-    private final EstimationVoteService estimationVoteService;
-    private final ProjectService projectService;
-    private final UserStoryService userStoryService;
-    private final UserService userService;
+    private final PlanningPokerFacade planningPokerFacade;
     private final MessageSource messageSource;
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_PLANNING_POKER_SESSION')")
     public String listSessions(Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        List<PlanningPokerSession> sessions = planningPokerSessionService.findAll();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
+        List<PlanningPokerSession> sessions = planningPokerFacade.getAllSessions();
 
         model.addAttribute("sessions", sessions);
         model.addAttribute("currentUser", currentUser);
@@ -61,11 +54,11 @@ public class PlanningPokerController {
     @GetMapping("/project/{projectId}")
     @PreAuthorize("hasAuthority('READ_PLANNING_POKER_SESSION')")
     public String listProjectSessions(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
+        return planningPokerFacade.getProjectById(projectId)
                 .map(project -> {
-                    List<PlanningPokerSession> sessions = planningPokerSessionService.findByProjectId(projectId);
+                    List<PlanningPokerSession> sessions = planningPokerFacade.getSessionsByProjectId(projectId);
 
                     model.addAttribute("project", project);
                     model.addAttribute("sessions", sessions);
@@ -84,7 +77,7 @@ public class PlanningPokerController {
                             @RequestParam(required = false) Long projectId, 
                             @RequestParam(required = false) Long userStoryId, 
                             @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
         CreatePlanningPokerSessionCommand command = new CreatePlanningPokerSessionCommand();
         if (projectId != null) {
@@ -95,7 +88,7 @@ public class PlanningPokerController {
         }
 
         model.addAttribute("command", command);
-        model.addAttribute("projects", projectService.findAll());
+        model.addAttribute("projects", planningPokerFacade.getAllProjects());
         model.addAttribute("currentUser", currentUser);
 
         return "planning-poker/new";
@@ -111,14 +104,14 @@ public class PlanningPokerController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("projects", projectService.findAll());
+            model.addAttribute("projects", planningPokerFacade.getAllProjects());
             return "planning-poker/new";
         }
 
-        User facilitator = userService.findByUsername(userDetails.getUsername())
+        User facilitator = planningPokerFacade.getUserByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        PlanningPokerSession session = planningPokerSessionService.createSession(command, facilitator);
+        PlanningPokerSession session = planningPokerFacade.createSession(command, facilitator);
 
         String successMessage = messageSource.getMessage(
                 "planningpoker.created", 
@@ -133,19 +126,19 @@ public class PlanningPokerController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('READ_PLANNING_POKER_SESSION')")
     public String viewSession(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findByIdWithParticipantsAndVotes(id)
+        return planningPokerFacade.getSessionByIdWithParticipantsAndVotes(id)
                 .map(session -> {
                     Project project = session.getProject();
-                    List<EstimationVote> votes = estimationVoteService.findBySessionIdWithVoter(id);
+                    List<EstimationVote> votes = planningPokerFacade.getVotesBySessionId(id);
 
                     model.addAttribute("pokerSession", session);
                     model.addAttribute("project", project);
                     model.addAttribute("votes", votes);
                     model.addAttribute("currentUser", currentUser);
-                    model.addAttribute("isFacilitator", session.getFacilitator().getId().equals(currentUser.getId()));
-                    model.addAttribute("isParticipant", session.getParticipants().contains(currentUser));
+                    model.addAttribute("isFacilitator", planningPokerFacade.isFacilitator(session, currentUser));
+                    model.addAttribute("isParticipant", planningPokerFacade.isParticipant(session, currentUser));
 
                     // Add user story and votes to the model
                     model.addAttribute("userStory", session.getUserStory());
@@ -163,36 +156,28 @@ public class PlanningPokerController {
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findById(id)
-                .map(session -> {
-                    // Only facilitator can start the session
-                    if (!session.getFacilitator().getId().equals(currentUser.getId())) {
-                        String errorMessage = messageSource.getMessage(
-                                "planningpoker.error.not.facilitator", 
-                                null, 
-                                "Only the facilitator can start the session", 
-                                LocaleContextHolder.getLocale());
-                        redirectAttributes.addFlashAttribute("error", errorMessage);
-                        return "redirect:/planning-poker/" + id;
-                    }
+        try {
+            planningPokerFacade.startSessionWithAuthorization(id, currentUser);
+            String successMessage = messageSource.getMessage(
+                    "planningpoker.started", 
+                    null, 
+                    "Planning poker session started successfully", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("message", successMessage);
+        } catch (AccessDeniedException e) {
+            String errorMessage = messageSource.getMessage(
+                    "planningpoker.error.not.facilitator", 
+                    null, 
+                    "Only the facilitator can start the session", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
 
-                    try {
-                        planningPokerSessionService.startSession(id);
-                        String successMessage = messageSource.getMessage(
-                                "planningpoker.started", 
-                                null, 
-                                "Planning poker session started successfully", 
-                                LocaleContextHolder.getLocale());
-                        redirectAttributes.addFlashAttribute("message", successMessage);
-                    } catch (IllegalStateException e) {
-                        redirectAttributes.addFlashAttribute("error", e.getMessage());
-                    }
-
-                    return "redirect:/planning-poker/" + id;
-                })
-                .orElse("redirect:/planning-poker");
+        return "redirect:/planning-poker/" + id;
     }
 
     @PostMapping("/{id}/complete")
@@ -202,36 +187,28 @@ public class PlanningPokerController {
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findById(id)
-                .map(session -> {
-                    // Only facilitator can complete the session
-                    if (!session.getFacilitator().getId().equals(currentUser.getId())) {
-                        String errorMessage = messageSource.getMessage(
-                                "planningpoker.error.not.facilitator", 
-                                null, 
-                                "Only the facilitator can complete the session", 
-                                LocaleContextHolder.getLocale());
-                        redirectAttributes.addFlashAttribute("error", errorMessage);
-                        return "redirect:/planning-poker/" + id;
-                    }
+        try {
+            planningPokerFacade.completeSessionWithAuthorization(id, currentUser);
+            String successMessage = messageSource.getMessage(
+                    "planningpoker.completed", 
+                    null, 
+                    "Planning poker session completed successfully", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("message", successMessage);
+        } catch (AccessDeniedException e) {
+            String errorMessage = messageSource.getMessage(
+                    "planningpoker.error.not.facilitator", 
+                    null, 
+                    "Only the facilitator can complete the session", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
 
-                    try {
-                        planningPokerSessionService.completeSession(id);
-                        String successMessage = messageSource.getMessage(
-                                "planningpoker.completed", 
-                                null, 
-                                "Planning poker session completed successfully", 
-                                LocaleContextHolder.getLocale());
-                        redirectAttributes.addFlashAttribute("message", successMessage);
-                    } catch (IllegalStateException e) {
-                        redirectAttributes.addFlashAttribute("error", e.getMessage());
-                    }
-
-                    return "redirect:/planning-poker/" + id;
-                })
-                .orElse("redirect:/planning-poker");
+        return "redirect:/planning-poker/" + id;
     }
 
     @PostMapping("/{id}/cancel")
@@ -241,32 +218,28 @@ public class PlanningPokerController {
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findById(id)
-                .map(session -> {
-                    // Only facilitator can cancel the session
-                    if (!session.getFacilitator().getId().equals(currentUser.getId())) {
-                        String errorMessage = messageSource.getMessage(
-                                "planningpoker.error.not.facilitator", 
-                                null, 
-                                "Only the facilitator can cancel the session", 
-                                LocaleContextHolder.getLocale());
-                        redirectAttributes.addFlashAttribute("error", errorMessage);
-                        return "redirect:/planning-poker/" + id;
-                    }
+        try {
+            planningPokerFacade.cancelSessionWithAuthorization(id, currentUser);
+            String successMessage = messageSource.getMessage(
+                    "planningpoker.cancelled", 
+                    null, 
+                    "Planning poker session cancelled", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("message", successMessage);
+        } catch (AccessDeniedException e) {
+            String errorMessage = messageSource.getMessage(
+                    "planningpoker.error.not.facilitator", 
+                    null, 
+                    "Only the facilitator can cancel the session", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
 
-                    planningPokerSessionService.cancelSession(id);
-                    String successMessage = messageSource.getMessage(
-                            "planningpoker.cancelled", 
-                            null, 
-                            "Planning poker session cancelled", 
-                            LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", successMessage);
-
-                    return "redirect:/planning-poker/" + id;
-                })
-                .orElse("redirect:/planning-poker");
+        return "redirect:/planning-poker/" + id;
     }
 
     @PostMapping("/{id}/delete")
@@ -276,34 +249,29 @@ public class PlanningPokerController {
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findById(id)
-                .map(session -> {
-                    // Only facilitator can delete the session
-                    if (!session.getFacilitator().getId().equals(currentUser.getId()) &&
-                            userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        String errorMessage = messageSource.getMessage(
-                                "planningpoker.error.not.facilitator", 
-                                null, 
-                                "Only the facilitator can delete the session", 
-                                LocaleContextHolder.getLocale());
-                        redirectAttributes.addFlashAttribute("error", errorMessage);
-                        return "redirect:/planning-poker/" + id;
-                    }
-
-                    Long projectId = session.getProject().getId();
-                    planningPokerSessionService.deleteSession(id);
-                    String successMessage = messageSource.getMessage(
-                            "planningpoker.deleted", 
-                            null, 
-                            "Planning poker session deleted", 
-                            LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", successMessage);
-
-                    return "redirect:/planning-poker/project/" + projectId;
-                })
-                .orElse("redirect:/planning-poker");
+        try {
+            Long projectId = planningPokerFacade.deleteSessionWithAuthorization(id, currentUser, userDetails);
+            String successMessage = messageSource.getMessage(
+                    "planningpoker.deleted", 
+                    null, 
+                    "Planning poker session deleted", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("message", successMessage);
+            return "redirect:/planning-poker/project/" + projectId;
+        } catch (AccessDeniedException e) {
+            String errorMessage = messageSource.getMessage(
+                    "planningpoker.error.not.facilitator", 
+                    null, 
+                    "Only the facilitator can delete the session", 
+                    LocaleContextHolder.getLocale());
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+            return "redirect:/planning-poker/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/planning-poker";
+        }
     }
 
     @GetMapping("/{id}/vote/{userStoryId}")
@@ -312,46 +280,29 @@ public class PlanningPokerController {
             @PathVariable Long id,
             @PathVariable Long userStoryId,
             Model model,
+            RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return planningPokerSessionService.findByIdWithParticipants(id)
-                .map(session -> userStoryService.findById(userStoryId)
-                        .map(userStory -> {
-                            // Check if user is a participant
-                            if (!session.getParticipants().contains(currentUser) && 
-                                !session.getFacilitator().getId().equals(currentUser.getId())) {
-                                return "redirect:/planning-poker/" + id;
-                            }
-
-                            // Check if session is active
-                            if (session.getStatus() != SessionStatus.ACTIVE) {
-                                return "redirect:/planning-poker/" + id;
-                            }
-
-                            EstimationVoteDTO voteDTO = new EstimationVoteDTO();
-                            voteDTO.setSessionId(id);
-                            voteDTO.setUserStoryId(userStoryId);
-                            voteDTO.setVoterId(currentUser.getId());
-
-                            // Check if user has already voted
-                            estimationVoteService.findBySessionAndUserStoryAndVoter(session, userStory, currentUser)
-                                    .ifPresent(vote -> {
-                                        voteDTO.setId(vote.getId());
-                                        voteDTO.setStoryPoints(vote.getStoryPoints());
-                                        voteDTO.setReasoning(vote.getReasoning());
-                                    });
-
-                            model.addAttribute("pokerSession", session);
-                            model.addAttribute("userStory", userStory);
-                            model.addAttribute("vote", voteDTO);
-                            model.addAttribute("currentUser", currentUser);
-
-                            return "planning-poker/vote";
-                        })
-                        .orElse("redirect:/planning-poker/" + id))
-                .orElse("redirect:/planning-poker");
+        try {
+            EstimationVoteDTO voteDTO = planningPokerFacade.prepareVoteDTO(id, userStoryId, currentUser);
+            PlanningPokerSession session = planningPokerFacade.getSessionByIdWithParticipants(id).orElseThrow();
+            UserStory userStory = planningPokerFacade.getUserStoryById(userStoryId).orElseThrow();
+            
+            model.addAttribute("pokerSession", session);
+            model.addAttribute("userStory", userStory);
+            model.addAttribute("vote", voteDTO);
+            model.addAttribute("currentUser", currentUser);
+            
+            return "planning-poker/vote";
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", "You are not authorized to vote in this session");
+            return "redirect:/planning-poker/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/planning-poker/" + id;
+        }
     }
 
     @PostMapping("/{id}/vote/{userStoryId}")
@@ -366,11 +317,11 @@ public class PlanningPokerController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         if (bindingResult.hasErrors()) {
-            User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-            PlanningPokerSession session = planningPokerSessionService.findByIdWithParticipants(id).orElseThrow();
-            UserStory userStory = userStoryService.findById(userStoryId).orElseThrow();
+            User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
+            PlanningPokerSession session = planningPokerFacade.getSessionByIdWithParticipants(id).orElseThrow();
+            UserStory userStory = planningPokerFacade.getUserStoryById(userStoryId).orElseThrow();
 
-            model.addAttribute("session", session);
+            model.addAttribute("pokerSession", session);
             model.addAttribute("userStory", userStory);
             model.addAttribute("currentUser", currentUser);
             model.addAttribute("vote", voteDTO);
@@ -378,14 +329,11 @@ public class PlanningPokerController {
             return "planning-poker/vote";
         }
 
-        User voter = userService.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        try {
-            estimationVoteService.saveVote(
+         try {
+            planningPokerFacade.saveVoteByUsername(
                     id,
                     userStoryId,
-                    voter,
+                    userDetails.getUsername(),
                     voteDTO.getStoryPoints(),
                     voteDTO.getReasoning()
             );
@@ -407,9 +355,9 @@ public class PlanningPokerController {
     @PreAuthorize("hasAuthority('READ_USER_STORY')")
     @ResponseBody
     public List<UserStoryDTO> getProjectStories(@PathVariable Long projectId) {
-        List<UserStory> stories = userStoryService.findByProjectIdAndStatus(projectId, StoryStatus.BACKLOG);
+        List<UserStory> stories = planningPokerFacade.getUserStoriesByProjectIdAndStatus(projectId, StoryStatus.BACKLOG);
         return stories.stream()
-                .map(this::convertToUserStoryDTO)
+                .map(planningPokerFacade::convertToUserStoryDTO)
                 .collect(Collectors.toList());
     }
 
@@ -417,34 +365,11 @@ public class PlanningPokerController {
     @PreAuthorize("hasAuthority('READ_PROJECT')")
     @ResponseBody
     public List<UserDTO> getProjectMembers(@PathVariable Long projectId) {
-        Project project = projectService.findById(projectId)
+        Project project = planningPokerFacade.getProjectById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         return project.getTeamMembers().stream()
-                .map(this::convertToUserDTO)
+                .map(planningPokerFacade::convertToUserDTO)
                 .collect(Collectors.toList());
-    }
-
-    private UserDTO convertToUserDTO(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setEnabled(user.isEnabled());
-        dto.setTenant(user.getTenant());
-        return dto;
-    }
-
-    private UserStoryDTO convertToUserStoryDTO(UserStory userStory) {
-        UserStoryDTO dto = new UserStoryDTO();
-        dto.setId(userStory.getId());
-        dto.setTitle(userStory.getTitle());
-        dto.setDescription(userStory.getDescription());
-        dto.setStatus(userStory.getStatus());
-        dto.setPriority(userStory.getPriority());
-        dto.setStoryPoints(userStory.getStoryPoints());
-        dto.setProjectId(userStory.getProject().getId());
-        dto.setEstimationType(userStory.getEstimationType());
-        return dto;
     }
 }
