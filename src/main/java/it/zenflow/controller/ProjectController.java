@@ -1,12 +1,11 @@
 package it.zenflow.controller;
 
 import it.zenflow.dto.ProjectDTO;
+import it.zenflow.facade.ProjectFacade;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.rbac.User;
-import it.zenflow.service.ProjectService;
-import it.zenflow.service.rbac.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -24,10 +23,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/projects")
@@ -35,8 +31,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProjectController {
 
-    private final ProjectService projectService;
-    private final UserService userService;
+    private final ProjectFacade projectFacade;
     private final MessageSource messageSource;
 
     @GetMapping("")
@@ -48,8 +43,8 @@ public class ProjectController {
             Model model) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        Page<Project> projectPage = projectService.findAllWithOwners(pageable);
+        User currentUser = projectFacade.getCurrentUser(userDetails);
+        Page<Project> projectPage = projectFacade.getAllProjects(pageable);
 
         model.addAttribute("projects", projectPage.getContent());
         model.addAttribute("currentPage", projectPage.getNumber());
@@ -64,24 +59,14 @@ public class ProjectController {
 
     @GetMapping("/{id}")
     public String viewProject(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = projectFacade.getCurrentUser(userDetails);
 
-        return projectService.findById(id)
+        return projectFacade.getProjectById(id)
                 .map(project -> {
                     model.addAttribute("project", project);
                     model.addAttribute("currentUser", currentUser);
-
-                    // Safely check if the current user is the owner
-                    boolean isOwner = project.getOwner() != null && 
-                                     project.getOwner().getId() != null && 
-                                     project.getOwner().getId().equals(currentUser.getId());
-                    model.addAttribute("isOwner", isOwner);
-
-                    // Safely check if the current user is a team member
-                    boolean isTeamMember = project.getTeamMembers() != null && 
-                                          project.getTeamMembers().contains(currentUser);
-                    model.addAttribute("isTeamMember", isTeamMember);
-
+                    model.addAttribute("isOwner", projectFacade.isProjectOwner(project, currentUser));
+                    model.addAttribute("isTeamMember", projectFacade.isTeamMember(project, currentUser));
                     return "projects/detail";
                 })
                 .orElse("redirect:/projects");
@@ -90,11 +75,7 @@ public class ProjectController {
     @GetMapping("/new")
     @PreAuthorize("hasAuthority('CREATE_PROJECT')")
     public String newProjectForm(Model model) {
-        model.addAttribute("projectDTO", new ProjectDTO());
-        model.addAttribute("allUsers", userService.findAll());
-        model.addAttribute("statuses", ProjectStatus.values());
-        model.addAttribute("types", ProjectType.values());
-        model.addAttribute("isNew", true);
+        prepareFormModel(model, true);
         return "projects/form";
     }
 
@@ -108,75 +89,38 @@ public class ProjectController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("allUsers", userService.findAll());
-            model.addAttribute("statuses", ProjectStatus.values());
-            model.addAttribute("types", ProjectType.values());
-            model.addAttribute("isNew", true);
+            prepareFormModel(model, true);
             return "projects/form";
         }
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = projectFacade.getCurrentUser(userDetails);
 
-        Project project = new Project();
-        project.setName(projectDTO.getName());
-        project.setDescription(projectDTO.getDescription());
-        project.setStatus(projectDTO.getStatus());
-        project.setType(projectDTO.getType());
-        project.setStartDate(projectDTO.getStartDate());
-        project.setEndDate(projectDTO.getEndDate());
-        project.setOwner(currentUser);
-
-        // Add team members
-        Set<User> teamMembers = new HashSet<>();
-        if (projectDTO.getTeamMemberIds() != null && !projectDTO.getTeamMemberIds().isEmpty()) {
-            for (Long userId : projectDTO.getTeamMemberIds()) {
-                userService.findById(userId).ifPresent(teamMembers::add);
-            }
+        try {
+            projectFacade.createProject(projectDTO, currentUser);
+            addSuccessMessage(redirectAttributes, "project.created");
+            return "redirect:/projects";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            prepareFormModel(model, true);
+            return "projects/form";
         }
-        project.setTeamMembers(teamMembers);
-
-        projectService.save(project);
-
-        String message = messageSource.getMessage("project.created", null, LocaleContextHolder.getLocale());
-        redirectAttributes.addFlashAttribute("message", message);
-
-        return "redirect:/projects";
     }
 
     @GetMapping("/{id}/edit")
     @PreAuthorize("hasAuthority('UPDATE_PROJECT')")
     public String editProjectForm(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = projectFacade.getCurrentUser(userDetails);
 
-        return projectService.findById(id)
+        return projectFacade.getProjectById(id)
                 .map(project -> {
                     // Check if user is owner or has admin rights
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                    if (!projectFacade.hasAdminRights(project, currentUser, userDetails)) {
                         return "redirect:/projects";
                     }
 
-                    ProjectDTO projectDTO = new ProjectDTO();
-                    projectDTO.setId(project.getId());
-                    projectDTO.setName(project.getName());
-                    projectDTO.setDescription(project.getDescription());
-                    projectDTO.setStatus(project.getStatus());
-                    projectDTO.setType(project.getType());
-                    projectDTO.setStartDate(project.getStartDate());
-                    projectDTO.setEndDate(project.getEndDate());
-
-                    // Set team member IDs
-                    Set<Long> teamMemberIds = project.getTeamMembers().stream()
-                            .map(User::getId)
-                            .collect(Collectors.toSet());
-                    projectDTO.setTeamMemberIds(teamMemberIds);
-
+                    ProjectDTO projectDTO = projectFacade.mapToDTO(project);
                     model.addAttribute("projectDTO", projectDTO);
-                    model.addAttribute("allUsers", userService.findAll());
-                    model.addAttribute("statuses", ProjectStatus.values());
-                    model.addAttribute("types", ProjectType.values());
-                    model.addAttribute("isNew", false);
-
+                    prepareFormModel(model, false);
                     return "projects/form";
                 })
                 .orElse("redirect:/projects");
@@ -193,47 +137,21 @@ public class ProjectController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("allUsers", userService.findAll());
-            model.addAttribute("statuses", ProjectStatus.values());
-            model.addAttribute("types", ProjectType.values());
-            model.addAttribute("isNew", false);
+            prepareFormModel(model, false);
             return "projects/form";
         }
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = projectFacade.getCurrentUser(userDetails);
 
-        return projectService.findById(id)
-                .map(project -> {
-                    // Check if user is owner or has admin rights
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects";
-                    }
-
-                    project.setName(projectDTO.getName());
-                    project.setDescription(projectDTO.getDescription());
-                    project.setStatus(projectDTO.getStatus());
-                    project.setType(projectDTO.getType());
-                    project.setStartDate(projectDTO.getStartDate());
-                    project.setEndDate(projectDTO.getEndDate());
-
-                    // Update team members
-                    Set<User> teamMembers = new HashSet<>();
-                    if (projectDTO.getTeamMemberIds() != null && !projectDTO.getTeamMemberIds().isEmpty()) {
-                        for (Long userId : projectDTO.getTeamMemberIds()) {
-                            userService.findById(userId).ifPresent(teamMembers::add);
-                        }
-                    }
-                    project.setTeamMembers(teamMembers);
-
-                    projectService.save(project);
-
-                    String message = messageSource.getMessage("project.updated", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + id;
-                })
-                .orElse("redirect:/projects");
+        try {
+            projectFacade.updateProject(id, projectDTO, currentUser, userDetails);
+            addSuccessMessage(redirectAttributes, "project.updated");
+            return "redirect:/projects/" + id;
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            prepareFormModel(model, false);
+            return "projects/form";
+        }
     }
 
     @PostMapping("/{id}/delete")
@@ -243,24 +161,16 @@ public class ProjectController {
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = projectFacade.getCurrentUser(userDetails);
 
-        return projectService.findById(id)
-                .map(project -> {
-                    // Check if user is owner or has admin rights
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects";
-                    }
+        try {
+            projectFacade.deleteProject(id, currentUser, userDetails);
+            addSuccessMessage(redirectAttributes, "project.deleted");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
 
-                    projectService.deleteById(id);
-
-                    String message = messageSource.getMessage("project.deleted", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects";
-                })
-                .orElse("redirect:/projects");
+        return "redirect:/projects";
     }
 
     @GetMapping("/my")
@@ -271,8 +181,8 @@ public class ProjectController {
             @AuthenticationPrincipal UserDetails userDetails,
             Model model) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        List<Project> projects = projectService.findByOwner(currentUser);
+        User currentUser = projectFacade.getCurrentUser(userDetails);
+        List<Project> projects = projectFacade.getUserProjects(currentUser);
 
         model.addAttribute("projects", projects);
         model.addAttribute("currentUser", currentUser);
@@ -286,5 +196,26 @@ public class ProjectController {
         model.addAttribute("sortField", sort);
 
         return "projects/list";
+    }
+    
+    /**
+     * Prepares the model with common attributes for the form
+     */
+    private void prepareFormModel(Model model, boolean isNew) {
+        if (!model.containsAttribute("projectDTO")) {
+            model.addAttribute("projectDTO", new ProjectDTO());
+        }
+        model.addAttribute("allUsers", projectFacade.getAllUsers());
+        model.addAttribute("statuses", ProjectStatus.values());
+        model.addAttribute("types", ProjectType.values());
+        model.addAttribute("isNew", isNew);
+    }
+    
+    /**
+     * Adds a success message to the redirect attributes
+     */
+    private void addSuccessMessage(RedirectAttributes redirectAttributes, String messageKey) {
+        String message = messageSource.getMessage(messageKey, null, LocaleContextHolder.getLocale());
+        redirectAttributes.addFlashAttribute("message", message);
     }
 }

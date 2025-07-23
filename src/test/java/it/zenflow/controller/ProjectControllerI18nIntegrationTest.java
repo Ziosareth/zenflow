@@ -5,6 +5,7 @@ import it.zenflow.model.project.ProjectRepository;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.rbac.*;
+import it.zenflow.facade.ProjectFacade;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.rbac.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,9 @@ public class ProjectControllerI18nIntegrationTest {
 
     @Autowired
     private ProjectService projectService;
+    
+    @Autowired
+    private ProjectFacade projectFacade;
 
     @Autowired
     private UserRepository userRepository;
