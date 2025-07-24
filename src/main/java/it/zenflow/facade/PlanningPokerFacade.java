@@ -4,6 +4,8 @@ import it.zenflow.dto.CreatePlanningPokerSessionCommand;
 import it.zenflow.dto.EstimationVoteDTO;
 import it.zenflow.dto.UserDTO;
 import it.zenflow.dto.UserStoryDTO;
+import it.zenflow.mapper.UserMapper;
+import it.zenflow.mapper.UserStoryMapper;
 import it.zenflow.model.project.EstimationVote;
 import it.zenflow.model.project.PlanningPokerSession;
 import it.zenflow.model.project.Project;
@@ -25,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Facade for Planning Poker-related business operations.
@@ -39,6 +40,8 @@ public class PlanningPokerFacade {
     private final ProjectService projectService;
     private final UserStoryService userStoryService;
     private final UserService userService;
+    private final UserMapper userMapper;
+    private final UserStoryMapper userStoryMapper;
 
     /**
      * Retrieves all planning poker sessions
@@ -189,29 +192,14 @@ public class PlanningPokerFacade {
      * Converts a User entity to a UserDTO
      */
     public UserDTO convertToUserDTO(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setEnabled(user.isEnabled());
-        dto.setTenant(user.getTenant());
-        return dto;
+        return userMapper.toDto(user);
     }
 
     /**
      * Converts a UserStory entity to a UserStoryDTO
      */
     public UserStoryDTO convertToUserStoryDTO(UserStory userStory) {
-        UserStoryDTO dto = new UserStoryDTO();
-        dto.setId(userStory.getId());
-        dto.setTitle(userStory.getTitle());
-        dto.setDescription(userStory.getDescription());
-        dto.setStatus(userStory.getStatus());
-        dto.setPriority(userStory.getPriority());
-        dto.setStoryPoints(userStory.getStoryPoints());
-        dto.setProjectId(userStory.getProject().getId());
-        dto.setEstimationType(userStory.getEstimationType());
-        return dto;
+        return userStoryMapper.toDto(userStory);
     }
 
     /**

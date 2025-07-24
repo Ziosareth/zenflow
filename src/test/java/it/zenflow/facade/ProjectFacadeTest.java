@@ -1,6 +1,7 @@
 package it.zenflow.facade;
 
 import it.zenflow.dto.ProjectDTO;
+import it.zenflow.mapper.ProjectMapper;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.project.enums.ProjectType;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +41,9 @@ public class ProjectFacadeTest {
 
     @Mock
     private UserService userService;
+    
+    @Mock
+    private ProjectMapper projectMapper;
 
     @InjectMocks
     private ProjectFacade projectFacade;
@@ -279,6 +284,15 @@ public class ProjectFacadeTest {
         newProject.setOwner(ownerUser);
         newProject.setTeamMembers(teamMembers);
 
+        Project mappedProject = new Project();
+        mappedProject.setName(projectDTO.getName());
+        mappedProject.setDescription(projectDTO.getDescription());
+        mappedProject.setStatus(projectDTO.getStatus());
+        mappedProject.setType(projectDTO.getType());
+        mappedProject.setStartDate(projectDTO.getStartDate());
+        mappedProject.setEndDate(projectDTO.getEndDate());
+
+        when(projectMapper.toEntity(projectDTO)).thenReturn(mappedProject);
         when(userService.findById(teamMemberUser.getId())).thenReturn(Optional.of(teamMemberUser));
         when(projectService.save(any(Project.class))).thenReturn(newProject);
 
@@ -326,6 +340,18 @@ public class ProjectFacadeTest {
         updatedProject.setTeamMembers(teamMembers);
 
         when(projectService.findById(1L)).thenReturn(Optional.of(project1));
+        // Configure the mapper to update the project
+        doAnswer(invocation -> {
+            ProjectDTO dto = invocation.getArgument(0);
+            Project project = invocation.getArgument(1);
+            project.setName(dto.getName());
+            project.setDescription(dto.getDescription());
+            project.setStatus(dto.getStatus());
+            project.setType(dto.getType());
+            project.setStartDate(dto.getStartDate());
+            project.setEndDate(dto.getEndDate());
+            return null;
+        }).when(projectMapper).updateEntityFromDto(eq(updateDTO), any(Project.class));
         when(userService.findById(teamMemberUser.getId())).thenReturn(Optional.of(teamMemberUser));
         when(projectService.save(any(Project.class))).thenReturn(updatedProject);
 
@@ -418,6 +444,21 @@ public class ProjectFacadeTest {
 
     @Test
     public void testMapToDTO() {
+        // Arrange
+        ProjectDTO expectedDTO = new ProjectDTO();
+        expectedDTO.setId(project1.getId());
+        expectedDTO.setName(project1.getName());
+        expectedDTO.setDescription(project1.getDescription());
+        expectedDTO.setStatus(project1.getStatus());
+        expectedDTO.setType(project1.getType());
+        expectedDTO.setStartDate(project1.getStartDate());
+        expectedDTO.setEndDate(project1.getEndDate());
+        Set<Long> teamMemberIds = new HashSet<>();
+        teamMemberIds.add(teamMemberUser.getId());
+        expectedDTO.setTeamMemberIds(teamMemberIds);
+        
+        when(projectMapper.toDto(project1)).thenReturn(expectedDTO);
+        
         // Act
         ProjectDTO result = projectFacade.mapToDTO(project1);
 
@@ -432,5 +473,7 @@ public class ProjectFacadeTest {
         assertThat(result.getEndDate()).isEqualTo(project1.getEndDate());
         assertThat(result.getTeamMemberIds()).hasSize(1);
         assertThat(result.getTeamMemberIds()).contains(teamMemberUser.getId());
+        
+        verify(projectMapper).toDto(project1);
     }
 }

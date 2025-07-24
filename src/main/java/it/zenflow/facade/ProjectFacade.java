@@ -1,8 +1,8 @@
 package it.zenflow.facade;
 
 import it.zenflow.dto.ProjectDTO;
+import it.zenflow.mapper.ProjectMapper;
 import it.zenflow.model.project.Project;
-import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.rbac.User;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.rbac.UserService;
@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Facade for Project-related business operations.
@@ -29,6 +28,7 @@ import java.util.stream.Collectors;
 public class ProjectFacade {
     private final ProjectService projectService;
     private final UserService userService;
+    private final ProjectMapper projectMapper;
 
     /**
      * Retrieves all projects with pagination
@@ -76,7 +76,7 @@ public class ProjectFacade {
      */
     @Transactional(transactionManager = "tenantTransactionManager")
     public Project createProject(ProjectDTO projectDTO, User currentUser) {
-        Project project = mapToEntity(projectDTO);
+        Project project = projectMapper.toEntity(projectDTO);
         project.setOwner(currentUser);
         
         // Add team members
@@ -100,7 +100,7 @@ public class ProjectFacade {
         }
         
         // Update project fields
-        updateEntityFromDTO(project, projectDTO);
+        projectMapper.updateEntityFromDto(projectDTO, project);
         
         // Update team members
         Set<User> teamMembers = getTeamMembersFromIds(projectDTO.getTeamMemberIds());
@@ -159,48 +159,10 @@ public class ProjectFacade {
     }
 
     /**
-     * Converts a DTO to a Project entity
-     */
-    private Project mapToEntity(ProjectDTO dto) {
-        Project project = new Project();
-        updateEntityFromDTO(project, dto);
-        return project;
-    }
-
-    /**
-     * Updates a Project entity with data from a DTO
-     */
-    private void updateEntityFromDTO(Project project, ProjectDTO dto) {
-        project.setName(dto.getName());
-        project.setDescription(dto.getDescription());
-        project.setStatus(dto.getStatus());
-        project.setType(dto.getType());
-        project.setStartDate(dto.getStartDate());
-        project.setEndDate(dto.getEndDate());
-    }
-
-    /**
      * Converts a Project entity to a DTO
      */
     public ProjectDTO mapToDTO(Project project) {
-        ProjectDTO dto = new ProjectDTO();
-        dto.setId(project.getId());
-        dto.setName(project.getName());
-        dto.setDescription(project.getDescription());
-        dto.setStatus(project.getStatus());
-        dto.setType(project.getType());
-        dto.setStartDate(project.getStartDate());
-        dto.setEndDate(project.getEndDate());
-        
-        // Set team member IDs
-        if (project.getTeamMembers() != null) {
-            Set<Long> teamMemberIds = project.getTeamMembers().stream()
-                    .map(User::getId)
-                    .collect(Collectors.toSet());
-            dto.setTeamMemberIds(teamMemberIds);
-        }
-        
-        return dto;
+        return projectMapper.toDto(project);
     }
 
     /**

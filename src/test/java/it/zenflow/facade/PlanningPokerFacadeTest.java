@@ -4,6 +4,8 @@ import it.zenflow.dto.CreatePlanningPokerSessionCommand;
 import it.zenflow.dto.EstimationVoteDTO;
 import it.zenflow.dto.UserDTO;
 import it.zenflow.dto.UserStoryDTO;
+import it.zenflow.mapper.UserMapper;
+import it.zenflow.mapper.UserStoryMapper;
 import it.zenflow.model.project.EstimationVote;
 import it.zenflow.model.project.PlanningPokerSession;
 import it.zenflow.model.project.Project;
@@ -59,6 +61,12 @@ public class PlanningPokerFacadeTest {
 
     @Mock
     private MessageSource messageSource;
+    
+    @Mock
+    private UserMapper userMapper;
+    
+    @Mock
+    private UserStoryMapper userStoryMapper;
 
     @InjectMocks
     private PlanningPokerFacade planningPokerFacade;
@@ -671,6 +679,15 @@ public class PlanningPokerFacadeTest {
         User user = facilitatorUser;
         user.setTenant("test-tenant");
         user.setEnabled(true);
+        
+        UserDTO expectedDTO = new UserDTO();
+        expectedDTO.setId(user.getId());
+        expectedDTO.setUsername(user.getUsername());
+        expectedDTO.setEmail(user.getEmail());
+        expectedDTO.setEnabled(user.isEnabled());
+        expectedDTO.setTenant(user.getTenant());
+        
+        when(userMapper.toDto(user)).thenReturn(expectedDTO);
 
         // Act
         UserDTO result = planningPokerFacade.convertToUserDTO(user);
@@ -682,6 +699,8 @@ public class PlanningPokerFacadeTest {
         assertThat(result.getEmail()).isEqualTo(user.getEmail());
         assertThat(result.isEnabled()).isEqualTo(user.isEnabled());
         assertThat(result.getTenant()).isEqualTo(user.getTenant());
+        
+        verify(userMapper).toDto(user);
     }
 
     @Test
@@ -691,6 +710,18 @@ public class PlanningPokerFacadeTest {
         userStory.setPriority(Priority.MEDIUM);
         userStory.setStoryPoints(5);
         userStory.setEstimationType(null); // Assuming this can be null
+        
+        UserStoryDTO expectedDTO = new UserStoryDTO();
+        expectedDTO.setId(userStory.getId());
+        expectedDTO.setTitle(userStory.getTitle());
+        expectedDTO.setDescription(userStory.getDescription());
+        expectedDTO.setStatus(userStory.getStatus());
+        expectedDTO.setPriority(userStory.getPriority());
+        expectedDTO.setStoryPoints(userStory.getStoryPoints());
+        expectedDTO.setProjectId(userStory.getProject().getId());
+        expectedDTO.setEstimationType(userStory.getEstimationType());
+        
+        when(userStoryMapper.toDto(userStory)).thenReturn(expectedDTO);
 
         // Act
         UserStoryDTO result = planningPokerFacade.convertToUserStoryDTO(userStory);
@@ -705,6 +736,8 @@ public class PlanningPokerFacadeTest {
         assertThat(result.getStoryPoints()).isEqualTo(userStory.getStoryPoints());
         assertThat(result.getProjectId()).isEqualTo(userStory.getProject().getId());
         assertThat(result.getEstimationType()).isEqualTo(userStory.getEstimationType());
+        
+        verify(userStoryMapper).toDto(userStory);
     }
 
     @Test
