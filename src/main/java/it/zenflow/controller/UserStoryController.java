@@ -13,6 +13,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,8 +24,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/projects/{projectId}/user-stories")
@@ -38,15 +39,28 @@ public class UserStoryController {
 
     @GetMapping("")
     @PreAuthorize("hasAuthority('READ_USER_STORY')")
-    public String listUserStories(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String listUserStories(
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
         User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
 
         return projectService.findById(projectId)
                 .map(project -> {
-                    List<UserStory> userStories = userStoryService.findByProject(project);
-
+                    Page<UserStory> userStoriesPage = userStoryService.findByProjectPaginated(
+                            project, PageRequest.of(page, size, Sort.by(sort)));
+                    
                     model.addAttribute("project", project);
-                    model.addAttribute("userStories", userStories);
+                    model.addAttribute("userStories", userStoriesPage.getContent());
+                    model.addAttribute("currentPage", page);
+                    model.addAttribute("totalPages", userStoriesPage.getTotalPages());
+                    model.addAttribute("totalItems", userStoriesPage.getTotalElements());
+                    model.addAttribute("pageSize", size);
+                    model.addAttribute("sortField", sort);
                     model.addAttribute("currentUser", currentUser);
                     model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
                     model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));

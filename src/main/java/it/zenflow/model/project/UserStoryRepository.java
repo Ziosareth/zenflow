@@ -2,6 +2,8 @@ package it.zenflow.model.project;
 
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,9 @@ public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
 
     @Query("SELECT us FROM UserStory us LEFT JOIN FETCH us.assignedTo WHERE us.project = :project")
     List<UserStory> findByProjectWithAssignedUser(@Param("project") Project project);
+    
+    @Query("SELECT us FROM UserStory us LEFT JOIN us.assignedTo WHERE us.project = :project")
+    Page<UserStory> findByProjectPaginated(@Param("project") Project project, Pageable pageable);
 
     List<UserStory> findByProjectAndStatus(Project project, StoryStatus status);
 

@@ -104,6 +104,10 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Pagination -->
+                <div th:replace="~{fragments/pagination :: pagination('/projects/' + ${project.id} + '/user-stories', ${currentPage}, ${totalPages}, ${totalItems}, ${pageSize}, ${sortField})}">
+                </div>
             </div>
         </div>
     </div>

@@ -6,6 +6,8 @@ import it.zenflow.model.project.UserStoryRepository;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,11 @@ public class UserStoryService {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<UserStory> findByProject(Project project) {
         return userStoryRepository.findByProjectWithAssignedUser(project);
+    }
+    
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Page<UserStory> findByProjectPaginated(Project project, Pageable pageable) {
+        return userStoryRepository.findByProjectPaginated(project, pageable);
     }
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")

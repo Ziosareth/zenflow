@@ -8,38 +8,23 @@ import it.zenflow.model.project.enums.EstimationType;
 import it.zenflow.model.project.enums.Priority;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
-import it.zenflow.service.ProjectService;
-import it.zenflow.service.SprintService;
-import it.zenflow.service.rbac.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for the UserStoryMapper implementation.
- * Uses Mockito to mock the service dependencies.
+ * Tests basic mapping functionality without relationship setting.
  */
 @ExtendWith(MockitoExtension.class)
 public class UserStoryMapperTest {
-
-    @Mock
-    private ProjectService projectService;
-
-    @Mock
-    private SprintService sprintService;
-
-    @Mock
-    private UserService userService;
 
     @Spy
     @InjectMocks
@@ -111,11 +96,6 @@ public class UserStoryMapperTest {
         userStory.setVariance(0.7);
         userStory.setTasks(new ArrayList<>());
         userStory.setPlanningSessions(new ArrayList<>());
-
-        // Set up service mocks with lenient stubs to avoid UnnecessaryStubbingException
-        lenient().when(projectService.findById(project.getId())).thenReturn(Optional.of(project));
-        lenient().when(sprintService.findById(sprint.getId())).thenReturn(Optional.of(sprint));
-        lenient().when(userService.findById(assignedUser.getId())).thenReturn(Optional.of(assignedUser));
     }
 
     @Test
@@ -144,15 +124,11 @@ public class UserStoryMapperTest {
         assertThat(result.getTasks()).isEmpty();
         assertThat(result.getPlanningSessions()).isEmpty();
         
-        // Verify relationships are set by the setRelationships method
-        // Even though we have @Mapping(target = "project", ignore = true) in the mapper interface,
-        // the setRelationships method is called after mapping and sets these fields
-        assertThat(result.getProject()).isEqualTo(project);
-        assertThat(result.getSprint()).isEqualTo(sprint);
-        assertThat(result.getAssignedTo()).isEqualTo(assignedUser);
-        
-        // Verify setRelationships was called
-        verify(userStoryMapper).setRelationships(userStoryDTO, result);
+        // Relationships should be null as they are ignored in the mapping
+        // and are expected to be loaded via fetch joins in repository queries
+        assertThat(result.getProject()).isNull();
+        assertThat(result.getSprint()).isNull();
+        assertThat(result.getAssignedTo()).isNull();
     }
 
     @Test
@@ -239,94 +215,10 @@ public class UserStoryMapperTest {
         assertThat(existingUserStory.getBusinessValue()).isEqualTo(5); // Not updated
         assertThat(existingUserStory.getEstimationType()).isEqualTo(EstimationType.STORY_POINTS); // Not updated
         
-        // Verify relationships are set by the setRelationships method
-        // Even though we have @Mapping(target = "...", ignore = true) in the mapper interface,
-        // the setRelationships method is called after mapping and sets these fields
-        assertThat(existingUserStory.getProject()).isEqualTo(project);
-        assertThat(existingUserStory.getSprint()).isEqualTo(sprint);
-        assertThat(existingUserStory.getAssignedTo()).isEqualTo(assignedUser);
-        
-        // Verify setRelationships was called
-        verify(userStoryMapper).setRelationships(updateDTO, existingUserStory);
-    }
-
-    @Test
-    public void testSetRelationships() {
-        // Arrange
-        UserStory userStoryWithoutRelationships = new UserStory();
-        userStoryWithoutRelationships.setId(1L);
-        userStoryWithoutRelationships.setTitle("Test User Story");
-
-        // Act - Call the method directly
-        userStoryMapper.setRelationships(userStoryDTO, userStoryWithoutRelationships);
-
-        // Assert
-        assertThat(userStoryWithoutRelationships.getProject()).isEqualTo(project);
-        assertThat(userStoryWithoutRelationships.getSprint()).isEqualTo(sprint);
-        assertThat(userStoryWithoutRelationships.getAssignedTo()).isEqualTo(assignedUser);
-        
-        // Verify service methods were called
-        verify(projectService).findById(project.getId());
-        verify(sprintService).findById(sprint.getId());
-        verify(userService).findById(assignedUser.getId());
-    }
-
-    @Test
-    public void testSetRelationships_WithNullIds() {
-        // Arrange
-        UserStoryDTO dtoWithNullIds = new UserStoryDTO();
-        dtoWithNullIds.setId(1L);
-        dtoWithNullIds.setTitle("Test User Story");
-        // All relationship IDs are null
-
-        UserStory userStoryWithoutRelationships = new UserStory();
-        userStoryWithoutRelationships.setId(1L);
-        userStoryWithoutRelationships.setTitle("Test User Story");
-
-        // Act
-        userStoryMapper.setRelationships(dtoWithNullIds, userStoryWithoutRelationships);
-
-        // Assert
-        assertThat(userStoryWithoutRelationships.getProject()).isNull();
-        assertThat(userStoryWithoutRelationships.getSprint()).isNull();
-        assertThat(userStoryWithoutRelationships.getAssignedTo()).isNull();
-        
-        // Verify service methods were not called
-        verify(projectService, never()).findById(anyLong());
-        verify(sprintService, never()).findById(anyLong());
-        verify(userService, never()).findById(anyLong());
-    }
-
-    @Test
-    public void testSetRelationships_WithNonExistentEntities() {
-        // Arrange
-        UserStoryDTO dtoWithNonExistentIds = new UserStoryDTO();
-        dtoWithNonExistentIds.setId(1L);
-        dtoWithNonExistentIds.setTitle("Test User Story");
-        dtoWithNonExistentIds.setProjectId(999L); // Non-existent project
-        dtoWithNonExistentIds.setSprintId(999L);  // Non-existent sprint
-        dtoWithNonExistentIds.setAssignedToId(999L); // Non-existent user
-
-        UserStory userStoryWithoutRelationships = new UserStory();
-        userStoryWithoutRelationships.setId(1L);
-        userStoryWithoutRelationships.setTitle("Test User Story");
-
-        // Mock service responses for non-existent entities
-        when(projectService.findById(999L)).thenReturn(Optional.empty());
-        when(sprintService.findById(999L)).thenReturn(Optional.empty());
-        when(userService.findById(999L)).thenReturn(Optional.empty());
-
-        // Act
-        userStoryMapper.setRelationships(dtoWithNonExistentIds, userStoryWithoutRelationships);
-
-        // Assert
-        assertThat(userStoryWithoutRelationships.getProject()).isNull();
-        assertThat(userStoryWithoutRelationships.getSprint()).isNull();
-        assertThat(userStoryWithoutRelationships.getAssignedTo()).isNull();
-        
-        // Verify service methods were called
-        verify(projectService).findById(999L);
-        verify(sprintService).findById(999L);
-        verify(userService).findById(999L);
+        // Relationships should remain unchanged as they are ignored in the mapping
+        // and are expected to be loaded via fetch joins in repository queries
+        assertThat(existingUserStory.getProject()).isEqualTo(project); // Unchanged
+        assertThat(existingUserStory.getSprint()).isNull(); // Unchanged
+        assertThat(existingUserStory.getAssignedTo()).isNull(); // Unchanged
     }
 }
