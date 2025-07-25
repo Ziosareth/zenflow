@@ -9,7 +9,6 @@ import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.project.enums.SprintStatus;
 import it.zenflow.model.rbac.User;
 import it.zenflow.service.ProjectService;
-import it.zenflow.service.SprintMetricsService;
 import it.zenflow.service.SprintService;
 import it.zenflow.service.UserStoryService;
 import it.zenflow.service.rbac.UserService;
@@ -35,7 +34,6 @@ public class SprintFacade {
     private final ProjectService projectService;
     private final UserStoryService userStoryService;
     private final UserService userService;
-    private final SprintMetricsService sprintMetricsService;
     private final MessageSource messageSource;
     private final SprintMapper sprintMapper;
 
