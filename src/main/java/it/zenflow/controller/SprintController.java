@@ -1,19 +1,14 @@
 package it.zenflow.controller;
 
 import it.zenflow.dto.SprintDTO;
+import it.zenflow.facade.SprintFacade;
 import it.zenflow.model.project.Sprint;
 import it.zenflow.model.project.UserStory;
-import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.project.enums.SprintStatus;
 import it.zenflow.model.rbac.User;
-import it.zenflow.service.ProjectService;
-import it.zenflow.service.SprintService;
-import it.zenflow.service.UserStoryService;
-import it.zenflow.service.rbac.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,49 +26,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SprintController {
 
-    private final SprintService sprintService;
-    private final ProjectService projectService;
-    private final UserStoryService userStoryService;
-    private final UserService userService;
-    private final MessageSource messageSource;
+    private final SprintFacade sprintFacade;
 
     @GetMapping("")
     @PreAuthorize("hasAuthority('READ_SPRINT')")
     public String listSprints(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
+        return sprintFacade.getProjectById(projectId)
                 .map(project -> {
-                    // Verifica che il progetto sia di tipo SCRUM
-                    if (project.getType() == null || project.getType() != ProjectType.SCRUM) {
-                        String message = messageSource.getMessage("sprint.only_for_scrum", null, LocaleContextHolder.getLocale());
+                    // Verify that the project is of type SCRUM
+                    if (!sprintFacade.isProjectScrum(project)) {
+                        String message = sprintFacade.getLocalizedMessage("sprint.only_for_scrum");
                         model.addAttribute("errorMessage", message);
 
-                        // Safely set isOwner and isTeamMember attributes
-                        boolean isOwner = project.getOwner() != null && 
-                                         project.getOwner().getId() != null && 
-                                         project.getOwner().getId().equals(currentUser.getId());
-                        model.addAttribute("isOwner", isOwner);
-
-                        boolean isTeamMember = project.getTeamMembers() != null && 
-                                              project.getTeamMembers().contains(currentUser);
-                        model.addAttribute("isTeamMember", isTeamMember);
+                        model.addAttribute("isOwner", sprintFacade.isProjectOwner(project, currentUser));
+                        model.addAttribute("isTeamMember", sprintFacade.isTeamMember(project, currentUser));
 
                         return "projects/detail";
                     }
 
-                    List<Sprint> sprints = sprintService.findByProject(project);
+                    List<Sprint> sprints = sprintFacade.findByProject(project);
 
                     // Check for sprints of each status type
-                    boolean hasActive = sprints.stream().anyMatch(s -> s.getStatus() == SprintStatus.ACTIVE);
-                    boolean hasPlanned = sprints.stream().anyMatch(s -> s.getStatus() == SprintStatus.PLANNED);
-                    boolean hasCompleted = sprints.stream().anyMatch(s -> s.getStatus() == SprintStatus.COMPLETED);
+                    boolean hasActive = sprintFacade.hasSprintsWithStatus(sprints, SprintStatus.ACTIVE);
+                    boolean hasPlanned = sprintFacade.hasSprintsWithStatus(sprints, SprintStatus.PLANNED);
+                    boolean hasCompleted = sprintFacade.hasSprintsWithStatus(sprints, SprintStatus.COMPLETED);
 
                     model.addAttribute("project", project);
                     model.addAttribute("sprints", sprints);
                     model.addAttribute("currentUser", currentUser);
-                    model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
-                    model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));
+                    model.addAttribute("isOwner", sprintFacade.isProjectOwner(project, currentUser));
+                    model.addAttribute("isTeamMember", sprintFacade.isTeamMember(project, currentUser));
                     model.addAttribute("hasActive", hasActive);
                     model.addAttribute("hasPlanned", hasPlanned);
                     model.addAttribute("hasCompleted", hasCompleted);
@@ -86,24 +70,24 @@ public class SprintController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('READ_SPRINT')")
     public String viewSprint(@PathVariable Long projectId, @PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> sprintService.findByIdWithStories(id)
+        return sprintFacade.getProjectById(projectId)
+                .map(project -> sprintFacade.findByIdWithStories(id)
                         .map(sprint -> {
                             if (!sprint.getProject().getId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/sprints";
                             }
 
-                            // Ottieni le user story non assegnate a nessuno sprint
-                            List<UserStory> availableUserStories = userStoryService.findUnassignedUserStories(project);
+                            // Get user stories not assigned to any sprint
+                            List<UserStory> availableUserStories = sprintFacade.findUnassignedUserStories(project);
 
                             model.addAttribute("project", project);
                             model.addAttribute("sprint", sprint);
                             model.addAttribute("availableUserStories", availableUserStories);
                             model.addAttribute("currentUser", currentUser);
-                            model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
-                            model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));
+                            model.addAttribute("isOwner", sprintFacade.isProjectOwner(project, currentUser));
+                            model.addAttribute("isTeamMember", sprintFacade.isTeamMember(project, currentUser));
 
                             return "projects/sprints/detail";
                         })
@@ -114,31 +98,24 @@ public class SprintController {
     @GetMapping("/new")
     @PreAuthorize("hasAuthority('CREATE_SPRINT')")
     public String newSprintForm(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
+        return sprintFacade.getProjectById(projectId)
                 .map(project -> {
-                    // Verifica che il progetto sia di tipo SCRUM
-                    if (project.getType() == null || project.getType() != ProjectType.SCRUM) {
-                        String message = messageSource.getMessage("sprint.only_for_scrum", null, LocaleContextHolder.getLocale());
+                    // Verify that the project is of type SCRUM
+                    if (!sprintFacade.isProjectScrum(project)) {
+                        String message = sprintFacade.getLocalizedMessage("sprint.only_for_scrum");
                         model.addAttribute("errorMessage", message);
 
-                        // Safely set isOwner and isTeamMember attributes
-                        boolean isOwner = project.getOwner() != null && 
-                                         project.getOwner().getId() != null && 
-                                         project.getOwner().getId().equals(currentUser.getId());
-                        model.addAttribute("isOwner", isOwner);
-
-                        boolean isTeamMember = project.getTeamMembers() != null && 
-                                              project.getTeamMembers().contains(currentUser);
-                        model.addAttribute("isTeamMember", isTeamMember);
+                        model.addAttribute("isOwner", sprintFacade.isProjectOwner(project, currentUser));
+                        model.addAttribute("isTeamMember", sprintFacade.isTeamMember(project, currentUser));
 
                         return "projects/detail";
                     }
 
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
+                    // Check if user is owner or team member
+                    if (!sprintFacade.isProjectOwner(project, currentUser) && 
+                        !sprintFacade.isTeamMember(project, currentUser) &&
                         !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                         return "redirect:/projects/" + projectId;
                     }
@@ -166,90 +143,55 @@ public class SprintController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> {
-                    // Verifica che il progetto sia di tipo SCRUM
-                    if (project.getType() == null || project.getType() != ProjectType.SCRUM) {
-                        String message = messageSource.getMessage("sprint.only_for_scrum", null, LocaleContextHolder.getLocale());
-                        model.addAttribute("errorMessage", message);
-
-                        // Safely set isOwner and isTeamMember attributes
-                        boolean isOwner = project.getOwner() != null && 
-                                         project.getOwner().getId() != null && 
-                                         project.getOwner().getId().equals(currentUser.getId());
-                        model.addAttribute("isOwner", isOwner);
-
-                        boolean isTeamMember = project.getTeamMembers() != null && 
-                                              project.getTeamMembers().contains(currentUser);
-                        model.addAttribute("isTeamMember", isTeamMember);
-
-                        return "projects/detail";
-                    }
-
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects/" + projectId;
-                    }
-
-                    if (bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
+            return sprintFacade.getProjectById(projectId)
+                    .map(project -> {
                         model.addAttribute("project", project);
                         model.addAttribute("statuses", SprintStatus.values());
                         model.addAttribute("isNew", true);
                         return "projects/sprints/form";
-                    }
+                    })
+                    .orElse("redirect:/projects");
+        }
 
-                    Sprint sprint = new Sprint();
-                    sprint.setName(sprintDTO.getName());
-                    sprint.setGoal(sprintDTO.getGoal());
-                    sprint.setStartDate(sprintDTO.getStartDate());
-                    sprint.setEndDate(sprintDTO.getEndDate());
-                    sprint.setStatus(SprintStatus.PLANNED);
-                    sprint.setProject(project);
-
-                    sprintService.save(sprint);
-
-                    String message = messageSource.getMessage("sprint.created", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + projectId + "/sprints";
-                })
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.createSprint(sprintDTO, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.created"));
+            return "redirect:/projects/" + projectId + "/sprints";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints";
+        }
     }
 
     @GetMapping("/{id}/edit")
     @PreAuthorize("hasAuthority('UPDATE_SPRINT')")
     public String editSprintForm(@PathVariable Long projectId, @PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> sprintService.findById(id)
+        return sprintFacade.getProjectById(projectId)
+                .map(project -> sprintFacade.findById(id)
                         .map(sprint -> {
                             if (!sprint.getProject().getId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/sprints";
                             }
 
-                            // Verifica che l'utente sia proprietario o membro del team
-                            if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                                !project.getTeamMembers().contains(currentUser) &&
+                            // Check if user is owner or team member
+                            if (!sprintFacade.isProjectOwner(project, currentUser) && 
+                                !sprintFacade.isTeamMember(project, currentUser) &&
                                 !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
                                 return "redirect:/projects/" + projectId;
                             }
 
-                            SprintDTO sprintDTO = new SprintDTO();
-                            sprintDTO.setId(sprint.getId());
-                            sprintDTO.setName(sprint.getName());
-                            sprintDTO.setGoal(sprint.getGoal());
-                            sprintDTO.setStartDate(sprint.getStartDate());
-                            sprintDTO.setEndDate(sprint.getEndDate());
-                            sprintDTO.setStatus(sprint.getStatus());
-                            sprintDTO.setProjectId(projectId);
-                            sprintDTO.setPlannedStoryPoints(sprint.getPlannedStoryPoints());
-                            sprintDTO.setCompletedStoryPoints(sprint.getCompletedStoryPoints());
-                            sprintDTO.setSprintVelocity(sprint.getSprintVelocity());
+                            SprintDTO sprintDTO = sprintFacade.mapToDTO(sprint);
 
                             model.addAttribute("project", project);
                             model.addAttribute("sprintDTO", sprintDTO);
@@ -273,44 +215,30 @@ public class SprintController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> sprintService.findById(id)
-                        .map(sprint -> {
-                            if (!sprint.getProject().getId().equals(projectId)) {
-                                return "redirect:/projects/" + projectId + "/sprints";
-                            }
+        if (bindingResult.hasErrors()) {
+            return sprintFacade.getProjectById(projectId)
+                    .map(project -> {
+                        model.addAttribute("project", project);
+                        model.addAttribute("statuses", SprintStatus.values());
+                        model.addAttribute("isNew", false);
+                        return "projects/sprints/form";
+                    })
+                    .orElse("redirect:/projects");
+        }
 
-                            // Verifica che l'utente sia proprietario o membro del team
-                            if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                                !project.getTeamMembers().contains(currentUser) &&
-                                !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                                return "redirect:/projects/" + projectId;
-                            }
-
-                            if (bindingResult.hasErrors()) {
-                                model.addAttribute("project", project);
-                                model.addAttribute("statuses", SprintStatus.values());
-                                model.addAttribute("isNew", false);
-                                return "projects/sprints/form";
-                            }
-
-                            sprint.setName(sprintDTO.getName());
-                            sprint.setGoal(sprintDTO.getGoal());
-                            sprint.setStartDate(sprintDTO.getStartDate());
-                            sprint.setEndDate(sprintDTO.getEndDate());
-                            // Non aggiorniamo lo status qui, ci sono metodi specifici per farlo
-
-                            sprintService.save(sprint);
-
-                            String message = messageSource.getMessage("sprint.updated", null, LocaleContextHolder.getLocale());
-                            redirectAttributes.addFlashAttribute("message", message);
-
-                            return "redirect:/projects/" + projectId + "/sprints/" + id;
-                        })
-                        .orElse("redirect:/projects/" + projectId + "/sprints"))
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.updateSprint(id, sprintDTO, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.updated"));
+            return "redirect:/projects/" + projectId + "/sprints/" + id;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints";
+        }
     }
 
     @PostMapping("/{id}/start")
@@ -321,25 +249,19 @@ public class SprintController {
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> {
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects/" + projectId;
-                    }
-
-                    sprintService.startSprint(id);
-
-                    String message = messageSource.getMessage("sprint.started", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + projectId + "/sprints/" + id;
-                })
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.startSprint(projectId, id, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.started"));
+            return "redirect:/projects/" + projectId + "/sprints/" + id;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints";
+        }
     }
 
     @PostMapping("/{id}/complete")
@@ -350,25 +272,19 @@ public class SprintController {
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> {
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects/" + projectId;
-                    }
-
-                    sprintService.completeSprint(id);
-
-                    String message = messageSource.getMessage("sprint.completed_message", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + projectId + "/sprints/" + id;
-                })
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.completeSprint(projectId, id, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.completed_message"));
+            return "redirect:/projects/" + projectId + "/sprints/" + id;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints";
+        }
     }
 
     @PostMapping("/{id}/cancel")
@@ -379,25 +295,19 @@ public class SprintController {
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> {
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects/" + projectId;
-                    }
-
-                    sprintService.cancelSprint(id);
-
-                    String message = messageSource.getMessage("sprint.cancelled", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + projectId + "/sprints/" + id;
-                })
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.cancelSprint(projectId, id, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.cancelled"));
+            return "redirect:/projects/" + projectId + "/sprints/" + id;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints";
+        }
     }
 
     @PostMapping("/{sprintId}/add-story/{storyId}")
@@ -409,25 +319,19 @@ public class SprintController {
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> {
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects/" + projectId;
-                    }
-
-                    sprintService.addUserStoryToSprint(sprintId, storyId);
-
-                    String message = messageSource.getMessage("sprint.story_added", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + projectId + "/sprints/" + sprintId;
-                })
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.addUserStoryToSprint(projectId, sprintId, storyId, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.story_added"));
+            return "redirect:/projects/" + projectId + "/sprints/" + sprintId;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints/" + sprintId;
+        }
     }
 
     @PostMapping("/{sprintId}/remove-story/{storyId}")
@@ -439,24 +343,18 @@ public class SprintController {
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
 
-        User currentUser = userService.findByUsername(userDetails.getUsername()).orElseThrow();
+        User currentUser = sprintFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
-        return projectService.findById(projectId)
-                .map(project -> {
-                    // Verifica che l'utente sia proprietario o membro del team
-                    if (!project.getOwner().getId().equals(currentUser.getId()) && 
-                        !project.getTeamMembers().contains(currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                        return "redirect:/projects/" + projectId;
-                    }
-
-                    sprintService.removeUserStoryFromSprint(sprintId, storyId);
-
-                    String message = messageSource.getMessage("sprint.story_removed", null, LocaleContextHolder.getLocale());
-                    redirectAttributes.addFlashAttribute("message", message);
-
-                    return "redirect:/projects/" + projectId + "/sprints/" + sprintId;
-                })
-                .orElse("redirect:/projects");
+        try {
+            sprintFacade.removeUserStoryFromSprint(projectId, sprintId, storyId, currentUser, userDetails);
+            redirectAttributes.addFlashAttribute("message", sprintFacade.getLocalizedMessage("sprint.story_removed"));
+            return "redirect:/projects/" + projectId + "/sprints/" + sprintId;
+        } catch (AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/projects/" + projectId + "/sprints/" + sprintId;
+        }
     }
 }
