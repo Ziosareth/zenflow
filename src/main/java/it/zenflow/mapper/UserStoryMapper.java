@@ -8,7 +8,7 @@ import org.mapstruct.*;
  * Mapper for the UserStory entity and its DTO.
  */
 @Mapper(componentModel = "spring")
-public abstract class UserStoryMapper {
+public interface UserStoryMapper {
 
     /**
      * Converts a UserStoryDTO to a UserStory entity.
@@ -19,7 +19,7 @@ public abstract class UserStoryMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "planningSessions", ignore = true)
-    public abstract UserStory toEntity(UserStoryDTO dto);
+     UserStory toEntity(UserStoryDTO dto);
 
     /**
      * Converts a UserStory entity to a UserStoryDTO.
@@ -28,7 +28,7 @@ public abstract class UserStoryMapper {
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "sprintId", source = "sprint.id")
     @Mapping(target = "assignedToId", source = "assignedTo.id")
-    public abstract UserStoryDTO toDto(UserStory userStory);
+    UserStoryDTO toDto(UserStory userStory);
 
     /**
      * Updates a UserStory entity with data from a UserStoryDTO.
@@ -41,6 +41,6 @@ public abstract class UserStoryMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "planningSessions", ignore = true)
-    public abstract void updateEntityFromDto(UserStoryDTO dto, @MappingTarget UserStory userStory);
+    void updateEntityFromDto(UserStoryDTO dto, @MappingTarget UserStory userStory);
 
 }

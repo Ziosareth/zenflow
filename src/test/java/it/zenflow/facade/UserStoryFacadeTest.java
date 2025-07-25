@@ -400,9 +400,11 @@ class UserStoryFacadeTest {
             // Arrange
             when(projectService.findById(1L)).thenReturn(Optional.of(project));
             when(userService.findById(2L)).thenReturn(Optional.of(teamMember));
+            when(userStoryMapper.toEntity(userStoryDTO)).thenReturn(new UserStory());
             when(userStoryService.save(any(UserStory.class))).thenAnswer(invocation -> {
                 UserStory savedStory = invocation.getArgument(0);
                 savedStory.setId(1L);
+                savedStory.setTitle(userStoryDTO.getTitle());
                 return savedStory;
             });
 
@@ -455,11 +457,21 @@ class UserStoryFacadeTest {
             when(projectService.findById(1L)).thenReturn(Optional.of(project));
             when(userStoryService.findById(1L)).thenReturn(Optional.of(userStory));
             when(userService.findById(2L)).thenReturn(Optional.of(teamMember));
-            when(userStoryService.save(any(UserStory.class))).thenReturn(userStory);
-
+            
             // Update DTO with new values
             userStoryDTO.setTitle("Updated Title");
             userStoryDTO.setStatus(StoryStatus.IN_PROGRESS);
+            
+            // Mock the updateEntityFromDto method to update the userStory
+            doAnswer(invocation -> {
+                UserStoryDTO dto = invocation.getArgument(0);
+                UserStory story = invocation.getArgument(1);
+                story.setTitle(dto.getTitle());
+                story.setStatus(dto.getStatus());
+                return null;
+            }).when(userStoryMapper).updateEntityFromDto(eq(userStoryDTO), any(UserStory.class));
+            
+            when(userStoryService.save(any(UserStory.class))).thenReturn(userStory);
 
             // Act
             UserStory result = userStoryFacade.updateUserStory(1L, userStoryDTO, teamMember, regularUserDetails);
@@ -522,13 +534,22 @@ class UserStoryFacadeTest {
             when(projectService.findById(1L)).thenReturn(Optional.of(project));
             when(userStoryService.findById(1L)).thenReturn(Optional.of(userStory));
             when(userService.findById(2L)).thenReturn(Optional.of(teamMember));
+            
+            // Update DTO with DONE status
+            userStoryDTO.setStatus(StoryStatus.DONE);
+            
+            // Mock the updateEntityFromDto method to update the userStory status to DONE
+            doAnswer(invocation -> {
+                UserStoryDTO dto = invocation.getArgument(0);
+                UserStory story = invocation.getArgument(1);
+                story.setStatus(dto.getStatus()); // This sets the status to DONE
+                return null;
+            }).when(userStoryMapper).updateEntityFromDto(eq(userStoryDTO), any(UserStory.class));
+            
             when(userStoryService.save(any(UserStory.class))).thenAnswer(invocation -> {
                 UserStory savedStory = invocation.getArgument(0);
                 return savedStory;
             });
-
-            // Update DTO with DONE status
-            userStoryDTO.setStatus(StoryStatus.DONE);
 
             // Act
             userStoryFacade.updateUserStory(1L, userStoryDTO, teamMember, regularUserDetails);
@@ -598,13 +619,13 @@ class UserStoryFacadeTest {
     class HelperMethodsTests {
 
         @Test
-        @DisplayName("convertToUserStoryDTO should convert user story to DTO")
-        void convertToUserStoryDTO_ShouldConvertUserStoryToDTO() {
+        @DisplayName("mapToDTO should convert user story to DTO")
+        void mapToDTO_ShouldConvertUserStoryToDTO() {
             // Arrange
             when(userStoryMapper.toDto(userStory)).thenReturn(userStoryDTO);
 
             // Act
-            UserStoryDTO result = userStoryFacade.convertToUserStoryDTO(userStory);
+            UserStoryDTO result = userStoryFacade.mapToDTO(userStory);
 
             // Assert
             assertNotNull(result);

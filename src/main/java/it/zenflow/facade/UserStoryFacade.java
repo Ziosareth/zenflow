@@ -124,15 +124,8 @@ public class UserStoryFacade {
             throw new AccessDeniedException("Not authorized to create user stories for this project");
         }
         
-        UserStory userStory = new UserStory();
-        userStory.setTitle(userStoryDTO.getTitle());
-        userStory.setDescription(userStoryDTO.getDescription());
-        userStory.setAcceptanceCriteria(userStoryDTO.getAcceptanceCriteria());
-        userStory.setStatus(userStoryDTO.getStatus());
-        userStory.setPriority(userStoryDTO.getPriority());
-        userStory.setStoryPoints(userStoryDTO.getStoryPoints());
-        userStory.setBusinessValue(userStoryDTO.getBusinessValue());
-        userStory.setEstimationType(userStoryDTO.getEstimationType());
+        // Use mapper to convert DTO to entity
+        UserStory userStory = userStoryMapper.toEntity(userStoryDTO);
         userStory.setProject(project);
 
         // Set assigned user if provided
@@ -140,11 +133,6 @@ public class UserStoryFacade {
             userService.findById(userStoryDTO.getAssignedToId())
                     .ifPresent(userStory::setAssignedTo);
         }
-
-        // Set PERT estimates if provided
-        userStory.setOptimisticEstimate(userStoryDTO.getOptimisticEstimate());
-        userStory.setPessimisticEstimate(userStoryDTO.getPessimisticEstimate());
-        userStory.setMostLikelyEstimate(userStoryDTO.getMostLikelyEstimate());
 
         return userStoryService.save(userStory);
     }
@@ -172,14 +160,8 @@ public class UserStoryFacade {
             throw new AccessDeniedException("Not authorized to update user stories for this project");
         }
         
-        userStory.setTitle(userStoryDTO.getTitle());
-        userStory.setDescription(userStoryDTO.getDescription());
-        userStory.setAcceptanceCriteria(userStoryDTO.getAcceptanceCriteria());
-        userStory.setStatus(userStoryDTO.getStatus());
-        userStory.setPriority(userStoryDTO.getPriority());
-        userStory.setStoryPoints(userStoryDTO.getStoryPoints());
-        userStory.setBusinessValue(userStoryDTO.getBusinessValue());
-        userStory.setEstimationType(userStoryDTO.getEstimationType());
+        // Use mapper to update entity from DTO
+        userStoryMapper.updateEntityFromDto(userStoryDTO, userStory);
 
         // Update assigned user if provided
         if (userStoryDTO.getAssignedToId() != null) {
@@ -188,11 +170,6 @@ public class UserStoryFacade {
         } else {
             userStory.setAssignedTo(null);
         }
-
-        // Update PERT estimates if provided
-        userStory.setOptimisticEstimate(userStoryDTO.getOptimisticEstimate());
-        userStory.setPessimisticEstimate(userStoryDTO.getPessimisticEstimate());
-        userStory.setMostLikelyEstimate(userStoryDTO.getMostLikelyEstimate());
 
         UserStory savedUserStory = userStoryService.save(userStory);
 
@@ -231,9 +208,9 @@ public class UserStoryFacade {
     }
 
     /**
-     * Converts a UserStory to UserStoryDTO
+     * Converts a UserStory entity to a DTO
      */
-    public UserStoryDTO convertToUserStoryDTO(UserStory userStory) {
+    public UserStoryDTO mapToDTO(UserStory userStory) {
         return userStoryMapper.toDto(userStory);
     }
 

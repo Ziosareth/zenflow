@@ -179,7 +179,7 @@ public class UserStoryController {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
 
-                            UserStoryDTO userStoryDTO = userStoryFacade.convertToUserStoryDTO(userStory);
+                            UserStoryDTO userStoryDTO = userStoryFacade.mapToDTO(userStory);
 
                             model.addAttribute("project", project);
                             model.addAttribute("userStoryDTO", userStoryDTO);
