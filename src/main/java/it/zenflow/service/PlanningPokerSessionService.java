@@ -8,6 +8,8 @@ import it.zenflow.model.rbac.User;
 import it.zenflow.service.rbac.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,11 @@ public class PlanningPokerSessionService {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findAll() {
         return planningPokerSessionRepository.findAll();
+    }
+
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Page<PlanningPokerSession> findAllPaginated(Pageable pageable) {
+        return planningPokerSessionRepository.findAllPaginated(pageable);
     }
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
@@ -58,6 +65,11 @@ public class PlanningPokerSessionService {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> findByProjectId(Long projectId) {
         return planningPokerSessionRepository.findByProjectId(projectId);
+    }
+    
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Page<PlanningPokerSession> findByProjectIdPaginated(Long projectId, Pageable pageable) {
+        return planningPokerSessionRepository.findByProjectIdPaginated(projectId, pageable);
     }
 
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")

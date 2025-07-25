@@ -89,6 +89,11 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Pagination -->
+                <div th:replace="~{fragments/pagination :: pagination('/planning-poker/project/' + ${project.id}, ${currentPage}, ${totalPages}, ${totalItems}, ${pageSize}, ${sortField})}"
+                     th:if="${totalPages > 0}">
+                </div>
             </div>
         </div>
     </div>

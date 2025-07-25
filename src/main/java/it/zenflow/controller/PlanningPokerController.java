@@ -9,7 +9,6 @@ import it.zenflow.model.project.EstimationVote;
 import it.zenflow.model.project.PlanningPokerSession;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.UserStory;
-import it.zenflow.model.project.enums.SessionStatus;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,6 +16,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,31 +43,57 @@ public class PlanningPokerController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_PLANNING_POKER_SESSION')")
-    public String listSessions(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String listSessions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            Model model, 
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
         User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
-        List<PlanningPokerSession> sessions = planningPokerFacade.getAllSessions();
-
-        model.addAttribute("sessions", sessions);
+        
+        Page<PlanningPokerSession> sessionsPage = planningPokerFacade.getAllSessionsPaginated(
+                PageRequest.of(page, size, Sort.by(sort)));
+        
+        model.addAttribute("sessions", sessionsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", sessionsPage.getTotalPages());
+        model.addAttribute("totalItems", sessionsPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("sortField", sort);
         model.addAttribute("currentUser", currentUser);
-
+        
         return "planning-poker/list";
     }
 
     @GetMapping("/project/{projectId}")
     @PreAuthorize("hasAuthority('READ_PLANNING_POKER_SESSION')")
-    public String listProjectSessions(@PathVariable Long projectId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String listProjectSessions(
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            Model model, 
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
         User currentUser = planningPokerFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
-
+        
         return planningPokerFacade.getProjectById(projectId)
                 .map(project -> {
-                    List<PlanningPokerSession> sessions = planningPokerFacade.getSessionsByProjectId(projectId);
-
+                    Page<PlanningPokerSession> sessionsPage = planningPokerFacade.getSessionsByProjectIdPaginated(
+                            projectId, PageRequest.of(page, size, Sort.by(sort)));
+                    
                     model.addAttribute("project", project);
-                    model.addAttribute("sessions", sessions);
+                    model.addAttribute("sessions", sessionsPage.getContent());
+                    model.addAttribute("currentPage", page);
+                    model.addAttribute("totalPages", sessionsPage.getTotalPages());
+                    model.addAttribute("totalItems", sessionsPage.getTotalElements());
+                    model.addAttribute("pageSize", size);
+                    model.addAttribute("sortField", sort);
                     model.addAttribute("currentUser", currentUser);
                     model.addAttribute("isOwner", project.getOwner().getId().equals(currentUser.getId()));
                     model.addAttribute("isTeamMember", project.getTeamMembers().contains(currentUser));
-
+                    
                     return "planning-poker/project-list";
                 })
                 .orElse("redirect:/projects");

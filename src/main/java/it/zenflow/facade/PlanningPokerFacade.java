@@ -20,6 +20,8 @@ import it.zenflow.service.UserStoryService;
 import it.zenflow.service.rbac.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -50,6 +52,14 @@ public class PlanningPokerFacade {
     public List<PlanningPokerSession> getAllSessions() {
         return planningPokerSessionService.findAll();
     }
+    
+    /**
+     * Retrieves all planning poker sessions with pagination
+     */
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Page<PlanningPokerSession> getAllSessionsPaginated(Pageable pageable) {
+        return planningPokerSessionService.findAllPaginated(pageable);
+    }
 
     /**
      * Retrieves planning poker sessions for a specific project
@@ -57,6 +67,14 @@ public class PlanningPokerFacade {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<PlanningPokerSession> getSessionsByProjectId(Long projectId) {
         return planningPokerSessionService.findByProjectId(projectId);
+    }
+    
+    /**
+     * Retrieves planning poker sessions for a specific project with pagination
+     */
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Page<PlanningPokerSession> getSessionsByProjectIdPaginated(Long projectId, Pageable pageable) {
+        return planningPokerSessionService.findByProjectIdPaginated(projectId, pageable);
     }
 
     /**

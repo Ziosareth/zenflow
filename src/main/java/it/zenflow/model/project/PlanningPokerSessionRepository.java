@@ -2,6 +2,8 @@ package it.zenflow.model.project;
 
 import it.zenflow.model.project.enums.SessionStatus;
 import it.zenflow.model.rbac.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -39,4 +41,10 @@ public interface PlanningPokerSessionRepository extends JpaRepository<PlanningPo
 
     @Query("SELECT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.userStory = :userStory")
     List<PlanningPokerSession> findByUserStory(@Param("userStory") UserStory userStory);
+    
+    @Query("SELECT DISTINCT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants LEFT JOIN FETCH s.project")
+    Page<PlanningPokerSession> findAllPaginated(Pageable pageable);
+
+    @Query("SELECT DISTINCT s FROM PlanningPokerSession s LEFT JOIN FETCH s.facilitator LEFT JOIN FETCH s.participants WHERE s.project.id = :projectId")
+    Page<PlanningPokerSession> findByProjectIdPaginated(@Param("projectId") Long projectId, Pageable pageable);
 }
