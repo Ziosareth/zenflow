@@ -1,19 +1,258 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{::style})}">
     <title th:text="#{app.name}">ZenFlow</title>
+    <style>
+        .card {
+            transition: transform 0.3s;
+            margin-bottom: 1rem;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .story-priority-HIGH {
+            border-left: 4px solid #dc3545;
+        }
+        .story-priority-MEDIUM {
+            border-left: 4px solid #ffc107;
+        }
+        .story-priority-LOW {
+            border-left: 4px solid #28a745;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+        }
+        .progress {
+            height: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- Contenuto della Dashboard -->
+    <!-- Dashboard Content -->
     <div class="container mt-4">
-        <h1 th:text="#{dashboard.welcome}">Welcome to the Dashboard</h1>
-        <p th:text="#{dashboard.content}">Insert your content here...</p>
+        <h1 class="mb-4" th:text="#{dashboard.welcome}">Welcome to Your Dashboard</h1>
+        
+        <!-- Dashboard Overview -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-kanban"></i> <span th:text="#{dashboard.overview.projects}">Projects</span>
+                        </h5>
+                        <h2 class="display-4" th:text="${userProjects != null ? userProjects.size() : 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-list-check"></i> <span th:text="#{dashboard.overview.assigned_stories}">Assigned Stories</span>
+                        </h5>
+                        <h2 class="display-4" th:text="${totalAssignedStories != null ? totalAssignedStories : 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-lightning"></i> <span th:text="#{dashboard.overview.active_sprints}">Active Sprints</span>
+                        </h5>
+                        <h2 class="display-4" th:text="${activeSprints != null ? activeSprints.size() : 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Projects Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-kanban"></i> <span th:text="#{dashboard.my_projects.title}">My Projects</span></h4>
+            </div>
+            <div class="card-body">
+                <div class="row" th:if="${userProjects != null && !userProjects.isEmpty()}">
+                    <div class="col-md-6 col-lg-4" th:each="project : ${userProjects}">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${project.name}">Project Name</h5>
+                                <p class="card-text text-muted" th:text="${project.description}">Project description...</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-secondary" th:text="${project.type}">Type</span>
+                                    <span class="badge" th:classappend="${project.status == T(it.zenflow.model.project.enums.ProjectStatus).ACTIVE ? 'bg-success' : 'bg-warning'}" 
+                                          th:text="${project.status}">Status</span>
+                                </div>
+                                <div class="progress mb-2" th:if="${project.totalStoryPoints > 0}">
+                                    <div class="progress-bar" role="progressbar" 
+                                         th:style="'width: ' + ${project.completedStoryPoints * 100 / project.totalStoryPoints} + '%'" 
+                                         th:aria-valuenow="${project.completedStoryPoints}" 
+                                         aria-valuemin="0" th:aria-valuemax="${project.totalStoryPoints}"></div>
+                                </div>
+                                <small class="text-muted" th:if="${project.totalStoryPoints > 0}">
+                                    <span th:text="${project.completedStoryPoints}">0</span> / 
+                                    <span th:text="${project.totalStoryPoints}">0</span> <span th:text="#{dashboard.story_points}">story points</span>
+                                </small>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-sm btn-outline-primary" th:text="#{dashboard.my_projects.view_project}">View Project</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info" th:if="${userProjects == null || userProjects.isEmpty()}">
+                    <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_projects.no_projects}">You don't have any projects yet.</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assigned User Stories Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-list-check"></i> <span th:text="#{dashboard.my_stories.title}">My User Stories</span></h4>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="storyTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="backlog-tab" data-bs-toggle="tab" data-bs-target="#backlog" 
+                                type="button" role="tab" aria-controls="backlog" aria-selected="true">
+                            <span th:text="#{dashboard.my_stories.backlog}">Backlog</span>
+                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG) != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG).size() : 0}">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="inprogress-tab" data-bs-toggle="tab" data-bs-target="#inprogress" 
+                                type="button" role="tab" aria-controls="inprogress" aria-selected="false">
+                            <span th:text="#{dashboard.my_stories.in_progress}">In Progress</span>
+                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS) != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS).size() : 0}">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="done-tab" data-bs-toggle="tab" data-bs-target="#done" 
+                                type="button" role="tab" aria-controls="done" aria-selected="false">
+                            <span th:text="#{dashboard.my_stories.done}">Done</span>
+                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE) != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE).size() : 0}">0</span>
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="storyTabsContent">
+                    <!-- Backlog Tab -->
+                    <div class="tab-pane fade show active" id="backlog" role="tabpanel" aria-labelledby="backlog-tab">
+                        <div class="list-group" th:with="backlogStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG) : null}"
+                             th:if="${backlogStories != null && !backlogStories.isEmpty()}">
+                            <a th:each="story : ${backlogStories}" 
+                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               class="list-group-item list-group-item-action" 
+                               th:classappend="${'story-priority-' + story.priority}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1" th:text="${story.title}">Story Title</h5>
+                                    <small th:if="${story.storyPoints != null}" th:text="${story.storyPoints + ' ' + #messages.msg('dashboard.story_points')}">0 points</small>
+                                </div>
+                                <p class="mb-1" th:text="${story.description}">Story description...</p>
+                                <small>Project: <span th:text="${story.project.name}">Project Name</span></small>
+                            </a>
+                        </div>
+                        <div class="alert alert-info" th:with="backlogStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG) : null}"
+                             th:if="${backlogStories == null || backlogStories.isEmpty()}">
+                            <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_stories.no_backlog}">You don't have any user stories in the backlog.</span>
+                        </div>
+                    </div>
+                    
+                    <!-- In Progress Tab -->
+                    <div class="tab-pane fade" id="inprogress" role="tabpanel" aria-labelledby="inprogress-tab">
+                        <div class="list-group" th:with="inProgressStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS) : null}"
+                             th:if="${inProgressStories != null && !inProgressStories.isEmpty()}">
+                            <a th:each="story : ${inProgressStories}" 
+                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               class="list-group-item list-group-item-action" 
+                               th:classappend="${'story-priority-' + story.priority}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1" th:text="${story.title}">Story Title</h5>
+                                    <small th:if="${story.storyPoints != null}" th:text="${story.storyPoints + ' ' + #messages.msg('dashboard.story_points')}">0 points</small>
+                                </div>
+                                <p class="mb-1" th:text="${story.description}">Story description...</p>
+                                <small>Project: <span th:text="${story.project.name}">Project Name</span></small>
+                            </a>
+                        </div>
+                        <div class="alert alert-info" th:with="inProgressStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS) : null}"
+                             th:if="${inProgressStories == null || inProgressStories.isEmpty()}">
+                            <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_stories.no_in_progress}">You don't have any user stories in progress.</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Done Tab -->
+                    <div class="tab-pane fade" id="done" role="tabpanel" aria-labelledby="done-tab">
+                        <div class="list-group" th:with="doneStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE) : null}"
+                             th:if="${doneStories != null && !doneStories.isEmpty()}">
+                            <a th:each="story : ${doneStories}" 
+                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               class="list-group-item list-group-item-action" 
+                               th:classappend="${'story-priority-' + story.priority}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1" th:text="${story.title}">Story Title</h5>
+                                    <small th:if="${story.storyPoints != null}" th:text="${story.storyPoints + ' ' + #messages.msg('dashboard.story_points')}">0 points</small>
+                                </div>
+                                <p class="mb-1" th:text="${story.description}">Story description...</p>
+                                <small>Project: <span th:text="${story.project.name}">Project Name</span></small>
+                            </a>
+                        </div>
+                        <div class="alert alert-info" th:with="doneStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE) : null}"
+                             th:if="${doneStories == null || doneStories.isEmpty()}">
+                            <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_stories.no_done}">You don't have any completed user stories.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Sprints Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-lightning"></i> <span th:text="#{dashboard.active_sprints.title}">Active Sprints</span></h4>
+            </div>
+            <div class="card-body">
+                <div class="row" th:if="${activeSprints != null && !activeSprints.isEmpty()}">
+                    <div class="col-md-6 col-lg-4" th:each="sprint : ${activeSprints}">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${sprint.name}">Sprint Name</h5>
+                                <p class="card-text text-muted" th:text="${sprint.goal}">Sprint goal...</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-success" th:text="${sprint.status}">Status</span>
+                                    <small class="text-muted" th:text="${#temporals.format(sprint.endDate, 'dd MMM yyyy')}">End Date</small>
+                                </div>
+                                <div class="progress mb-2" th:if="${sprint.plannedStoryPoints > 0}">
+                                    <div class="progress-bar" role="progressbar" 
+                                         th:style="'width: ' + ${sprint.completedStoryPoints * 100 / sprint.plannedStoryPoints} + '%'" 
+                                         th:aria-valuenow="${sprint.completedStoryPoints}" 
+                                         aria-valuemin="0" th:aria-valuemax="${sprint.plannedStoryPoints}"></div>
+                                </div>
+                                <small class="text-muted" th:if="${sprint.plannedStoryPoints > 0}">
+                                    <span th:text="${sprint.completedStoryPoints}">0</span> / 
+                                    <span th:text="${sprint.plannedStoryPoints}">0</span> <span th:text="#{dashboard.story_points}">story points</span>
+                                </small>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a th:href="@{/projects/{projectId}/sprints/{sprintId}(projectId=${sprint.project.id}, sprintId=${sprint.id})}" class="btn btn-sm btn-outline-primary" th:text="#{dashboard.active_sprints.view_sprint}">View Sprint</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info" th:if="${activeSprints == null || activeSprints.isEmpty()}">
+                    <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.active_sprints.no_sprints}">There are no active sprints in your projects.</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Script -->
+    <!-- Scripts -->
     <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
 </body>
 </html>
