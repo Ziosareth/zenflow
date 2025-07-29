@@ -1,35 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/common :: head(~{::title}, ~{::style})}">
+<head th:replace="~{fragments/common :: head(~{::title}, ~{})}">
     <title th:text="#{app.name}">ZenFlow</title>
-    <style>
-        .card {
-            transition: transform 0.3s;
-            margin-bottom: 1rem;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .story-priority-HIGH {
-            border-left: 4px solid #dc3545;
-        }
-        .story-priority-MEDIUM {
-            border-left: 4px solid #ffc107;
-        }
-        .story-priority-LOW {
-            border-left: 4px solid #28a745;
-        }
-        .nav-tabs .nav-link {
-            color: #495057;
-        }
-        .nav-tabs .nav-link.active {
-            font-weight: bold;
-        }
-        .progress {
-            height: 10px;
-        }
-    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -75,7 +47,7 @@
         
         <!-- My Projects Section -->
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-dark text-white">
                 <h4 class="mb-0"><i class="bi bi-kanban"></i> <span th:text="#{dashboard.my_projects.title}">My Projects</span></h4>
             </div>
             <div class="card-body">
@@ -115,7 +87,7 @@
         
         <!-- Assigned User Stories Section -->
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-dark text-white">
                 <h4 class="mb-0"><i class="bi bi-list-check"></i> <span th:text="#{dashboard.my_stories.title}">My User Stories</span></h4>
             </div>
             <div class="card-body">
@@ -214,7 +186,7 @@
         
         <!-- Active Sprints Section -->
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-dark text-white">
                 <h4 class="mb-0"><i class="bi bi-lightning"></i> <span th:text="#{dashboard.active_sprints.title}">Active Sprints</span></h4>
             </div>
             <div class="card-body">

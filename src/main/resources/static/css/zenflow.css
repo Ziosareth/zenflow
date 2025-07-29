@@ -93,3 +93,38 @@ body.theme-dark .modal-content {
         background-color: #27314b;
     }
 }
+
+/* -------- Component Styles -------- */
+/* Card styles */
+.card {
+    margin-bottom: 1rem;
+}
+
+/* User story priority indicators */
+.story-priority-HIGH {
+    border-left: 4px solid #dc3545;
+}
+.story-priority-MEDIUM {
+    border-left: 4px solid #ffc107;
+}
+.story-priority-LOW {
+    border-left: 4px solid #28a745;
+}
+
+/* Navigation tabs styling */
+.nav-tabs .nav-link {
+    color: #495057;
+}
+.nav-tabs .nav-link.active {
+    font-weight: bold;
+}
+
+/* Progress bar height */
+.progress {
+    height: 10px;
+}
+
+/* Add more vertical spacing between project cards in dashboard */
+.card-body .row .col-md-6.col-lg-4 {
+    margin-bottom: 1.5rem;
+}
