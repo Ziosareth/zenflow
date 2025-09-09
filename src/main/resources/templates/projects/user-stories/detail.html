@@ -66,14 +66,10 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <h6 class="fw-bold" th:text="#{userstory.tasks}">Tasks</h6>
-                                <div th:if="${userStory.tasks == null || #lists.isEmpty(userStory.tasks)}" class="text-muted" th:text="#{userstory.no.tasks}">
+                                <div th:if="${userStory.tasksCount == null || userStory.tasksCount == 0}" class="text-muted" th:text="#{userstory.no.tasks}">
                                     No tasks defined for this user story.
                                 </div>
-                                <ul th:if="${userStory.tasks != null && !#lists.isEmpty(userStory.tasks)}" class="list-group">
-                                    <li th:each="task : ${userStory.tasks}" class="list-group-item">
-                                        <span th:text="${task.title}">Task title</span>
-                                    </li>
-                                </ul>
+                                <!-- Optionally render tasks if provided in the DTO in future -->
                             </div>
                         </div>
                     </div>
@@ -89,24 +85,24 @@
                         <div class="mb-3">
                             <span class="fw-bold" th:text="#{userstory.status.label}">Status:</span>
                             <span class="badge" 
-                                  th:classappend="${userStory.status != null ? 
-                                                  (userStory.status.name() == 'BACKLOG' ? 'bg-secondary' : 
-                                                  (userStory.status.name() == 'SELECTED' ? 'bg-info' : 
-                                                  (userStory.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
-                                                  (userStory.status.name() == 'IN_REVIEW' ? 'bg-warning' : 
-                                                  (userStory.status.name() == 'TESTING' ? 'bg-info' : 
-                                                  (userStory.status.name() == 'DONE' ? 'bg-success' : 'bg-danger')))))) : 'bg-secondary'}"
-                                  th:text="${userStory.status != null ? userStory.status : 'Unknown'}">Status</span>
+                                  th:classappend="${userStory.statusName != null ? 
+                                                  (userStory.statusName == 'BACKLOG' ? 'bg-secondary' : 
+                                                  (userStory.statusName == 'SELECTED' ? 'bg-info' : 
+                                                  (userStory.statusName == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                  (userStory.statusName == 'IN_REVIEW' ? 'bg-warning' : 
+                                                  (userStory.statusName == 'TESTING' ? 'bg-info' : 
+                                                  (userStory.statusName == 'DONE' ? 'bg-success' : 'bg-danger')))))) : 'bg-secondary'}"
+                                  th:text="${userStory.statusName != null ? userStory.statusName : 'Unknown'}">Status</span>
                         </div>
 
                         <div class="mb-3">
                             <span class="fw-bold" th:text="#{userstory.priority.label}">Priority:</span>
                             <span class="badge"
-                                  th:classappend="${userStory.priority != null ? 
-                                                  (userStory.priority.name() == 'LOW' ? 'bg-success' : 
-                                                  (userStory.priority.name() == 'MEDIUM' ? 'bg-info' : 
-                                                  (userStory.priority.name() == 'HIGH' ? 'bg-warning' : 'bg-danger'))) : 'bg-secondary'}"
-                                  th:text="${userStory.priority != null ? userStory.priority : 'Unknown'}">Priority</span>
+                                  th:classappend="${userStory.priorityName != null ? 
+                                                  (userStory.priorityName == 'LOW' ? 'bg-success' : 
+                                                  (userStory.priorityName == 'MEDIUM' ? 'bg-info' : 
+                                                  (userStory.priorityName == 'HIGH' ? 'bg-warning' : 'bg-danger'))) : 'bg-secondary'}"
+                                  th:text="${userStory.priorityName != null ? userStory.priorityName : 'Unknown'}">Priority</span>
                         </div>
 
                         <div class="mb-3">
@@ -123,8 +119,7 @@
 
                         <div class="mb-3">
                             <span class="fw-bold" th:text="#{userstory.assignedTo.label}">Assigned To:</span>
-                            <span th:if="${userStory.assignedTo != null}" th:text="${userStory.assignedTo.username}">User</span>
-                            <span th:unless="${userStory.assignedTo != null}" th:text="#{userstory.unassigned.text}">Unassigned</span>
+                            <span th:text="${userStory.assignedToUsername != null ? userStory.assignedToUsername : 'Unassigned'}">User</span>
                         </div>
                     </div>
                 </div>

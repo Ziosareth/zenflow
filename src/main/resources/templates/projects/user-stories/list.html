@@ -64,23 +64,23 @@
                                 </td>
                                 <td>
                                     <span class="badge" 
-                                          th:classappend="${story.status.name() == 'BACKLOG' ? 'bg-secondary' : 
-                                                          (story.status.name() == 'SELECTED' ? 'bg-info' : 
-                                                          (story.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
-                                                          (story.status.name() == 'IN_REVIEW' ? 'bg-warning' : 
-                                                          (story.status.name() == 'TESTING' ? 'bg-info' : 
-                                                          (story.status.name() == 'DONE' ? 'bg-success' : 'bg-danger')))))}"
-                                          th:text="${story.status}">Status</span>
+                                          th:classappend="${story.statusName == 'BACKLOG' ? 'bg-secondary' : 
+                                                          (story.statusName == 'SELECTED' ? 'bg-info' : 
+                                                          (story.statusName == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                          (story.statusName == 'IN_REVIEW' ? 'bg-warning' : 
+                                                          (story.statusName == 'TESTING' ? 'bg-info' : 
+                                                          (story.statusName == 'DONE' ? 'bg-success' : 'bg-danger')))))}"
+                                          th:text="${story.statusName}">Status</span>
                                 </td>
                                 <td>
                                     <span class="badge"
-                                          th:classappend="${story.priority.name() == 'LOW' ? 'bg-success' : 
-                                                          (story.priority.name() == 'MEDIUM' ? 'bg-info' : 
-                                                          (story.priority.name() == 'HIGH' ? 'bg-warning' : 'bg-danger'))}"
-                                          th:text="${story.priority}">Priority</span>
+                                          th:classappend="${story.priorityName == 'LOW' ? 'bg-success' : 
+                                                          (story.priorityName == 'MEDIUM' ? 'bg-info' : 
+                                                          (story.priorityName == 'HIGH' ? 'bg-warning' : 'bg-danger'))}"
+                                          th:text="${story.priorityName}">Priority</span>
                                 </td>
                                 <td th:text="${story.storyPoints != null ? story.storyPoints : '-'}">5</td>
-                                <td th:text="${story.assignedTo != null ? story.assignedTo.username : '-'}">User</td>
+                                <td th:text="${story.assignedToUsername != null ? story.assignedToUsername : '-'}">User</td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${project.id},id=${story.id})}"

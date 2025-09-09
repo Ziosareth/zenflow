@@ -1,10 +1,10 @@
 package it.zenflow.facade;
 
+import it.zenflow.dto.UserStoryViewDTO;
+import it.zenflow.mapper.UserStoryViewMapper;
 import it.zenflow.model.project.Project;
 import it.zenflow.model.project.Sprint;
-import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.ProjectStatus;
-import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import it.zenflow.service.ProjectService;
 import it.zenflow.service.SprintService;
@@ -30,6 +30,7 @@ public class DashboardFacade {
     private final UserStoryService userStoryService;
     private final SprintService sprintService;
     private final UserService userService;
+    private final UserStoryViewMapper userStoryViewMapper;
 
     /**
      * Gets the current user from UserDetails.
@@ -56,33 +57,26 @@ public class DashboardFacade {
 
     /**
      * Gets all user stories assigned to the user.
-     *
-     * @param user the user
-     * @return list of user stories
      */
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
-    public List<UserStory> getAssignedUserStories(User user) {
-        return userStoryService.findByAssignedTo(user);
+    public List<UserStoryViewDTO> getAssignedUserStories(User user) {
+        return userStoryService.findByAssignedTo(user).stream()
+                .map(userStoryViewMapper::toViewDto)
+                .collect(Collectors.toList());
     }
 
     /**
-     * Gets user stories assigned to the user, grouped by status.
-     *
-     * @param user the user
-     * @return map of user stories grouped by status
+     * Gets user stories assigned to the user, grouped by status (String key).
      */
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
-    public Map<StoryStatus, List<UserStory>> getAssignedUserStoriesByStatus(User user) {
-        List<UserStory> userStories = userStoryService.findByAssignedTo(user);
+    public Map<String, List<UserStoryViewDTO>> getAssignedUserStoriesByStatus(User user) {
+        List<UserStoryViewDTO> userStories = getAssignedUserStories(user);
         return userStories.stream()
-                .collect(Collectors.groupingBy(UserStory::getStatus));
+                .collect(Collectors.groupingBy(UserStoryViewDTO::getStatusName));
     }
 
     /**
      * Gets active sprints for the user's projects.
-     *
-     * @param user the user
-     * @return list of active sprints
      */
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<Sprint> getActiveSprintsInUserProjects(User user) {
@@ -99,9 +93,6 @@ public class DashboardFacade {
 
     /**
      * Gets all dashboard data for a user.
-     *
-     * @param user the user
-     * @return map containing all dashboard data
      */
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Map<String, Object> getDashboardData(User user) {
@@ -111,8 +102,8 @@ public class DashboardFacade {
         List<Project> userProjects = getUserProjects(user);
         dashboardData.put("userProjects", userProjects);
 
-        // Get assigned user stories grouped by status
-        Map<StoryStatus, List<UserStory>> storiesByStatus = getAssignedUserStoriesByStatus(user);
+        // Get assigned user stories grouped by status (String keys)
+        Map<String, List<UserStoryViewDTO>> storiesByStatus = getAssignedUserStoriesByStatus(user);
         dashboardData.put("storiesByStatus", storiesByStatus);
         
         // Calculate total number of assigned stories

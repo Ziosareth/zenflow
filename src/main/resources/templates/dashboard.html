@@ -59,7 +59,7 @@
                                 <p class="card-text text-muted" th:text="${project.description}">Project description...</p>
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="badge bg-secondary" th:text="${project.type}">Type</span>
-                                    <span class="badge" th:classappend="${project.status == T(it.zenflow.model.project.enums.ProjectStatus).ACTIVE ? 'bg-success' : 'bg-warning'}" 
+                                    <span class="badge" th:classappend="${project.status != null && project.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-warning'}" 
                                           th:text="${project.status}">Status</span>
                                 </div>
                                 <div class="progress mb-2" th:if="${project.totalStoryPoints > 0}">
@@ -96,33 +96,33 @@
                         <button class="nav-link active" id="backlog-tab" data-bs-toggle="tab" data-bs-target="#backlog" 
                                 type="button" role="tab" aria-controls="backlog" aria-selected="true">
                             <span th:text="#{dashboard.my_stories.backlog}">Backlog</span>
-                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG) != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG).size() : 0}">0</span>
+                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus['BACKLOG'] != null ? storiesByStatus['BACKLOG'].size() : 0}">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="inprogress-tab" data-bs-toggle="tab" data-bs-target="#inprogress" 
                                 type="button" role="tab" aria-controls="inprogress" aria-selected="false">
                             <span th:text="#{dashboard.my_stories.in_progress}">In Progress</span>
-                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS) != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS).size() : 0}">0</span>
+                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus['IN_PROGRESS'] != null ? storiesByStatus['IN_PROGRESS'].size() : 0}">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="done-tab" data-bs-toggle="tab" data-bs-target="#done" 
                                 type="button" role="tab" aria-controls="done" aria-selected="false">
                             <span th:text="#{dashboard.my_stories.done}">Done</span>
-                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE) != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE).size() : 0}">0</span>
+                            <span class="badge bg-secondary ms-1" th:text="${storiesByStatus != null && storiesByStatus['DONE'] != null ? storiesByStatus['DONE'].size() : 0}">0</span>
                         </button>
                     </li>
                 </ul>
                 <div class="tab-content" id="storyTabsContent">
                     <!-- Backlog Tab -->
                     <div class="tab-pane fade show active" id="backlog" role="tabpanel" aria-labelledby="backlog-tab">
-                        <div class="list-group" th:with="backlogStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG) : null}"
+                        <div class="list-group" th:with="backlogStories=${storiesByStatus != null ? storiesByStatus['BACKLOG'] : null}"
                              th:if="${backlogStories != null && !backlogStories.isEmpty()}">
                             <a th:each="story : ${backlogStories}" 
-                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${story.projectId},id=${story.id})}" 
                                class="list-group-item list-group-item-action" 
-                               th:classappend="${'story-priority-' + story.priority}">
+                               th:classappend="${'story-priority-' + story.priorityName}">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1" th:text="${story.title}">Story Title</h5>
                                     <small th:if="${story.storyPoints != null}" th:text="${story.storyPoints + ' ' + #messages.msg('dashboard.story_points')}">0 points</small>
@@ -131,7 +131,7 @@
                                 <small>Project: <span th:text="${story.project.name}">Project Name</span></small>
                             </a>
                         </div>
-                        <div class="alert alert-info" th:with="backlogStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).BACKLOG) : null}"
+                        <div class="alert alert-info" th:with="backlogStories=${storiesByStatus != null ? storiesByStatus['BACKLOG'] : null}"
                              th:if="${backlogStories == null || backlogStories.isEmpty()}">
                             <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_stories.no_backlog}">You don't have any user stories in the backlog.</span>
                         </div>
@@ -139,7 +139,7 @@
                     
                     <!-- In Progress Tab -->
                     <div class="tab-pane fade" id="inprogress" role="tabpanel" aria-labelledby="inprogress-tab">
-                        <div class="list-group" th:with="inProgressStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS) : null}"
+                        <div class="list-group" th:with="inProgressStories=${storiesByStatus != null ? storiesByStatus['IN_PROGRESS'] : null}"
                              th:if="${inProgressStories != null && !inProgressStories.isEmpty()}">
                             <a th:each="story : ${inProgressStories}" 
                                th:href="@{/user-stories/{id}(id=${story.id})}" 
@@ -153,7 +153,7 @@
                                 <small>Project: <span th:text="${story.project.name}">Project Name</span></small>
                             </a>
                         </div>
-                        <div class="alert alert-info" th:with="inProgressStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).IN_PROGRESS) : null}"
+                        <div class="alert alert-info" th:with="inProgressStories=${storiesByStatus != null ? storiesByStatus['IN_PROGRESS'] : null}"
                              th:if="${inProgressStories == null || inProgressStories.isEmpty()}">
                             <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_stories.no_in_progress}">You don't have any user stories in progress.</span>
                         </div>
@@ -161,7 +161,7 @@
                     
                     <!-- Done Tab -->
                     <div class="tab-pane fade" id="done" role="tabpanel" aria-labelledby="done-tab">
-                        <div class="list-group" th:with="doneStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE) : null}"
+                        <div class="list-group" th:with="doneStories=${storiesByStatus != null ? storiesByStatus['DONE'] : null}"
                              th:if="${doneStories != null && !doneStories.isEmpty()}">
                             <a th:each="story : ${doneStories}" 
                                th:href="@{/user-stories/{id}(id=${story.id})}" 
@@ -175,7 +175,7 @@
                                 <small>Project: <span th:text="${story.project.name}">Project Name</span></small>
                             </a>
                         </div>
-                        <div class="alert alert-info" th:with="doneStories=${storiesByStatus != null ? storiesByStatus.get(T(it.zenflow.model.project.enums.StoryStatus).DONE) : null}"
+                        <div class="alert alert-info" th:with="doneStories=${storiesByStatus != null ? storiesByStatus['DONE'] : null}"
                              th:if="${doneStories == null || doneStories.isEmpty()}">
                             <i class="bi bi-info-circle"></i> <span th:text="#{dashboard.my_stories.no_done}">You don't have any completed user stories.</span>
                         </div>

@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface SprintRepository extends JpaRepository<Sprint, Long> {
     List<Sprint> findByProject(Project project);
     
-    @Query("SELECT s FROM Sprint s LEFT JOIN FETCH s.stories WHERE s.id = :id")
+    @Query("SELECT DISTINCT s FROM Sprint s LEFT JOIN FETCH s.stories st LEFT JOIN FETCH st.assignedTo WHERE s.id = :id")
     Optional<Sprint> findByIdWithStories(@Param("id") Long id);
     
     @Query("SELECT s FROM Sprint s WHERE s.project.id = :projectId ORDER BY s.startDate DESC")

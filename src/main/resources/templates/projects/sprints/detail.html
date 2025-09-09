@@ -143,7 +143,7 @@
                                                   class="badge bg-success" th:text="#{userstory.status.done}">Done</span>
                                         </td>
                                         <td th:text="${story.storyPoints}">5</td>
-                                        <td th:text="${story.assignedTo != null ? story.assignedTo.fullName : '-'}">John Doe</td>
+                                        <td th:text="${story.assignedTo != null ? story.assignedTo.username : '-'}">John Doe</td>
                                         <td th:if="${isOwner or isTeamMember}">
                                             <form th:if="${sprint.status == null || sprint.status.name() != 'COMPLETED'}" 
                                                   th:action="@{/projects/{projectId}/sprints/{sprintId}/remove-story/{storyId}(projectId=${project.id},sprintId=${sprint.id},storyId=${story.id})}" 

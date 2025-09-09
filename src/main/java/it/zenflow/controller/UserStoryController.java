@@ -2,13 +2,11 @@ package it.zenflow.controller;
 
 import it.zenflow.dto.UserStoryDTO;
 import it.zenflow.facade.UserStoryFacade;
-import it.zenflow.model.project.UserStory;
 import it.zenflow.model.project.enums.Priority;
 import it.zenflow.model.project.enums.StoryStatus;
 import it.zenflow.model.rbac.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
@@ -43,7 +41,7 @@ public class UserStoryController {
 
         return userStoryFacade.getProjectById(projectId)
                 .map(project -> {
-                    Page<UserStory> userStoriesPage = userStoryFacade.findByProjectPaginated(
+                    org.springframework.data.domain.Page<it.zenflow.dto.UserStoryViewDTO> userStoriesPage = userStoryFacade.findByProjectPaginatedView(
                             project, PageRequest.of(page, size, Sort.by(sort)));
                     
                     model.addAttribute("project", project);
@@ -68,9 +66,9 @@ public class UserStoryController {
         User currentUser = userStoryFacade.getUserByUsername(userDetails.getUsername()).orElseThrow();
 
         return userStoryFacade.getProjectById(projectId)
-                .map(project -> userStoryFacade.findByIdWithTasks(id)
+                .map(project -> userStoryFacade.findByIdWithTasksView(id)
                         .map(userStory -> {
-                            if (!userStory.getProject().getId().equals(projectId)) {
+                            if (userStory.getProjectId() == null || !userStory.getProjectId().equals(projectId)) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
 

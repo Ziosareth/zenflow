@@ -35,6 +35,7 @@ public class UserStoryFacade {
     private final SprintMetricsService sprintMetricsService;
     private final MessageSource messageSource;
     private final UserStoryMapper userStoryMapper;
+    private final it.zenflow.mapper.UserStoryViewMapper userStoryViewMapper;
 
     /**
      * Retrieves all user stories for a project with pagination
@@ -42,6 +43,15 @@ public class UserStoryFacade {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Page<UserStory> findByProjectPaginated(Project project, Pageable pageable) {
         return userStoryService.findByProjectPaginated(project, pageable);
+    }
+
+    /**
+     * View-safe: Retrieves user stories as view DTOs with pagination
+     */
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Page<it.zenflow.dto.UserStoryViewDTO> findByProjectPaginatedView(Project project, Pageable pageable) {
+        return userStoryService.findByProjectPaginated(project, pageable)
+                .map(userStoryViewMapper::toViewDto);
     }
 
     /**
@@ -58,6 +68,14 @@ public class UserStoryFacade {
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<UserStory> findByIdWithTasks(Long id) {
         return userStoryService.findByIdWithTasks(id);
+    }
+
+    /**
+     * View-safe: Retrieves a user story with tasks as a view DTO
+     */
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public Optional<it.zenflow.dto.UserStoryViewDTO> findByIdWithTasksView(Long id) {
+        return userStoryService.findByIdWithTasks(id).map(userStoryViewMapper::toViewDto);
     }
 
     /**
