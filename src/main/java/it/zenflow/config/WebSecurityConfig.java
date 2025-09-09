@@ -30,6 +30,7 @@ public class WebSecurityConfig {
                 .addFilterAfter(tenantAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/robots.txt").permitAll()
                         .requestMatchers("/webjars/**", "/css/**", "/js/**", "/images/**", "/change-lang").permitAll()
                         .requestMatchers("/password/forgot", "/password/reset").permitAll() // reset per utenti NON autenticati
                         .requestMatchers("/password/change").authenticated() // cambio per utenti autenticati
