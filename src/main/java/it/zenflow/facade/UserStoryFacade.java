@@ -138,7 +138,7 @@ public class UserStoryFacade {
         // Check permissions
         if (!isProjectOwner(project, currentUser) && 
             !isTeamMember(project, currentUser) &&
-            !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
             throw new AccessDeniedException("Not authorized to create user stories for this project");
         }
         
@@ -174,7 +174,7 @@ public class UserStoryFacade {
         // Check permissions
         if (!isProjectOwner(project, currentUser) && 
             !isTeamMember(project, currentUser) &&
-            !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
             throw new AccessDeniedException("Not authorized to update user stories for this project");
         }
         
@@ -217,8 +217,8 @@ public class UserStoryFacade {
         }
         
         // Check permissions (only owner or admin)
-        if (!isProjectOwner(project, currentUser) && 
-            !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+        if (!isProjectOwner(project, currentUser) &&
+                userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
             throw new AccessDeniedException("Not authorized to delete user stories for this project");
         }
         

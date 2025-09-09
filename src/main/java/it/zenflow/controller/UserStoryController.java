@@ -94,7 +94,7 @@ public class UserStoryController {
                     // Check if user is owner or team member
                     if (!userStoryFacade.isProjectOwner(project, currentUser) && 
                         !userStoryFacade.isTeamMember(project, currentUser) &&
-                        !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                            userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
                         return "redirect:/projects/" + projectId;
                     }
 
@@ -173,7 +173,7 @@ public class UserStoryController {
                             // Check if user is owner or team member
                             if (!userStoryFacade.isProjectOwner(project, currentUser) && 
                                 !userStoryFacade.isTeamMember(project, currentUser) &&
-                                !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                                    userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ADMIN"))) {
                                 return "redirect:/projects/" + projectId + "/user-stories";
                             }
 
@@ -224,9 +224,6 @@ public class UserStoryController {
             userStoryFacade.updateUserStory(id, userStoryDTO, currentUser, userDetails);
             redirectAttributes.addFlashAttribute("message", userStoryFacade.getLocalizedMessage("userstory.updated"));
             return "redirect:/projects/" + projectId + "/user-stories/" + id;
-        } catch (AccessDeniedException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/projects/" + projectId + "/user-stories";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/projects/" + projectId + "/user-stories";
@@ -246,8 +243,6 @@ public class UserStoryController {
         try {
             userStoryFacade.deleteUserStory(projectId, id, currentUser, userDetails);
             redirectAttributes.addFlashAttribute("message", userStoryFacade.getLocalizedMessage("userstory.deleted"));
-        } catch (AccessDeniedException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
