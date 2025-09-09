@@ -10,7 +10,6 @@ import org.mapstruct.Named;
 public interface UserStoryViewMapper {
 
     @Mapping(target = "projectId", source = "project.id")
-    @Mapping(target = "projectName", source = "project.name")
     @Mapping(target = "sprintId", source = "sprint.id")
     @Mapping(target = "assignedToUsername", source = "assignedTo.username")
     @Mapping(target = "statusName", source = "status", qualifiedByName = "enumName")

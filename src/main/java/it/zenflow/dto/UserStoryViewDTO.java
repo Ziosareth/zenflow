@@ -36,7 +36,6 @@ public class UserStoryViewDTO {
 
     // Flattened relation fields
     private Long projectId;
-    private String projectName;
     private Long sprintId;
     private String assignedToUsername; // null-safe username for assignee
 
