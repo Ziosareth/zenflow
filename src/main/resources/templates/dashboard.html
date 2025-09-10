@@ -119,7 +119,7 @@
                     <div class="tab-pane fade show active" id="backlog" role="tabpanel" aria-labelledby="backlog-tab">
                         <div class="list-group" th:if="${!#lists.isEmpty(backlogStories)}">
                             <a th:each="story : ${backlogStories}" 
-                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${story.project.id}, id=${story.id})}" 
                                class="list-group-item list-group-item-action" 
                                th:classappend="${'story-priority-' + story.priority}">
                                 <div class="d-flex w-100 justify-content-between">
@@ -139,7 +139,7 @@
                     <div class="tab-pane fade" id="inprogress" role="tabpanel" aria-labelledby="inprogress-tab">
                         <div class="list-group" th:if="${!#lists.isEmpty(inProgressStories)}">
                             <a th:each="story : ${inProgressStories}" 
-                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${story.project.id}, id=${story.id})}" 
                                class="list-group-item list-group-item-action" 
                                th:classappend="${'story-priority-' + story.priority}">
                                 <div class="d-flex w-100 justify-content-between">
@@ -159,7 +159,7 @@
                     <div class="tab-pane fade" id="done" role="tabpanel" aria-labelledby="done-tab">
                         <div class="list-group" th:if="${!#lists.isEmpty(doneStories)}">
                             <a th:each="story : ${doneStories}" 
-                               th:href="@{/user-stories/{id}(id=${story.id})}" 
+                               th:href="@{/projects/{projectId}/user-stories/{id}(projectId=${story.project.id}, id=${story.id})}" 
                                class="list-group-item list-group-item-action" 
                                th:classappend="${'story-priority-' + story.priority}">
                                 <div class="d-flex w-100 justify-content-between">
