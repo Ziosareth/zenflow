@@ -182,3 +182,41 @@ logger.atDebug()
 * **Multiple outputs and formats:** Direct logs to consoles, rolling files, databases, or remote systems, and choose formats like JSON for seamless ingestion into ELK, Loki, or other log-analysis tools.
 
 * **Better tooling and analysis:** Structured logs and controlled log levels make it easier to filter noise, automate alerts, and visualize application behavior in real time.
+
+## 15. Avoid Logic in Thymeleaf Views
+* Do not put business or conditional presentation logic in Thymeleaf templates. Keep templates declarative and simple (binding values, iterating lists, showing/hiding sections).
+* Pre-compute view-specific data (e.g., CSS classes, counts, filtered lists) in the Controller/Facade/Service or in dedicated DTOs.
+* Never compare enums or invoke complex expressions in SpEL within templates. This can fail under DevTools classloader restarts and makes views brittle.
+* Prefer exposing already-shaped data structures to the view: maps for lookup (e.g., id -> cssClass), pre-split lists (e.g., backlog/inProgress/done), and formatted strings/dates.
+
+Explanation:
+
+* Clear separation of concerns: controllers/services prepare a ViewModel/DTO; views render it. This improves testability and maintainability.
+* Robustness: avoids SpEL pitfalls (e.g., enum comparisons with multiple classloaders) and reduces null-handling issues in templates.
+* Internationalization-friendly: computing text keys or formatted labels in Java ensures consistent i18n and formatting across the app.
+
+Example (before -> after):
+
+Before (template):
+
+```
+<span class="badge" th:classappend="${project.status == T(it.zenflow.model.project.enums.ProjectStatus).ACTIVE ? 'bg-success' : 'bg-warning'}"
+      th:text="${project.status}">Status</span>
+```
+
+After (controller/facade computes a map):
+
+```java
+Map<Long, String> projectStatusClassById = projects.stream()
+        .collect(Collectors.toMap(Project::getId,
+            p -> p.getStatus() == ProjectStatus.ACTIVE ? "bg-success" : "bg-warning"));
+model.addAttribute("projectStatusClassById", projectStatusClassById);
+```
+
+Template:
+
+```
+<span class="badge" th:classappend="${projectStatusClassById[project.id]}" th:text="${project.status}">Status</span>
+```
+
+Also consider introducing dedicated response DTOs to carry computed presentation fields (e.g., statusClass, formattedDates) to keep controllers lean.
