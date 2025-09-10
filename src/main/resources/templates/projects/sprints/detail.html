@@ -76,6 +76,16 @@
                     </div>
                 </div>
 
+                <!-- Burndown Chart -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5 class="mb-0" th:text="#{sprint.burndown}">Burndown</h5>
+                  </div>
+                  <div class="card-body">
+                    <canvas id="burndownChart" height="120"></canvas>
+                  </div>
+                </div>
+
                 <div class="d-flex justify-content-between mb-4" th:if="${isOwner or isTeamMember}">
                     <div>
                         <a th:href="@{/projects/{projectId}/sprints/{id}/edit(projectId=${project.id},id=${sprint.id})}" 
@@ -211,7 +221,43 @@
         }
     </script>
 
-    <!-- Script -->
-    <th:block th:replace="~{fragments/common :: scripts(~{})}"></th:block>
+    <!-- Scripts -->
+    <th:block th:replace="~{fragments/common :: scripts(~{::script})}"></th:block>
+    <script th:src="@{/webjars/chart.js/4.5.0/dist/chart.umd.js}"></script>
+    <script th:inline="javascript">
+        (async function() {
+            const sprintId = /*[[${sprint.id}]]*/ 0;
+            try {
+                const res = await fetch(`/api/v1/metrics/burndown/sprint/${sprintId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const ctx = document.getElementById('burndownChart');
+                if (!ctx) return;
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [
+                            { label: 'Ideale', data: data.ideal, borderDash: [5,5], borderColor: '#6c757d', fill: false, tension: 0 },
+                            { label: 'Rimanente', data: data.remaining, borderColor: '#0d6efd', fill: false, tension: 0.2 },
+                            { label: 'Scope', data: data.scope, borderColor: '#adb5bd', fill: false, tension: 0, borderWidth: 1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: data.unit === 'story_points' ? 'Story Points' : 'Ore' } },
+                            x: { ticks: { autoSkip: true, maxTicksLimit: 10 } }
+                        },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            } catch (e) {
+                // noop
+            }
+        })();
+    </script>
 </body>
 </html>

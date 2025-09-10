@@ -14,8 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Objects;
 
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-
 @Slf4j
 @Component
 public class TenantAuthorizationFilter extends OncePerRequestFilter {
@@ -24,22 +22,29 @@ public class TenantAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        String tenantId = TenantContext.getCurrentTenant();
+        String requestResolvedTenant = TenantContext.getCurrentTenant();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = authentication == null ? null : (UserDetails) authentication.getPrincipal();
         String userTenantId = user == null ? null : extractTenantFromAuthorities(user);
+
         if (user == null) {
             // Utente non autenticato, lascia passare per permettere il login
             chain.doFilter(request, response);
-        } else if (Objects.equals(tenantId, userTenantId)) {
-            // Utente autenticato e accede al proprio tenant
-            chain.doFilter(request, response);
-        } else {
-            // Utente autenticato che tenta di accedere a un tenant diverso
-            log.warn("Attempted cross-tenant access from user {} with tenant {} to tenant {}",
-                    user.getUsername(), userTenantId, tenantId);
-            response.setStatus(FORBIDDEN.value());
+            return;
         }
+
+        // Utente autenticato: imponi sempre il tenant del principal, ignorando header/query/path
+        if (userTenantId != null) {
+            if (requestResolvedTenant != null && !Objects.equals(requestResolvedTenant, userTenantId)) {
+                // Logghiamo il tentativo di "forzare" un tenant diverso, ma non blocchiamo perché imponiamo il tenant corretto
+                log.warn("Authenticated user {} attempted to set tenant {} via request while actual tenant is {}. Overriding to user tenant.",
+                        user.getUsername(), requestResolvedTenant, userTenantId);
+            }
+            TenantContext.setCurrentTenant(userTenantId);
+        }
+
+        // A questo punto il TenantContext corrisponde al tenant dell'utente, prosegui
+        chain.doFilter(request, response);
     }
 
     @Override
