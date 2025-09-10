@@ -111,14 +111,28 @@ public class DashboardFacade {
         List<Project> userProjects = getUserProjects(user);
         dashboardData.put("userProjects", userProjects);
 
+        // Compute presentation attributes for projects (move logic out of the view)
+        Map<Long, String> projectStatusClassById = userProjects.stream()
+                .collect(Collectors.toMap(
+                        Project::getId,
+                        p -> p.getStatus() == ProjectStatus.ACTIVE ? "bg-success" : "bg-warning"
+                ));
+        dashboardData.put("projectStatusClassById", projectStatusClassById);
+
         // Get assigned user stories grouped by status
         Map<StoryStatus, List<UserStory>> storiesByStatus = getAssignedUserStoriesByStatus(user);
         dashboardData.put("storiesByStatus", storiesByStatus);
+
+        // Also provide pre-split lists to avoid enum usage in the view
+        List<UserStory> backlogStories = Optional.ofNullable(storiesByStatus.get(StoryStatus.BACKLOG)).orElseGet(List::of);
+        List<UserStory> inProgressStories = Optional.ofNullable(storiesByStatus.get(StoryStatus.IN_PROGRESS)).orElseGet(List::of);
+        List<UserStory> doneStories = Optional.ofNullable(storiesByStatus.get(StoryStatus.DONE)).orElseGet(List::of);
+        dashboardData.put("backlogStories", backlogStories);
+        dashboardData.put("inProgressStories", inProgressStories);
+        dashboardData.put("doneStories", doneStories);
         
         // Calculate total number of assigned stories
-        int totalAssignedStories = storiesByStatus.values().stream()
-                .mapToInt(List::size)
-                .sum();
+        int totalAssignedStories = backlogStories.size() + inProgressStories.size() + doneStories.size();
         dashboardData.put("totalAssignedStories", totalAssignedStories);
 
         // Get active sprints in user projects
