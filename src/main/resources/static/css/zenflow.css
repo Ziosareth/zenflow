@@ -95,6 +95,9 @@ body.theme-dark .modal-content {
 }
 
 /* -------- Component Styles -------- */
+/* Extra spacings for hero */
+.py-6 { padding-top: 4.5rem !important; padding-bottom: 4.5rem !important; }
+@media (min-width: 992px){ .py-6{ padding-top: 6rem !important; padding-bottom: 6rem !important; }}
 /* Card styles */
 .card {
     margin-bottom: 1rem;
