@@ -97,11 +97,17 @@ public class SprintService {
     public void addUserStoryToSprint(Long sprintId, Long userStoryId) {
         findById(sprintId).ifPresent(sprint -> {
             userStoryService.findById(userStoryId).ifPresent(userStory -> {
+                boolean wasDone = userStory.getStatus() == StoryStatus.DONE;
                 userStory.setSprint(sprint);
                 userStoryService.save(userStory);
                 
                 // Aggiorna i punti pianificati
                 updateSprintPlannedPoints(sprintId);
+                
+                // Se la story è DONE, aggiorna anche i punti completati/velocity
+                if (wasDone) {
+                    sprintMetricsService.updateSprintCompletedPoints(sprintId);
+                }
             });
         });
     }
@@ -110,11 +116,17 @@ public class SprintService {
     public void removeUserStoryFromSprint(Long sprintId, Long userStoryId) {
         userStoryService.findById(userStoryId).ifPresent(userStory -> {
             if (userStory.getSprint() != null && userStory.getSprint().getId().equals(sprintId)) {
+                boolean wasDone = userStory.getStatus() == StoryStatus.DONE;
                 userStory.setSprint(null);
                 userStoryService.save(userStory);
                 
                 // Aggiorna i punti pianificati
                 updateSprintPlannedPoints(sprintId);
+                
+                // Se la story era DONE e viene rimossa, aggiorna i punti completati/velocity
+                if (wasDone) {
+                    sprintMetricsService.updateSprintCompletedPoints(sprintId);
+                }
             }
         });
     }

@@ -65,6 +65,8 @@ public class SprintMetricsService {
      * @return the calculated sprint velocity
      */
     public double calculateSprintVelocity(Sprint sprint, int completedPoints) {
+        // Calculate duration as the difference in days between start and end (exclusive),
+        // so a 2-week sprint has 14 days.
         long durationInDays = ChronoUnit.DAYS.between(sprint.getStartDate(), sprint.getEndDate());
         double durationInWeeks = durationInDays / 7.0;
         return durationInWeeks > 0 ? completedPoints / durationInWeeks : 0;
@@ -88,6 +90,9 @@ public class SprintMetricsService {
             
             // Update the project velocity as well
             updateProjectVelocity(sprint.getProject().getId());
+            
+            // Also update project's completed story points to keep project metrics in sync
+            projectService.updateProjectCompletedStoryPoints(sprint.getProject().getId());
         });
     }
     
@@ -100,17 +105,22 @@ public class SprintMetricsService {
     public void updateProjectVelocity(Long projectId) {
         // Find all completed sprints for the project
         List<Sprint> completedSprints = sprintRepository.findCompletedSprintsByProjectId(projectId);
-        
-        if (!completedSprints.isEmpty()) {
-            // Calculate the average velocity of completed sprints
-            double averageVelocity = completedSprints.stream()
-                .mapToDouble(Sprint::getSprintVelocity)
-                .average()
-                .orElse(0.0);
-            
-            // Update the project's velocity
-            projectService.updateProjectVelocity(projectId, averageVelocity);
+
+        // If there are no completed sprints, do not update the project's velocity
+        if (completedSprints == null || completedSprints.isEmpty()) {
+            return;
         }
+
+        // Calculate the average velocity of completed sprints (filtering out nulls)
+        double averageVelocity = completedSprints.stream()
+            .map(Sprint::getSprintVelocity)
+            .filter(java.util.Objects::nonNull)
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
+
+        // Update the project's velocity
+        projectService.updateProjectVelocity(projectId, averageVelocity);
     }
     
     /**

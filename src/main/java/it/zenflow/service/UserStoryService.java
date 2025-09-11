@@ -120,10 +120,11 @@ public class UserStoryService {
         // Save the user story
         UserStory savedUserStory = userStoryRepository.save(userStory);
 
-        // Update the project's total story points in a separate transaction
+        // Update the project's total and completed story points in a separate transaction
         if (userStory.getProject() != null) {
             Long projectId = userStory.getProject().getId();
             projectService.updateProjectTotalStoryPoints(projectId);
+            projectService.updateProjectCompletedStoryPoints(projectId);
         }
         
         // Update the sprint's planned story points if the user story is associated with a sprint
@@ -155,9 +156,10 @@ public class UserStoryService {
         // Delete the user story
         userStoryRepository.deleteById(id);
 
-        // Update the project's total story points in a separate transaction
+        // Update the project's total and completed story points in a separate transaction
         if (projectId != null) {
             projectService.updateProjectTotalStoryPoints(projectId);
+            projectService.updateProjectCompletedStoryPoints(projectId);
         }
 
         // Update the sprint's planned points if the user story was associated with a sprint

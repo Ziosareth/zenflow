@@ -122,4 +122,23 @@ public class ProjectService {
             projectRepository.save(project);
         });
     }
+
+    /**
+     * Updates the project's completed story points by summing the story points of all DONE user stories.
+     *
+     * @param projectId the ID of the project to update
+     */
+    @Transactional(transactionManager = "tenantTransactionManager")
+    public void updateProjectCompletedStoryPoints(Long projectId) {
+        projectRepository.findById(projectId).ifPresent(project -> {
+            List<UserStory> allStories = userStoryRepository.findByProject(project);
+            int completed = allStories.stream()
+                .filter(story -> story.getStatus() == it.zenflow.model.project.enums.StoryStatus.DONE)
+                .filter(story -> story.getStoryPoints() != null)
+                .mapToInt(UserStory::getStoryPoints)
+                .sum();
+            project.setCompletedStoryPoints(completed);
+            projectRepository.save(project);
+        });
+    }
 }

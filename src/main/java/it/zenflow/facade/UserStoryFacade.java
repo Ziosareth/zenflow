@@ -178,6 +178,11 @@ public class UserStoryFacade {
             throw new AccessDeniedException("Not authorized to update user stories for this project");
         }
         
+        // Capture previous state for metric recalculations
+        StoryStatus prevStatus = userStory.getStatus();
+        Long prevSprintId = userStory.getSprint() != null ? userStory.getSprint().getId() : null;
+        Integer prevStoryPoints = userStory.getStoryPoints();
+        
         // Use mapper to update entity from DTO
         userStoryMapper.updateEntityFromDto(userStoryDTO, userStory);
 
@@ -191,10 +196,65 @@ public class UserStoryFacade {
 
         UserStory savedUserStory = userStoryService.save(userStory);
 
-        // If the status is DONE and the user story is associated with a sprint,
-        // update the sprint's completed points and velocity
-        if (userStory.getStatus() == StoryStatus.DONE && userStory.getSprint() != null) {
-            sprintMetricsService.updateSprintCompletedPoints(userStory.getSprint().getId());
+        // Determine current state
+        StoryStatus currStatus = savedUserStory.getStatus();
+        Long currSprintId = savedUserStory.getSprint() != null ? savedUserStory.getSprint().getId() : null;
+        Integer currStoryPoints = savedUserStory.getStoryPoints();
+
+        // 1) Planned points update when story points changed or sprint association changed
+        boolean storyPointsChanged = (prevStoryPoints == null ? currStoryPoints != null : !prevStoryPoints.equals(currStoryPoints));
+        boolean sprintChanged = (prevSprintId == null ? currSprintId != null : !prevSprintId.equals(currSprintId));
+        if (storyPointsChanged) {
+            if (prevSprintId != null) {
+                sprintMetricsService.updateSprintPlannedPoints(prevSprintId);
+            }
+            if (currSprintId != null && !currSprintId.equals(prevSprintId)) {
+                sprintMetricsService.updateSprintPlannedPoints(currSprintId);
+            }
+        } else if (sprintChanged) {
+            // Sprint changed even if points didn't; planned totals of both sprints may change
+            if (prevSprintId != null) {
+                sprintMetricsService.updateSprintPlannedPoints(prevSprintId);
+            }
+            if (currSprintId != null) {
+                sprintMetricsService.updateSprintPlannedPoints(currSprintId);
+            }
+        }
+
+        // 2) Completed points update on status changes, sprint association changes, or points changes while DONE
+        // Cases:
+        // - Became DONE: update current sprint
+        if (currStatus == StoryStatus.DONE && currSprintId != null && prevStatus != StoryStatus.DONE) {
+            sprintMetricsService.updateSprintCompletedPoints(currSprintId);
+        }
+        // - Left DONE: update previous sprint
+        if (prevStatus == StoryStatus.DONE && (currStatus != StoryStatus.DONE)) {
+            if (prevSprintId != null) {
+                sprintMetricsService.updateSprintCompletedPoints(prevSprintId);
+            }
+        }
+        // - Moved between sprints while DONE: update both sprints
+        if (prevStatus == StoryStatus.DONE && currStatus == StoryStatus.DONE && sprintChanged) {
+            if (prevSprintId != null) {
+                sprintMetricsService.updateSprintCompletedPoints(prevSprintId);
+            }
+            if (currSprintId != null) {
+                sprintMetricsService.updateSprintCompletedPoints(currSprintId);
+            }
+        }
+        // - Changed story points while DONE: update the sprint it's in (and previous if changed)
+        if (currStatus == StoryStatus.DONE && storyPointsChanged) {
+            if (prevSprintId != null) {
+                sprintMetricsService.updateSprintCompletedPoints(prevSprintId);
+            }
+            if (currSprintId != null && !currSprintId.equals(prevSprintId)) {
+                sprintMetricsService.updateSprintCompletedPoints(currSprintId);
+            }
+        }
+
+        // Update the project's completed story points regardless of sprint association
+        if (project.getId() != null) {
+            projectService.updateProjectCompletedStoryPoints(project.getId());
         }
 
         return savedUserStory;
@@ -222,7 +282,22 @@ public class UserStoryFacade {
             throw new AccessDeniedException("Not authorized to delete user stories for this project");
         }
         
+        // Capture context for metric updates after deletion
+        Long sprintId = userStory.getSprint() != null ? userStory.getSprint().getId() : null;
+        boolean wasDone = userStory.getStatus() == StoryStatus.DONE;
+
         userStoryService.deleteById(id);
+
+        // Update project metrics
+        projectService.updateProjectCompletedStoryPoints(projectId);
+
+        // Update sprint metrics if the story belonged to a sprint
+        if (sprintId != null) {
+            sprintMetricsService.updateSprintPlannedPoints(sprintId);
+            if (wasDone) {
+                sprintMetricsService.updateSprintCompletedPoints(sprintId);
+            }
+        }
     }
 
     /**
