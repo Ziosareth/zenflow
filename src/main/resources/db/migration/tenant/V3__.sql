@@ -34,6 +34,14 @@ UPDATE permissions SET category = 'ESTIMATION_MANAGEMENT'
 WHERE name IN ('CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 
                'UPDATE_ESTIMATION_VOTE', 'DELETE_ESTIMATION_VOTE');
 
+-- Permessi relativi alle milestone
+UPDATE permissions SET category = 'MILESTONE_MANAGEMENT'
+WHERE name IN ('CREATE_MILESTONE', 'READ_MILESTONE', 'UPDATE_MILESTONE', 'DELETE_MILESTONE');
+
+-- Permessi relativi alle epic
+UPDATE permissions SET category = 'EPIC_MANAGEMENT'
+WHERE name IN ('CREATE_EPIC', 'READ_EPIC', 'UPDATE_EPIC', 'DELETE_EPIC');
+
 -- Permessi di amministrazione
 UPDATE permissions SET category = 'ADMINISTRATION' 
 WHERE name = 'ADMIN_ACCESS';

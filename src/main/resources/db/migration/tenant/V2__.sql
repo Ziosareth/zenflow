@@ -74,6 +74,20 @@ INSERT INTO permissions (name, description) VALUES
                                                         ('UPDATE_ESTIMATION_VOTE', 'Modificare voti di stima'),
                                                         ('DELETE_ESTIMATION_VOTE', 'Eliminare voti di stima');
 
+-- Add permissions for Milestone entity
+INSERT INTO permissions (name, description) VALUES
+                                                        ('CREATE_MILESTONE', 'Creare nuove milestone'),
+                                                        ('READ_MILESTONE', 'Visualizzare milestone'),
+                                                        ('UPDATE_MILESTONE', 'Modificare milestone'),
+                                                        ('DELETE_MILESTONE', 'Eliminare milestone');
+
+-- Add permissions for Epic entity
+INSERT INTO permissions (name, description) VALUES
+                                                        ('CREATE_EPIC', 'Creare nuove epic'),
+                                                        ('READ_EPIC', 'Visualizzare epic'),
+                                                        ('UPDATE_EPIC', 'Modificare epic'),
+                                                        ('DELETE_EPIC', 'Eliminare epic');
+
 -- Associate all new permissions with ADMIN role
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -85,4 +99,6 @@ WHERE r.name = 'ADMIN'
                 'CREATE_SPRINT', 'READ_SPRINT', 'UPDATE_SPRINT', 'DELETE_SPRINT',
                 'CREATE_TASK', 'READ_TASK', 'UPDATE_TASK', 'DELETE_TASK',
                 'CREATE_PLANNING_POKER_SESSION', 'READ_PLANNING_POKER_SESSION', 'UPDATE_PLANNING_POKER_SESSION', 'DELETE_PLANNING_POKER_SESSION',
-                'CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE', 'DELETE_ESTIMATION_VOTE');
+                'CREATE_ESTIMATION_VOTE', 'READ_ESTIMATION_VOTE', 'UPDATE_ESTIMATION_VOTE', 'DELETE_ESTIMATION_VOTE',
+                'CREATE_MILESTONE', 'READ_MILESTONE', 'UPDATE_MILESTONE', 'DELETE_MILESTONE',
+                'CREATE_EPIC', 'READ_EPIC', 'UPDATE_EPIC', 'DELETE_EPIC');
