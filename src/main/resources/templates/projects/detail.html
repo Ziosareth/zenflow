@@ -50,6 +50,10 @@
                    th:href="@{/projects/{id}/sprints(id=${project.id})}" class="btn btn-primary me-2">
                     <i class="bi bi-stopwatch"></i> <span th:text="#{nav.sprints}">Sprints</span>
                 </a>
+                <a sec:authorize="hasAuthority('CREATE_MILESTONE') or #vars.isOwner or #vars.isTeamMember"
+                   th:href="@{/projects/{id}/milestones/new(id=${project.id})}" class="btn btn-success me-2">
+                    <i class="bi bi-flag"></i> <span th:text="#{milestone.new}">New Milestone</span>
+                </a>
             </div>
         </div>
 
