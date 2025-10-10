@@ -1,11 +1,15 @@
 package it.zenflow.controller;
 
+import it.zenflow.dto.GanttItemDTO;
 import it.zenflow.dto.ProjectDTO;
 import it.zenflow.facade.ProjectFacade;
-import it.zenflow.model.project.Project;
+import it.zenflow.model.project.*;
 import it.zenflow.model.project.enums.ProjectStatus;
 import it.zenflow.model.project.enums.ProjectType;
 import it.zenflow.model.rbac.User;
+import it.zenflow.service.EpicService;
+import it.zenflow.service.MilestoneService;
+import it.zenflow.service.UserStoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -14,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +28,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -33,6 +40,11 @@ public class ProjectController {
 
     private final ProjectFacade projectFacade;
     private final MessageSource messageSource;
+
+    // Services used to build the Gantt data
+    private final MilestoneService milestoneService;
+    private final EpicService epicService;
+    private final UserStoryService userStoryService;
 
     @GetMapping("")
     public String listProjects(
@@ -70,6 +82,73 @@ public class ProjectController {
                     return "projects/detail";
                 })
                 .orElse("redirect:/projects");
+    }
+
+    @GetMapping("/{id}/gantt")
+    @ResponseBody
+    public ResponseEntity<List<GanttItemDTO>> getProjectGantt(@PathVariable Long id) {
+        return projectFacade.getProjectById(id)
+                .map(project -> {
+                    List<GanttItemDTO> items = new ArrayList<>();
+
+                    // Epics (use epic dates or fallback to project dates if both present)
+                    for (Epic epic : epicService.findByProject(project)) {
+                        LocalDate start = epic.getStartDate();
+                        LocalDate end = epic.getDueDate();
+                        if (start == null || end == null) {
+                            if (project.getStartDate() != null && project.getEndDate() != null) {
+                                start = project.getStartDate();
+                                end = project.getEndDate();
+                            } else {
+                                // Skip epics without a clear time range
+                                continue;
+                            }
+                        }
+                        items.add(new GanttItemDTO(
+                                "epic-" + epic.getId(),
+                                epic.getTitle(),
+                                start,
+                                end,
+                                0,
+                                "EPIC",
+                                null
+                        ));
+                    }
+
+                    // Milestones (single-day items; use target date)
+                    for (Milestone milestone : milestoneService.findByProject(project)) {
+                        LocalDate date = milestone.getTargetDate();
+                        int progress = milestone.isAchieved() ? 100 : 0;
+                        items.add(new GanttItemDTO(
+                                "milestone-" + milestone.getId(),
+                                milestone.getName(),
+                                date,
+                                date,
+                                progress,
+                                "MILESTONE",
+                                null
+                        ));
+                    }
+
+                    // User stories (use sprint timebox if assigned)
+                    for (UserStory story : userStoryService.findByProjectWithSprint(project)) {
+                        Sprint sprint = story.getSprint();
+                        if (sprint != null && sprint.getStartDate() != null && sprint.getEndDate() != null) {
+                            items.add(new GanttItemDTO(
+                                    "story-" + story.getId(),
+                                    story.getTitle(),
+                                    sprint.getStartDate(),
+                                    sprint.getEndDate(),
+                                    0,
+                                    "STORY",
+                                    null
+                            ));
+                        }
+                    }
+
+                    return ResponseEntity.ok(items);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/new")

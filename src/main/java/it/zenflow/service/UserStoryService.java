@@ -41,6 +41,11 @@ public class UserStoryService {
     public List<UserStory> findByProject(Project project) {
         return userStoryRepository.findByProjectWithAssignedUser(project);
     }
+
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
+    public List<UserStory> findByProjectWithSprint(Project project) {
+        return userStoryRepository.findByProjectWithSprint(project);
+    }
     
     @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Page<UserStory> findByProjectPaginated(Project project, Pageable pageable) {

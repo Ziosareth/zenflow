@@ -54,6 +54,10 @@
                    th:href="@{/projects/{id}/milestones/new(id=${project.id})}" class="btn btn-success me-2">
                     <i class="bi bi-flag"></i> <span th:text="#{milestone.new}">New Milestone</span>
                 </a>
+                <a sec:authorize="hasAuthority('CREATE_EPIC') or #vars.isOwner or #vars.isTeamMember"
+                   th:href="@{/projects/{id}/epics/new(id=${project.id})}" class="btn btn-success me-2">
+                    <i class="bi bi-collection"></i> <span th:text="#{epic.new}">New Epic</span>
+                </a>
             </div>
         </div>
 
@@ -148,6 +152,25 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Gantt / Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0" th:text="#{project.gantt.title}">Project Timeline</h5>
+                        <div class="small text-white-50">
+                            <span class="me-3"><span class="legend-dot" style="background:#0d6efd"></span> Epic</span>
+                            <span class="me-3"><span class="legend-dot" style="background:#6f42c1"></span> Story</span>
+                            <span><span class="legend-dot" style="background:#198754"></span> Milestone</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="w-100" style="overflow-x: auto;">
+                            <canvas id="project-gantt-canvas" height="360"
+                                    th:attr="data-project-start=${project.startDate}, data-project-end=${project.endDate}"></canvas>
+                        </div>
+                        <div id="project-gantt-empty" class="text-muted mt-2" style="display:none;" th:text="#{project.gantt.empty}">No items to show.</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Team Members -->
@@ -196,6 +219,149 @@
         function confirmDelete() {
             showModal('deleteModal');
         }
+    </script>
+
+    <!-- Chart.js (via WebJars) and time adapter -->
+    <script src="/webjars/chart.js/4.5.0/dist/chart.umd.js"></script>
+    <script src="/webjars/chartjs-adapter-date-fns/3.0.0/dist/chartjs-adapter-date-fns.bundle.js"></script>
+
+    <style>
+        /* Legend dots */
+        .legend-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+    </style>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const url = /*[[@{/projects/{id}/gantt(id=${project.id})}]]*/ '';
+            const emptyEl = document.getElementById('project-gantt-empty');
+            const canvas = document.getElementById('project-gantt-canvas');
+            if (!canvas) { return; }
+            const ctx = canvas.getContext('2d');
+
+            fetch(url)
+                .then(r => r.ok ? r.json() : [])
+                .then(items => {
+                    if (!items || items.length === 0) {
+                        emptyEl.style.display = 'block';
+                        return;
+                    }
+
+                    // Helper functions
+                    const isValidDate = (d) => d instanceof Date && !isNaN(d.getTime());
+                    const toDate = (d) => {
+                        if (!d) return null;
+                        const dd = new Date(d);
+                        return isValidDate(dd) ? dd : null;
+                    };
+                    const addDays = (d, n) => { const dd = new Date(d); dd.setDate(dd.getDate() + n); return dd; };
+
+                    // Normalize, validate and sort rows
+                    let rows = items.map(it => {
+                        const start = toDate(it.start);
+                        let end = toDate(it.end || it.start);
+                        if (start && end && it.type === 'MILESTONE') {
+                            // Make milestones visible as 1 day
+                            end = addDays(end, 1);
+                        }
+                        return {
+                            y: it.name,
+                            x: [start, end],
+                            type: it.type || 'OTHER',
+                            id: it.id
+                        };
+                    })
+                    // filter out invalid dates
+                    .filter(r => isValidDate(r.x[0]) && isValidDate(r.x[1]))
+                    .sort((a, b) => a.x[0] - b.x[0] || a.type.localeCompare(b.type));
+
+                    if (!rows.length) {
+                        emptyEl.style.display = 'block';
+                        return;
+                    }
+
+                    const labels = rows.map(r => r.y);
+
+                    const data = {
+                        labels,
+                        datasets: [{
+                            label: 'Timeline',
+                            data: rows.map(r => ({ x: r.x, y: r.y, id: r.id, type: r.type })),
+                            borderSkipped: false
+                        }]
+                    };
+
+                    const typeColors = { EPIC: '#0d6efd', STORY: '#6f42c1', MILESTONE: '#198754' };
+
+                    // Read project bounds from data attributes
+                    const startAttr = canvas.dataset.projectStart;
+                    const endAttr = canvas.dataset.projectEnd;
+                    const projectMin = toDate(startAttr);
+                    const projectMax = toDate(endAttr);
+
+                    // Compute data bounds (earliest start, latest end)
+                    const dataMin = rows.reduce((min, r) => r.x[0] < min ? r.x[0] : min, rows[0].x[0]);
+                    const dataMax = rows.reduce((max, r) => r.x[1] > max ? r.x[1] : max, rows[0].x[1]);
+
+                    const axisMin = projectMin || dataMin;
+                    const axisMax = projectMax || dataMax;
+
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const raw = context.raw;
+                                            const s = raw.x[0];
+                                            const e = raw.x[1];
+                                            const fmt = (d) => isValidDate(d) ? d.toLocaleDateString() : '';
+                                            return `${raw.type}: ${raw.y} (${fmt(s)} - ${fmt(e)})`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: { unit: 'day' },
+                                    ticks: { source: 'auto' },
+                                    min: axisMin,
+                                    max: axisMax
+                                },
+                                y: {
+                                    ticks: { autoSkip: false }
+                                }
+                            },
+                            elements: {
+                                bar: {
+                                    backgroundColor: (ctx) => {
+                                        const t = ctx?.raw?.type || 'OTHER';
+                                        return typeColors[t] || '#6c757d';
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error('[GANTT] Error loading data', err);
+                    emptyEl.style.display = 'block';
+                });
+        });
     </script>
 
     <!-- Script -->
