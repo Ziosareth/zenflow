@@ -25,6 +25,19 @@ services:
     networks:
       - zenflow-network
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    container_name: zenflow-otel
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4318:4318"   # OTLP over HTTP
+      - "4317:4317"   # OTLP over gRPC
+      - "9464:9464"   # Prometheus exporter
+    networks:
+      - zenflow-network
+
 volumes:
   postgres_data:
     name: zenflow-postgres-data

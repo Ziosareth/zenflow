@@ -448,11 +448,3 @@ ALTER TABLE user_roles
 
 ALTER TABLE user_roles
     ADD CONSTRAINT fk_userol_on_user FOREIGN KEY (user_id) REFERENCES users (id);
-
-CREATE INDEX idx_tasks_user_story_status ON tasks (user_story_id, status);
-
-CREATE INDEX idx_estimation_votes_session_user ON estimation_votes (session_id, user_id);
-
-CREATE INDEX idx_poker_session_participants_session_user ON poker_session_participants (session_id, user_id);
-
-CREATE INDEX idx_poker_session_user_stories_session_user ON poker_session_user_stories (session_id, user_id);
