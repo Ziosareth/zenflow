@@ -448,3 +448,5 @@ ALTER TABLE user_roles
 
 ALTER TABLE user_roles
     ADD CONSTRAINT fk_userol_on_user FOREIGN KEY (user_id) REFERENCES users (id);
+
+CREATE INDEX idx_tasks_user_story_status ON tasks (user_story_id, status);
