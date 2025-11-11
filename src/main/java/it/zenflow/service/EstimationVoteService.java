@@ -18,12 +18,12 @@ public class EstimationVoteService {
     private final PlanningPokerSessionRepository planningPokerSessionRepository;
     private final UserStoryRepository userStoryRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public List<EstimationVote> findAll() {
         return estimationVoteRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "tenantTransactionManager")
     public Optional<EstimationVote> findById(Long id) {
         return estimationVoteRepository.findById(id);
     }
