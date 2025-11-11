@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
@@ -43,6 +44,7 @@ public class MasterTenantService {
         return tenantRepository.findById(name);
     }
 
+    @Transactional(transactionManager = "masterTransactionManager", propagation = Propagation.REQUIRES_NEW)
     public Tenant createTenant(CreateTenantDTO dto) {
         // Check if tenant already exists
         if (tenantRepository.existsById(dto.getName())) {
